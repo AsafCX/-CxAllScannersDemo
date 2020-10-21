@@ -4,16 +4,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.checkmarx</groupId>
-    <artifactId>cx-template-java-project</artifactId>
+    <artifactId>cx-integrations-repo-mangaer</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>Template java project</name>
-    <description>Template java project</description>
+    <name>Integrations RepoManager</name>
+    <description>Integrations RepoManager</description>
     <url>https://www.checkmarx.com</url>
     <scm>
-        <connection>scm:git:git://github.com/checkmarx-ltd/cx-template-java-project.git</connection>
-        <developerConnection>scm:git:ssh://github.com/checkmarx-ltd/cx-template-java-project.git</developerConnection>
-        <url>https://github.com/checkmarx-ltd/cx-template-java-project/tree/master</url>
+        <connection>scm:git:git://github.com/checkmarx-ltd/Integrations-ReposManager.git</connection>
+        <developerConnection>scm:git:ssh://github.com/checkmarx-ltd/Integrations-ReposManager.git</developerConnection>
+        <url>https://github.com/checkmarx-ltd/Integrations-ReposManager/tree/master</url>
     </scm>
     <licenses>
         <license>
@@ -207,8 +207,8 @@
     </profiles>
     <developers>
         <developer>
-            <name>To fill in</name>
-            <email>To fill in</email>
+            <name>Checkmarx</name>
+            <email>Checkmarx</email>
             <organization>Checkmarx Ltd</organization>
             <organizationUrl>https://www.checkmarx.com/</organizationUrl>
         </developer>
