@@ -1,5 +1,5 @@
-# cx-template-java-project
-Please add a description of a project
+# cx-integrations-repo-manager
+Organizations repositories manager
 
 ## Release Notes
 Please read latest features and fixes from the [Releases](https://github.com/checkmarx-ltd/Cx-Client-Common/releases/latest).
