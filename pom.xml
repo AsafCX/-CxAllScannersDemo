@@ -28,9 +28,7 @@
         </license>
     </licenses>
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <!--SonarCloud scan -->
+        <sonar.projectKey>checkmarx-ltd_Integrations-ReposManager</sonar.projectKey>
         <sonar.organization>checkmarx-ltd</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
