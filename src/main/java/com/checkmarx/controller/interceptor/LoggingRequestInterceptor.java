@@ -32,7 +32,7 @@ public class LoggingRequestInterceptor implements HandlerInterceptor {
                            HttpServletResponse response, Object object, ModelAndView model)
             throws Exception {
         log.debug("=================== Response ===================");
-        log.debug("[postHandle][" + request + "]");
+        log.debug("[postHandle][" + response + "]");
         calcAndPrintExecution(request);
         log.debug("===================================================");
     }
