@@ -49,7 +49,7 @@ public class LoggingRequestInterceptor implements HandlerInterceptor {
         while (headerNames.hasMoreElements()) {
             final String headerName = headerNames.nextElement();
             final String header = request.getHeader(headerName);
-            log.info("{} = {}", headerName, header);
+            log.debug("{} = {}", headerName, header);
         }
     }
 
