@@ -2,12 +2,10 @@ package com.checkmarx.controller;
 
 import com.checkmarx.dto.OrganizationDto;
 import com.checkmarx.dto.RepositoryDto;
+import com.checkmarx.utils.RestHelper;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -20,18 +18,6 @@ import java.util.List;
 @RequestMapping(value = "/github")
 public class GitHubController {
 
-    @Value("${url.pattern.get.user.organizations}")
-    private String urlPatternGetUserOrganizations;
-
-    @Value("${url.pattern.get.user.repositories}")
-    private String urlPatternGetUserRepositories;
-
-    @Value("${url.pattern.get.org.repositories}")
-    private String urlPatternGetOrgRepositories;
-
-    @Value("${github.token.format}")
-    private String githubTokenPattern;
-
     @Autowired
     RestTemplate restTemplate;
 
@@ -41,7 +27,7 @@ public class GitHubController {
         List<RepositoryDto> userRepositoryDtos = new ArrayList<>();
 
         final HttpEntity<String> request = createRequest(null, createHeaders(userAuthToken));
-        ResponseEntity response = sendRequest(urlPatternGetUserRepositories, HttpMethod.GET, request, String.class);
+        ResponseEntity response = sendRequest(RestHelper.urlPatternGetOrgRepositories, HttpMethod.GET, request, String.class);
 
         log.info(response.toString());
         return new ResponseEntity<>(userRepositoryDtos, HttpStatus.OK);
@@ -54,7 +40,7 @@ public class GitHubController {
         List<OrganizationDto> userOrganizationDtos = new ArrayList<>();
 
         final HttpEntity<String> request = createRequest(null, createHeaders(userAuthToken));
-        ResponseEntity response = sendRequest(urlPatternGetUserOrganizations, HttpMethod.GET, request, String.class);
+        ResponseEntity response = sendRequest(RestHelper.urlPatternGetUserOrganizations, HttpMethod.GET, request, String.class);
 
         log.info(response.toString());
         return new ResponseEntity<>(userOrganizationDtos, HttpStatus.OK);
@@ -68,7 +54,7 @@ public class GitHubController {
         List<RepositoryDto> orgRepositoryDtos = new ArrayList<>();
 
         final HttpEntity<String> request = createRequest(null, createHeaders(userAuthToken));
-        String path = String.format(urlPatternGetOrgRepositories, orgName);
+        String path = String.format(RestHelper.urlPatternGetOrgRepositories, orgName);
         ResponseEntity response = sendRequest(path, HttpMethod.GET, request, String.class);
         log.info(response.toString());
         return new ResponseEntity<>(orgRepositoryDtos, HttpStatus.OK);
@@ -78,7 +64,7 @@ public class GitHubController {
 
     private HttpHeaders createHeaders(String userAuthToken) {
         final HttpHeaders headers = new HttpHeaders();
-        String tokenHeader = String.format(githubTokenPattern, userAuthToken);
+        String tokenHeader = String.format(RestHelper.githubTokenPattern, userAuthToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", tokenHeader);
         return headers;
