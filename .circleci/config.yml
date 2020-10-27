@@ -126,28 +126,6 @@ jobs:
       - image: circleci/openjdk:8-jdk
     steps:
       - run: echo << parameters.os >> - << parameters.node-version >>
-    
-  publish:
-    docker:
-      - image: circleci/openjdk:8-jdk
-    working_directory: ~/repo
-    environment:
-      MAVEN_OPTS: -Xmx3200m
-    steps:
-      - attach_workspace:
-          at: .
-      - restore_cache:
-          key: maven-repo-v1-{{ .Branch }}-{{ checksum "pom.xml" }}
-      - run:
-          name: Import GnuPG Keys
-          command: echo ${GPG_KEY} | base64 --decode | gpg --import --no-tty --batch --yes || true
-      - run:
-          name: Publish to Maven Central
-          command: mvn deploy -s .circleci/.circleci.settings.xml -P release -DskipTests -Dmvn-gpg.passphrase=${GPG_PASSPHRASE} -Dossrh.username=${OSSRH_USERNAME} -Dossrh.password=${OSSRH_PASSWORD}
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: maven-repo-v1-{{ .Branch }}-{{ checksum "pom.xml" }}
 
 workflows:
   ci-cd:
@@ -159,18 +137,3 @@ workflows:
       - sonar:
           requires:
             - build
-      - system-tests:
-          matrix:
-            parameters:
-              os: [linux, macos]
-              node-version: ["10.9.0", "11.9.0", "12.9.1", "13.9.0"]
-          requires:
-            - test
-            - sonar
-      - publish:
-          filters:
-            branches:
-              only:
-                - master
-          requires:
-            - system-tests
