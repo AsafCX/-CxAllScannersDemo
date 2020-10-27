@@ -17,11 +17,11 @@ public class LoggingRequestInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response, Object object) throws Exception {
 
-        log.info("=============== Request {} {} ===============",request.getMethod(), request.getRequestURI());
+        log.debug("=============== Request {} {} ===============",request.getMethod(), request.getRequestURI());
 
         printHeaders(request);
         printParameters(request);
-        log.info("===================================================");
+        log.debug("===================================================");
         long startTime = System.currentTimeMillis();
         request.setAttribute("executionTime", startTime);
         return true;
@@ -31,21 +31,21 @@ public class LoggingRequestInterceptor implements HandlerInterceptor {
     public void postHandle(HttpServletRequest request,
                            HttpServletResponse response, Object object, ModelAndView model)
             throws Exception {
-        log.info("=================== Response ===================");
-        log.info("[postHandle][" + request + "]");
+        log.debug("=================== Response ===================");
+        log.debug("[postHandle][" + request + "]");
         calcAndPrintExecution(request);
-        log.info("===================================================");
+        log.debug("===================================================");
     }
 
     private void calcAndPrintExecution(HttpServletRequest request) {
         long startTime = (Long) request.getAttribute("executionTime");
-        log.info("Execution time: {} ms",
+        log.debug("Execution time: {} ms",
                 System.currentTimeMillis() - startTime);
     }
 
     private void printHeaders(HttpServletRequest request) {
         final Enumeration<String> headerNames = request.getHeaderNames();
-        log.info("Request headers:");
+        log.debug("Request headers:");
         while (headerNames.hasMoreElements()) {
             final String headerName = headerNames.nextElement();
             final String header = request.getHeader(headerName);
@@ -59,7 +59,7 @@ public class LoggingRequestInterceptor implements HandlerInterceptor {
             while (parameterNames.hasMoreElements()) {
                 final String paramName = parameterNames.nextElement();
                 final String paramValue = request.getParameter(paramName);
-                log.info("{} = {}", paramName, paramValue);
+                log.debug("{} = {}", paramName, paramValue);
             }
         }
     }
