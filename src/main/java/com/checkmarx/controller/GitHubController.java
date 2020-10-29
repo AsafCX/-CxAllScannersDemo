@@ -50,6 +50,7 @@ public class GitHubController {
     @GetMapping(value="/user/orgs")
     public ResponseEntity getOrganizations(@RequestParam(name = "code") String oAuthCode) {
 
+
         String path = String.format(urlPatternGenerateOAuthToken, clientId, clientSecret, oAuthCode);
         ResponseEntity<OAuthTokenDto> response = sendRequest(path, HttpMethod.POST, null, OAuthTokenDto.class);
         OAuthTokenDto oAuthToken = response.getBody();
