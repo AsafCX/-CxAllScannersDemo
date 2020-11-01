@@ -12,7 +12,7 @@ import lombok.Data;
         "scope",
         "token_type"
 })
-public @Data class OAuthTokenDto {
+public @Data class AccessTokenDto {
 
     @JsonProperty("access_token")
     private String accessToken;
