@@ -28,6 +28,8 @@
         </license>
     </licenses>
     <properties>
+        <!-- The main class to start by executing "java -jar" -->
+        <start-class>com.checkmarx.IntegrationsReposManagerApplication</start-class>
         <sonar.projectKey>checkmarx-ltd_Integrations-ReposManager</sonar.projectKey>
         <sonar.organization>checkmarx-ltd</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
