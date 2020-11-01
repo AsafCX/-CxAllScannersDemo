@@ -1,5 +1,6 @@
 package com.checkmarx.controller;
 
+import com.checkmarx.dto.github.GitHubConfigDto;
 import com.checkmarx.dto.github.OAuthTokenDto;
 import com.checkmarx.dto.github.OrganizationDto;
 import com.checkmarx.dto.github.RepositoryDto;
@@ -40,26 +41,31 @@ public class GitHubController {
     @Value("${github.client.secret}")
     private String clientSecret;
 
+    @Value("${github.scope}")
+    private String scope;
+
     @Autowired
     RestTemplate restTemplate;
 
     @Autowired
     DataSourceController dataSourceController;
 
+    @GetMapping(value="/config")
+    public ResponseEntity getGitHubConfig() {
 
-    @GetMapping(value="/user/orgs")
+        GitHubConfigDto config = new GitHubConfigDto(clientId, scope);
+        return ResponseEntity.status(HttpStatus.OK).body(config);
+    }
+
+    @PostMapping(value="/user/orgs")
     public ResponseEntity getOrganizations(@RequestParam(name = "code") String oAuthCode) {
 
-
-        String path = String.format(urlPatternGenerateOAuthToken, clientId, clientSecret, oAuthCode);
-        ResponseEntity<OAuthTokenDto> response = sendRequest(path, HttpMethod.POST, null, OAuthTokenDto.class);
-        OAuthTokenDto oAuthToken = response.getBody();
+        OAuthTokenDto oAuthToken = generateOAuthToken(oAuthCode);
         ResponseEntity failureResponse = verifyTokenAndSave(oAuthToken);
         if (failureResponse != null) return failureResponse;
         log.info("OAuth token generated successfully");
         ArrayList<OrganizationDto> userOrganizationDtos = getUserOrganizations(oAuthToken.getAccessToken());
         return ResponseEntity.status(HttpStatus.OK).body(userOrganizationDtos);
-
     }
 
     @GetMapping(value="/user/repos")
@@ -70,22 +76,10 @@ public class GitHubController {
         ResponseEntity<RepositoryDto[]> response = sendRequest(urlPatternGetUserRepositories, HttpMethod.GET, request, RepositoryDto[].class);
         ArrayList<RepositoryDto> userRepositoryDtos = new ArrayList<>(Arrays.asList(response.getBody()));
         return ResponseEntity.status(HttpStatus.OK).body(userRepositoryDtos);
-
     }
-
-    @GetMapping(value="/user/orgs/do-not-use")
-    public ResponseEntity getUserOrganizationss(
-            @RequestHeader("UserAuthToken") String userAuthToken) {
-
-        final HttpEntity<String> request = createRequest(null, createHeaders(userAuthToken));
-        ResponseEntity<OrganizationDto[]> response = sendRequest(urlPatternGetUserOrganizations, HttpMethod.GET, request, OrganizationDto[].class);
-        ArrayList<OrganizationDto> userOrganizationDtos = new ArrayList<>(Arrays.asList(response.getBody()));
-        return ResponseEntity.status(HttpStatus.OK).body(userOrganizationDtos);
-    }
-
 
     @GetMapping(value="org/repos")
-    public ResponseEntity getOrganizationRepositoriess(
+    public ResponseEntity getOrganizationRepositories(
             @RequestHeader("UserAuthToken") String userAuthToken, @RequestHeader("Org") String orgName) {
 
         final HttpEntity<String> request = createRequest(null, createHeaders(userAuthToken));
@@ -94,8 +88,12 @@ public class GitHubController {
         ArrayList<RepositoryDto> orgRepositoryDtos = new ArrayList<>(Arrays.asList(response.getBody()));
 
         return ResponseEntity.status(HttpStatus.OK).body(orgRepositoryDtos);
+    }
 
-
+    private OAuthTokenDto generateOAuthToken(String oAuthCode) {
+        String path = String.format(urlPatternGenerateOAuthToken, clientId, clientSecret, oAuthCode);
+        ResponseEntity<OAuthTokenDto> response = sendRequest(path, HttpMethod.POST, null, OAuthTokenDto.class);
+        return response.getBody();
     }
 
     private ArrayList<OrganizationDto> getUserOrganizations( String accessToken) {
@@ -121,7 +119,6 @@ public class GitHubController {
     }
 
     private ResponseEntity verifyTokenAndSave(OAuthTokenDto oAuthToken) {
-        log.info("OAuth Token: {}", oAuthToken);
         if (oAuthToken == null || oAuthToken.getAccessToken() == null || oAuthToken.getAccessToken().isEmpty() ){
             log.error(RestHelper.GENERATE_OAUTH_TOKEN_FAILURE);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(RestHelper.GENERATE_OAUTH_TOKEN_FAILURE);
