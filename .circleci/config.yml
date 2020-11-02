@@ -116,6 +116,54 @@ jobs:
               exit 1
             fi
   
+  build-image:
+    docker:
+      - image: docker:19.03.13
+    working_directory: ~/repo
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: 19.03.13
+          #docker_layer_caching: true
+      - run:
+          name: Build Repos-Manager Docker Image
+          command: docker build -t repos-manager .
+      - run:
+          name: Save Repos-Manager Docker Image to File
+          command: docker save -o repos-manager-image.tar repos-manager
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./repos-manager-image.tar
+      
+  deploy:
+    docker:
+      - image: docker:19.03.13
+    working_directory: ~/repo
+    steps:
+      - setup_remote_docker:
+          version: 19.03.13
+          #docker_layer_caching: true
+      - attach_workspace:
+          at: .
+      - run:
+          name: Load Repos-Manager Docker Image from File
+          command: docker load -i repos-manager-image.tar
+      - run:
+          name: Deploy Repos-Manager Docker Container
+          command: docker run -d --name repos-manager -e GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID -e GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET repos-manager:latest
+      - run:
+          name: Wait for Repos-Manager Application to be Up and Running
+          # in curl command -4 flag stands for forcing curl to use IPv4 (--retry-connrefused won't work otherwise)
+          command: docker exec repos-manager curl -4 --retry 15 --retry-delay 2 --retry-connrefused http://localhost:8080/actuator/health
+      - run:
+          name: print Repos-Manager Docker Container logs
+          command: |
+            docker ps -a
+            docker logs repos-manager
+          when: always
+  
   system-tests:
     parameters:
       os:
@@ -137,3 +185,10 @@ workflows:
       - sonar:
           requires:
             - build
+      - build-image:
+          requires:
+            - test
+            - sonar
+      - deploy:
+          requires:
+            - build-image
