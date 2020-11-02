@@ -54,39 +54,63 @@ public class GitHubController {
     @Autowired
     GitHubService gitHubService;
 
-    @GetMapping(value="/config")
+    /**
+     * Rest api used by FE application on start-up, Retrieve client id from env variable and scope from app properties file
+     *
+     * @return ResponseEntity with status:200, Body: Github client id & scope
+     */
+    @GetMapping(value = "/config")
     public ResponseEntity getGitHubConfig() {
 
         GitHubConfigDto config = new GitHubConfigDto(clientId, scope);
         return ResponseEntity.ok(config);
     }
 
-    @PostMapping(value="/user/orgs")
+    /**
+     * Rest api used to first create OAuth access token and retrieve all user organizations from GitHub
+     *
+     * @param oAuthCode given from FE application after first-step OAuth implementation passed successfully, taken from request param "code", using it to create access token
+     * @return ResponseEntity with status:200, Body: list of all user organizations
+     */
+    @PostMapping(value = "/user/orgs")
     public ResponseEntity getOrganizations(@RequestParam(name = "code") String oAuthCode) {
 
         AccessTokenDto accessToken = generateAccessToken(oAuthCode);
         ResponseEntity failureResponse = verifyAccessToken(accessToken);
         if (failureResponse != null) return failureResponse;
+
         log.info("Access token generated successfully");
         ArrayList<OrganizationDto> userOrganizationDtos = getUserOrganizations(accessToken.getAccessToken());
         gitHubService.addAccessToken(accessToken.getAccessToken(), userOrganizationDtos);
         return ResponseEntity.ok(userOrganizationDtos);
     }
 
-    @GetMapping(value="/user/repos")
+    /**
+     * Rest api used to get all user repositories from GitHub
+     *
+     * @param userAccessToken access token using it for GitHub authorization header
+     * @return ResponseEntity with https status:200, Body: list of all user repositories (private and public)
+     */
+    @GetMapping(value = "/user/repos")
     public ResponseEntity getUserRepositories(
-            @RequestHeader("UserAuthToken") String userAuthToken) {
+            @RequestHeader("UserAccessToken") String userAccessToken) {
 
-        final HttpEntity<String> request = createRequest(null, createHeaders(userAuthToken));
+        final HttpEntity<String> request = createRequest(null, createHeaders(userAccessToken));
         ResponseEntity<RepositoryDto[]> response = sendRequest(urlPatternGetUserRepositories, HttpMethod.GET, request, RepositoryDto[].class);
         ArrayList<RepositoryDto> userRepositoryDtos = new ArrayList<>(Arrays.asList(response.getBody()));
         return ResponseEntity.ok(userRepositoryDtos);
     }
 
-    @GetMapping(value="/orgs/{orgName}/repos")
+    /**
+     * Rest api used to get specific organization repositories (private and public)
+     *
+     * @param orgName organization name used to retrieve the relevant repositories
+     * @return ResponseEntity with http status:200, Body: all organization repositories (public and private)
+     */
+    @GetMapping(value = "/orgs/{orgName}/repos")
     public ResponseEntity getOrganizationRepositories(@PathVariable String orgName) {
         String accessToken = gitHubService.getAccessToken(orgName);
-        if(accessToken == null || accessToken.isEmpty()){
+        if (accessToken == null || accessToken.isEmpty()) {
             log.error(RestHelper.ACCESS_TOKEN_MISSING);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(RestHelper.ACCESS_TOKEN_MISSING);
         }
@@ -94,39 +118,78 @@ public class GitHubController {
         String path = String.format(urlPatternGetOrgRepositories, orgName);
         ResponseEntity<RepositoryDto[]> response = sendRequest(path, HttpMethod.GET, request, RepositoryDto[].class);
         ArrayList<RepositoryDto> orgRepositoryDtos = new ArrayList<>(Arrays.asList(response.getBody()));
-        return  ResponseEntity.ok(orgRepositoryDtos);
+        return ResponseEntity.ok(orgRepositoryDtos);
     }
 
+    /**
+     * generateAccessToken method using OAuth code, client id and client secret generates access token via github api
+     *
+     * @param oAuthCode given from FE application after first-step OAuth implementation passed successfully, taken from request param "code", using it to create access token
+     * @return Access token given from GitHub
+     */
     private AccessTokenDto generateAccessToken(String oAuthCode) {
         String path = String.format(urlPatternGenerateOAuthToken, clientId, clientSecret, oAuthCode);
         ResponseEntity<AccessTokenDto> response = sendRequest(path, HttpMethod.POST, null, AccessTokenDto.class);
         return response.getBody();
     }
 
-    private ArrayList<OrganizationDto> getUserOrganizations( String accessToken) {
+    /**
+     * getUserOrganizations method using access token retrieve all user organisations via GitHub api
+     *
+     * @param accessToken generated before using GitHub api, Gives access to relevant GitHub data
+     * @return Array list of all user organizations
+     */
+    private ArrayList<OrganizationDto> getUserOrganizations(String accessToken) {
         final HttpEntity<String> request = createRequest(null, createHeaders(accessToken));
         ResponseEntity<OrganizationDto[]> response = sendRequest(urlPatternGetUserOrganizations, HttpMethod.GET, request, OrganizationDto[].class);
         return new ArrayList<>(Arrays.asList(response.getBody()));
     }
 
-    private HttpHeaders createHeaders(String userAuthToken) {
+    /**
+     * createHeaders method created headers for future Rest request, Adding user auth token for GitHub authorization
+     *
+     * @param userAccessToken access token generated before using GitHub api, Gives access to relevant GitHub data
+     * @return HttpHeaders for future rest request
+     */
+    private HttpHeaders createHeaders(String userAccessToken) {
         final HttpHeaders headers = new HttpHeaders();
-        String tokenHeader = String.format(githubTokenPattern, userAuthToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", tokenHeader);
+        headers.setBearerAuth(userAccessToken);
         return headers;
     }
 
+    /**
+     * sendRequest method used as rest request template, sends request via RestTemplate
+     *
+     * @param path         url path
+     * @param method       http method
+     * @param request      request including headers and (optional) body
+     * @param responseType expected class structure as response
+     * @return ResponseEntity of any type
+     */
     private ResponseEntity sendRequest(String path, HttpMethod method, HttpEntity<String> request, Class responseType) {
         return restTemplate.exchange(path, method, request, responseType);
     }
 
+    /**
+     * createRequest method used as request creation template, Construct request from given headers and body
+     *
+     * @param body    request body
+     * @param headers http headers
+     * @return HttpEntity including headers and body sent as input
+     */
     private HttpEntity<String> createRequest(Object body, HttpHeaders headers) {
         return new HttpEntity<>((String) body, headers);
     }
 
+    /**
+     * verifyAccessToken method used to verify access token creation, Currently checks if access token created without GitHub validation
+     *
+     * @param oAuthToken access token generated before using GitHub api, Gives access to relevant GitHub data
+     * @return null if verification passed successfully else ResponseEntity with http status: 417, Body: generate token failure string
+     */
     private ResponseEntity verifyAccessToken(AccessTokenDto oAuthToken) {
-        if (oAuthToken == null || oAuthToken.getAccessToken() == null || oAuthToken.getAccessToken().isEmpty() ){
+        if (oAuthToken == null || oAuthToken.getAccessToken() == null || oAuthToken.getAccessToken().isEmpty()) {
             log.error(RestHelper.GENERATE_ACCESS_TOKEN_FAILURE);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(RestHelper.GENERATE_ACCESS_TOKEN_FAILURE);
         } else
