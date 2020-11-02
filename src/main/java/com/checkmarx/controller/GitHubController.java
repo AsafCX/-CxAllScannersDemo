@@ -55,7 +55,8 @@ public class GitHubController {
     GitHubService gitHubService;
 
     /**
-     * Rest api used by FE application on start-up, Retrieve client id from env variable and scope from app properties file
+     * Rest api used by FE application on start-up, Retrieve client id from env variable and
+     * scope from app properties file
      *
      * @return ResponseEntity with status:200, Body: Github client id & scope
      */
@@ -69,7 +70,8 @@ public class GitHubController {
     /**
      * Rest api used to first create OAuth access token and retrieve all user organizations from GitHub
      *
-     * @param oAuthCode given from FE application after first-step OAuth implementation passed successfully, taken from request param "code", using it to create access token
+     * @param oAuthCode given from FE application after first-step OAuth implementation passed
+     *                  successfully, taken from request param "code", using it to create access token
      * @return ResponseEntity with status:200, Body: list of all user organizations
      */
     @PostMapping(value = "/user/orgs")
@@ -89,7 +91,8 @@ public class GitHubController {
      * Rest api used to get all user repositories from GitHub
      *
      * @param userAccessToken access token using it for GitHub authorization header
-     * @return ResponseEntity with https status:200, Body: list of all user repositories (private and public)
+     * @return ResponseEntity with https status:200, Body: list of all user repositories (private
+     *         and public)
      */
     @GetMapping(value = "/user/repos")
     public ResponseEntity getUserRepositories(
@@ -102,10 +105,11 @@ public class GitHubController {
     }
 
     /**
-     * Rest api used to get specific organization repositories (private and public)
+     * Rest api used to get for specific organization all repositories (private and public)
      *
      * @param orgName organization name used to retrieve the relevant repositories
-     * @return ResponseEntity with http status:200, Body: all organization repositories (public and private)
+     * @return ResponseEntity with http status:200, Body: all organization repositories (public
+     *         and private)
      */
     @GetMapping(value = "/orgs/{orgName}/repos")
     public ResponseEntity getOrganizationRepositories(@PathVariable String orgName) {
@@ -122,9 +126,11 @@ public class GitHubController {
     }
 
     /**
-     * generateAccessToken method using OAuth code, client id and client secret generates access token via github api
+     * generateAccessToken method using OAuth code, client id and client secret generates access
+     * token via GitHub api
      *
-     * @param oAuthCode given from FE application after first-step OAuth implementation passed successfully, taken from request param "code", using it to create access token
+     * @param oAuthCode given from FE application after first-step OAuth implementation passed
+     *                  successfully, taken from request param "code", using it to create access token
      * @return Access token given from GitHub
      */
     private AccessTokenDto generateAccessToken(String oAuthCode) {
@@ -146,9 +152,11 @@ public class GitHubController {
     }
 
     /**
-     * createHeaders method created headers for future Rest request, Adding user auth token for GitHub authorization
+     * createHeaders method created headers for future Rest request, Adding user auth token for
+     * GitHub authorization
      *
-     * @param userAccessToken access token generated before using GitHub api, Gives access to relevant GitHub data
+     * @param userAccessToken access token generated before using GitHub api, Gives access to
+     *                        relevant GitHub data
      * @return HttpHeaders for future rest request
      */
     private HttpHeaders createHeaders(String userAccessToken) {
@@ -172,7 +180,8 @@ public class GitHubController {
     }
 
     /**
-     * createRequest method used as request creation template, Construct request from given headers and body
+     * createRequest method used as request creation template, Construct request from given
+     * headers and body
      *
      * @param body    request body
      * @param headers http headers
@@ -183,10 +192,13 @@ public class GitHubController {
     }
 
     /**
-     * verifyAccessToken method used to verify access token creation, Currently checks if access token created without GitHub validation
+     * verifyAccessToken method used to verify access token creation, Currently checks if access
+     * token created without GitHub validation
      *
-     * @param oAuthToken access token generated before using GitHub api, Gives access to relevant GitHub data
-     * @return null if verification passed successfully else ResponseEntity with http status: 417, Body: generate token failure string
+     * @param oAuthToken access token generated before using GitHub api, Gives access to relevant
+     *                  GitHub data
+     * @return null if verification passed successfully else ResponseEntity with http status:
+     *         417, Body: generate token failure string
      */
     private ResponseEntity verifyAccessToken(AccessTokenDto oAuthToken) {
         if (oAuthToken == null || oAuthToken.getAccessToken() == null || oAuthToken.getAccessToken().isEmpty()) {
