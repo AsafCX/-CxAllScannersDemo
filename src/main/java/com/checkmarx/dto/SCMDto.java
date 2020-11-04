@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -12,6 +13,7 @@ import lombok.Data;
         "client_secret"
 })
 @Data
+@NoArgsConstructor
 public class SCMDto {
     @JsonProperty("base_url")
     private String baseUrl;
