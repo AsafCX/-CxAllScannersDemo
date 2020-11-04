@@ -1,17 +1,18 @@
 package com.checkmarx.controller;
 
+import com.checkmarx.dto.SCMAccessTokenDto;
 import com.checkmarx.dto.github.GitHubConfigDto;
 import com.checkmarx.dto.github.AccessTokenDto;
 import com.checkmarx.dto.github.OrganizationDto;
 import com.checkmarx.dto.github.RepositoryDto;
 import com.checkmarx.service.GitHubService;
 import com.checkmarx.utils.RestHelper;
+import com.checkmarx.utils.TokenType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,9 +34,6 @@ public class GitHubController {
     @Value("${github.url.pattern.get.org.repositories}")
     private String urlPatternGetOrgRepositories;
 
-    @Value("${github.token.format}")
-    private String githubTokenPattern;
-
     @Value("${github.client.id}")
     private String clientId;
 
@@ -45,14 +43,17 @@ public class GitHubController {
     @Value("${github.scope}")
     private String scope;
 
-    @Autowired
-    RestTemplate restTemplate;
+    @Value("${github.url}")
+    private String githubUrl;
 
     @Autowired
-    DataSourceController dataSourceController;
+    DataStoreController dataStoreController;
 
     @Autowired
     GitHubService gitHubService;
+
+    @Autowired
+    RestHelper restHelper;
 
     /**
      * Rest api used by FE application on start-up, Retrieve client id from env variable and
@@ -83,7 +84,7 @@ public class GitHubController {
 
         log.info("Access token generated successfully");
         ArrayList<OrganizationDto> userOrganizationDtos = getUserOrganizations(accessToken.getAccessToken());
-        gitHubService.addAccessToken(accessToken.getAccessToken(), userOrganizationDtos);
+        gitHubService.addAccessToken(accessToken, userOrganizationDtos);
         return ResponseEntity.ok(userOrganizationDtos);
     }
 
@@ -97,9 +98,12 @@ public class GitHubController {
     @GetMapping(value = "/user/repos")
     public ResponseEntity getUserRepositories(
             @RequestHeader("UserAccessToken") String userAccessToken) {
-
-        final HttpEntity<String> request = createRequest(null, createHeaders(userAccessToken));
-        ResponseEntity<RepositoryDto[]> response = sendRequest(urlPatternGetUserRepositories, HttpMethod.GET, request, RepositoryDto[].class);
+        HttpHeaders headers = restHelper.createHeaders(null);
+        headers.setBearerAuth(userAccessToken);
+        final HttpEntity<String> request = restHelper.createRequest(null, headers);
+        ResponseEntity<RepositoryDto[]> response =
+                restHelper.sendRequest(urlPatternGetUserRepositories,
+                                                                HttpMethod.GET, request, RepositoryDto[].class);
         ArrayList<RepositoryDto> userRepositoryDtos = new ArrayList<>(Arrays.asList(response.getBody()));
         return ResponseEntity.ok(userRepositoryDtos);
     }
@@ -113,14 +117,24 @@ public class GitHubController {
      */
     @GetMapping(value = "/orgs/{orgName}/repos")
     public ResponseEntity getOrganizationRepositories(@PathVariable String orgName) {
-        String accessToken = gitHubService.getAccessToken(orgName);
-        if (accessToken == null || accessToken.isEmpty()) {
+        AccessTokenDto accessToken = gitHubService.getAccessToken(orgName);
+        if (accessToken == null || accessToken.getAccessToken().isEmpty()) {
             log.error(RestHelper.ACCESS_TOKEN_MISSING);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(RestHelper.ACCESS_TOKEN_MISSING);
         }
-        final HttpEntity<String> request = createRequest(null, createHeaders(accessToken));
+        SCMAccessTokenDto scmAccessTokenDto = new SCMAccessTokenDto(githubUrl, orgName,
+                                                                    accessToken.getAccessToken(),
+                                                                    TokenType.ACCESS.getType());
+        boolean success = dataStoreController.saveSCMOrgToken(scmAccessTokenDto);
+        if (!success){
+            log.error(RestHelper.SAVE_ACCESS_TOKEN_FAILURE);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(RestHelper.SAVE_ACCESS_TOKEN_FAILURE);
+        }
+        HttpHeaders headers = restHelper.createHeaders(null);
+        headers.setBearerAuth(accessToken.getAccessToken());
+        final HttpEntity<String> request = restHelper.createRequest(null, headers);
         String path = String.format(urlPatternGetOrgRepositories, orgName);
-        ResponseEntity<RepositoryDto[]> response = sendRequest(path, HttpMethod.GET, request, RepositoryDto[].class);
+        ResponseEntity<RepositoryDto[]> response =  restHelper.sendRequest(path, HttpMethod.GET, request, RepositoryDto[].class);
         ArrayList<RepositoryDto> orgRepositoryDtos = new ArrayList<>(Arrays.asList(response.getBody()));
         return ResponseEntity.ok(orgRepositoryDtos);
     }
@@ -135,7 +149,7 @@ public class GitHubController {
      */
     private AccessTokenDto generateAccessToken(String oAuthCode) {
         String path = String.format(urlPatternGenerateOAuthToken, clientId, clientSecret, oAuthCode);
-        ResponseEntity<AccessTokenDto> response = sendRequest(path, HttpMethod.POST, null, AccessTokenDto.class);
+        ResponseEntity<AccessTokenDto> response =  restHelper.sendRequest(path, HttpMethod.POST, null, AccessTokenDto.class);
         return response.getBody();
     }
 
@@ -146,49 +160,12 @@ public class GitHubController {
      * @return Array list of all user organizations
      */
     private ArrayList<OrganizationDto> getUserOrganizations(String accessToken) {
-        final HttpEntity<String> request = createRequest(null, createHeaders(accessToken));
-        ResponseEntity<OrganizationDto[]> response = sendRequest(urlPatternGetUserOrganizations, HttpMethod.GET, request, OrganizationDto[].class);
+        HttpHeaders headers = restHelper.createHeaders(null);
+        headers.setBearerAuth(accessToken);
+        final HttpEntity<String> request = restHelper.createRequest(null, headers);
+        ResponseEntity<OrganizationDto[]> response =
+                restHelper.sendRequest(urlPatternGetUserOrganizations, HttpMethod.GET, request, OrganizationDto[].class);
         return new ArrayList<>(Arrays.asList(response.getBody()));
-    }
-
-    /**
-     * createHeaders method created headers for future Rest request, Adding user auth token for
-     * GitHub authorization
-     *
-     * @param userAccessToken access token generated before using GitHub api, Gives access to
-     *                        relevant GitHub data
-     * @return HttpHeaders for future rest request
-     */
-    private HttpHeaders createHeaders(String userAccessToken) {
-        final HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(userAccessToken);
-        return headers;
-    }
-
-    /**
-     * sendRequest method used as rest request template, sends request via RestTemplate
-     *
-     * @param path         url path
-     * @param method       http method
-     * @param request      request including headers and (optional) body
-     * @param responseType expected class structure as response
-     * @return ResponseEntity of any type
-     */
-    private ResponseEntity sendRequest(String path, HttpMethod method, HttpEntity<String> request, Class responseType) {
-        return restTemplate.exchange(path, method, request, responseType);
-    }
-
-    /**
-     * createRequest method used as request creation template, Construct request from given
-     * headers and body
-     *
-     * @param body    request body
-     * @param headers http headers
-     * @return HttpEntity including headers and body sent as input
-     */
-    private HttpEntity<String> createRequest(Object body, HttpHeaders headers) {
-        return new HttpEntity<>((String) body, headers);
     }
 
     /**
@@ -204,7 +181,7 @@ public class GitHubController {
         if (oAuthToken == null || oAuthToken.getAccessToken() == null || oAuthToken.getAccessToken().isEmpty()) {
             log.error(RestHelper.GENERATE_ACCESS_TOKEN_FAILURE);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(RestHelper.GENERATE_ACCESS_TOKEN_FAILURE);
-        } else
+        }else
             return null;
     }
 

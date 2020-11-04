@@ -21,4 +21,12 @@ public @Data class SCMAccessTokenDto {
     private String accessToken;
     @JsonProperty("tokenType")
     private String tokenType;
+
+    public SCMAccessTokenDto(String scmUrl, String orgName, String accessToken,
+                             String tokenType) {
+        this.scmUrl = scmUrl;
+        this.orgName = orgName;
+        this.accessToken = accessToken;
+        this.tokenType = tokenType;
+    }
 }
