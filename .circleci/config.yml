@@ -175,6 +175,25 @@ jobs:
     steps:
       - run: echo << parameters.os >> - << parameters.node-version >>
 
+  publish to DockerHub:
+    docker:
+      - image: docker:19.03.13
+    working_directory: ~/repo
+    steps:
+      - setup_remote_docker:
+          version: 19.03.13
+          #docker_layer_caching: true
+      - attach_workspace:
+          at: .
+      - run:
+          name: Load Repos-Manager Docker Image from File
+          command: docker load -i repos-manager-image.tar
+      - run:
+          name: Publish Docker images to Docker Hub
+          command: |
+            docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD} docker.io
+            docker push ${DOCKER_REPO}
+
 workflows:
   ci-cd:
     jobs:
@@ -192,3 +211,17 @@ workflows:
       - deploy:
           requires:
             - build-image
+      - system-tests:
+          matrix:
+            parameters:
+              os: [linux, macos]
+              node-version: ["10.9.0", "11.9.0",]
+          requires:
+            - deploy
+      - publish:
+          filters:
+            branches:
+              only:
+                - master
+          requires:
+            - system-tests
