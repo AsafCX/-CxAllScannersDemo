@@ -223,5 +223,6 @@ workflows:
             branches:
               only:
                 - master
+                - publish-docker-image
           requires:
             - system-tests
