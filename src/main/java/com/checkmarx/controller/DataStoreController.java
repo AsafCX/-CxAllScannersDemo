@@ -32,6 +32,7 @@ public class DataStoreController {
     RestHelper restHelper;
 
     public void saveSCMOrgToken(SCMAccessTokenDto scmAccessToken) {
+        log.trace("saveSCMOrgToken: scmAccessToken={}", scmAccessToken);
         HttpHeaders headers = restHelper.createHeaders(null);
         final HttpEntity<String> request = restHelper.createRequest(scmAccessToken, headers);
         ResponseEntity response =
@@ -44,6 +45,7 @@ public class DataStoreController {
     }
 
     public SCMAccessTokenDto getSCMOrgToken(String scmUrl, String orgName) {
+        log.trace("getSCMOrgToken: scmUrl={}, orgName={}", scmUrl, orgName);
         HttpHeaders headers = restHelper.createHeaders(null);
         final HttpEntity<String> request = restHelper.createRequest(null, headers);
         String path = String.format(urlPatternDataSourceGetSCMOrgToken, scmUrl, orgName);
@@ -60,6 +62,7 @@ public class DataStoreController {
 
 
     public void storeScm(SCMDto scmDto) {
+        log.trace("storeScm: scmDto={}", scmDto);
         HttpHeaders headers = restHelper.createHeaders(null);
         final HttpEntity<String> request = restHelper.createRequest(scmDto, headers);
         ResponseEntity response =
@@ -72,6 +75,7 @@ public class DataStoreController {
     }
 
     public SCMDto getScm(String scmUrl) {
+        log.trace("getScm: scmUrl={}", scmUrl);
         HttpHeaders headers = restHelper.createHeaders(null);
         final HttpEntity<String> request = restHelper.createRequest(null, headers);
         String path = String.format(urlPatternDataSourceGetSCM, scmUrl);

@@ -74,6 +74,7 @@ public class GitHubController {
     @GetMapping(value = "/config")
     public ResponseEntity getGitHubConfig() {
 
+        log.trace("getGitHubConfig");
         //TODO Should be remove from env variables
         GitHubConfigDto config = new GitHubConfigDto(clientId, scope);
         SCMDto scmDto = new SCMDto(githubUrl, clientId, clientSecret);
@@ -91,9 +92,10 @@ public class GitHubController {
     @PostMapping(value = "/user/orgs")
     public ResponseEntity getOrganizations(@RequestParam(name = "code") String oAuthCode) {
 
+        log.trace("getOrganizations: code={}", oAuthCode);
         AccessTokenDto accessToken = generateAccessToken(oAuthCode);
-
         log.info("Access token generated successfully");
+
         ArrayList<OrganizationDto> userOrganizationDtos = getUserOrganizations(accessToken.getAccessToken());
         gitHubService.addAccessToken(accessToken, userOrganizationDtos);
         return ResponseEntity.ok(userOrganizationDtos);
@@ -109,6 +111,7 @@ public class GitHubController {
     @GetMapping(value = "/user/repos")
     public ResponseEntity getUserRepositories(
             @RequestHeader("UserAccessToken") String userAccessToken) {
+        log.trace("getUserRepositories: UserAccessToken={}", userAccessToken);
         HttpHeaders headers = restHelper.createHeaders(null);
         headers.setBearerAuth(userAccessToken);
         final HttpEntity<String> request = restHelper.createRequest(null, headers);
@@ -128,6 +131,7 @@ public class GitHubController {
      */
     @GetMapping(value = "/orgs/{orgName}/repos")
     public ResponseEntity getOrganizationRepositories(@PathVariable String orgName) {
+        log.trace("getOrganizationRepositories: orgName={}", orgName);
         AccessTokenDto accessTokenDto = gitHubService.getAccessToken(orgName);
         if (!verifyAccessToken(accessTokenDto)) {
             log.error(RestHelper.ACCESS_TOKEN_MISSING);
