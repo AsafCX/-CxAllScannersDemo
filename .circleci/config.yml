@@ -175,7 +175,7 @@ jobs:
     steps:
       - run: echo << parameters.os >> - << parameters.node-version >>
 
-  publish to DockerHub:
+  publish-to-DockerHub:
     docker:
       - image: docker:19.03.13
     working_directory: ~/repo
@@ -218,7 +218,7 @@ workflows:
               node-version: ["10.9.0", "11.9.0",]
           requires:
             - deploy
-      - publish:
+      - publish-to-DockerHub:
           filters:
             branches:
               only:
