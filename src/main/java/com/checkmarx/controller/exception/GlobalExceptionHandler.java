@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
                     HttpStatus.EXPECTATION_FAILED,
                     ZonedDateTime.now(ZoneId.of("Z"))
             );
-            return new ResponseEntity<>(exceptionDetails, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(exceptionDetails, HttpStatus.EXPECTATION_FAILED);
     }
 
 }

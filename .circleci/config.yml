@@ -152,7 +152,7 @@ jobs:
           command: docker load -i repos-manager-image.tar
       - run:
           name: Deploy Repos-Manager Docker Container
-          command: docker run -d --name repos-manager -e GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID -e GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET -e DATA_STORE="https://ShouldBeReplaced.ngrok.io" repos-manager:latest
+          command: docker run -d --name repos-manager -e GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID -e GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET -e DATA_STORE=$DATA_STORE repos-manager:latest
       - run:
           name: Wait for Repos-Manager Application to be Up and Running
           # in curl command -4 flag stands for forcing curl to use IPv4 (--retry-connrefused won't work otherwise)
