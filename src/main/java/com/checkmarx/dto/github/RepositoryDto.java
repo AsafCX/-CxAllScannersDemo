@@ -19,4 +19,6 @@ public @Data class RepositoryDto {
     private String name;
     @JsonProperty("full_name")
     private String fullName;
+
+    private boolean webHookEnabled;
 }

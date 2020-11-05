@@ -3,6 +3,7 @@ package com.checkmarx.controller;
 import com.checkmarx.controller.exception.GitHubException;
 import com.checkmarx.dto.SCMAccessTokenDto;
 import com.checkmarx.dto.SCMDto;
+import com.checkmarx.dto.github.WebHookDto;
 import com.checkmarx.dto.github.GitHubConfigDto;
 import com.checkmarx.dto.github.AccessTokenDto;
 import com.checkmarx.dto.github.OrganizationDto;
@@ -36,6 +37,12 @@ public class GitHubController {
 
     @Value("${github.url.pattern.get.org.repositories}")
     private String urlPatternGetOrgRepositories;
+
+    @Value("${github.url.pattern.get.repo.webhook}")
+    private String urlPatternGetRepoWebHook;
+
+    @Value("${cxflow.webhook.url}")
+    private String cxFlowWebHook;
 
     @Value("${github.client.id}")
     private String clientId;
@@ -121,22 +128,47 @@ public class GitHubController {
      */
     @GetMapping(value = "/orgs/{orgName}/repos")
     public ResponseEntity getOrganizationRepositories(@PathVariable String orgName) {
-        AccessTokenDto accessToken = gitHubService.getAccessToken(orgName);
-        if (!verifyAccessToken(accessToken)) {
+        AccessTokenDto accessTokenDto = gitHubService.getAccessToken(orgName);
+        if (!verifyAccessToken(accessTokenDto)) {
             log.error(RestHelper.ACCESS_TOKEN_MISSING);
             throw new GitHubException(RestHelper.ACCESS_TOKEN_MISSING);
         }
         SCMAccessTokenDto scmAccessTokenDto = new SCMAccessTokenDto(githubUrl, orgName,
-                                                                    accessToken.getAccessToken(),
+                                                                    accessTokenDto.getAccessToken(),
                                                                     TokenType.ACCESS.getType());
         dataStoreController.saveSCMOrgToken(scmAccessTokenDto);
         HttpHeaders headers = restHelper.createHeaders(null);
-        headers.setBearerAuth(accessToken.getAccessToken());
+        headers.setBearerAuth(accessTokenDto.getAccessToken());
         final HttpEntity<String> request = restHelper.createRequest(null, headers);
         String path = String.format(urlPatternGetOrgRepositories, orgName);
         ResponseEntity<RepositoryDto[]> response =  restHelper.sendRequest(path, HttpMethod.GET, request, RepositoryDto[].class);
         ArrayList<RepositoryDto> orgRepositoryDtos = new ArrayList<>(Arrays.asList(response.getBody()));
+        for (RepositoryDto repositoryDto : orgRepositoryDtos) {
+            repositoryDto.setWebHookEnabled( isWebHookEnabled(orgName, repositoryDto.getName(),
+                                                              accessTokenDto.getAccessToken()));
+        }
         return ResponseEntity.ok(orgRepositoryDtos);
+    }
+
+    private WebHookDto getRepositoryCXFlowWebHook(String orgName, String repoName,
+                                                  String accessToken){
+        HttpHeaders headers = restHelper.createHeaders(null);
+        headers.setBearerAuth(accessToken);
+        final HttpEntity<String> request = restHelper.createRequest(null, headers);
+        String path = String.format(urlPatternGetRepoWebHook, orgName, repoName);
+        ResponseEntity<WebHookDto[]> response =  restHelper.sendRequest(path, HttpMethod.GET,
+                                                                       request, WebHookDto[].class);
+        ArrayList<WebHookDto> webHookDtos = new ArrayList<>(Arrays.asList(response.getBody()));
+        for (WebHookDto webHookDto : webHookDtos) {
+            if (webHookDto.getConfig().getUrl().equals(cxFlowWebHook))
+                return webHookDto;
+        }
+        return null;
+    }
+
+    private boolean isWebHookEnabled(String orgName, String repoName, String accessToken) {
+        WebHookDto webHookDto = getRepositoryCXFlowWebHook(orgName, repoName, accessToken);
+        return webHookDto != null && webHookDto.getActive();
     }
 
     /**
@@ -185,8 +217,7 @@ public class GitHubController {
      *
      * @param accessToken access token generated before using GitHub api, Gives access to relevant
      *                  GitHub data
-     * @return null if verification passed successfully else ResponseEntity with http status:
-     *         417, Body: generate token failure string
+     * @return true if verification passed successfully
      */
     private boolean verifyAccessToken(AccessTokenDto accessToken) {
         return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
