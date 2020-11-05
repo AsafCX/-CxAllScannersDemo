@@ -50,8 +50,8 @@ public class DataStoreController {
         ResponseEntity<SCMAccessTokenDto> response =
                 restHelper.sendRequest(path, HttpMethod.GET, request,
                                        SCMAccessTokenDto.class);
-        if (response.getStatusCode().equals(HttpStatus.OK)) {
-            log.error(RestHelper.SCM_ORG_TOKEN_MISSING + "\nScm: {}, orgName: {}", scmUrl, orgName);
+        if (!response.getStatusCode().equals(HttpStatus.OK)) {
+            log.error(RestHelper.SCM_ORG_TOKEN_MISSING + " Scm: {}, orgName: {}", scmUrl, orgName);
             throw new DataStoreException(RestHelper.SCM_ORG_TOKEN_MISSING);
         }
         return response.getBody();
