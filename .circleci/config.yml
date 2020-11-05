@@ -128,10 +128,10 @@ jobs:
           #docker_layer_caching: true
       - run:
           name: Build Repos-Manager Docker Image
-          command: docker build -t repos-manager:$CIRCLE_BRANCH-$CIRCLE_BUILD_NUM .
+          command: docker build -t repos-manager:$CIRCLE_BRANCH-$CIRCLE_SHA1 .
       - run:
           name: Save Repos-Manager Docker Image to File
-          command: docker save -o repos-manager-image.tar repos-manager:$CIRCLE_BRANCH-$CIRCLE_BUILD_NUM
+          command: docker save -o repos-manager-image.tar repos-manager:$CIRCLE_BRANCH-$CIRCLE_SHA1
       - persist_to_workspace:
           root: .
           paths:
@@ -152,7 +152,7 @@ jobs:
           command: docker load -i repos-manager-image.tar
       - run:
           name: Deploy Repos-Manager Docker Container
-          command: docker run -d --name repos-manager -e GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID -e GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET -e DATA_STORE=$DATA_STORE repos-manager:$CIRCLE_BRANCH-$CIRCLE_BUILD_NUM
+          command: docker run -d --name repos-manager -e GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID -e GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET -e DATA_STORE=$DATA_STORE repos-manager:$CIRCLE_BRANCH-$CIRCLE_SHA1
       - run:
           name: Wait for Repos-Manager Application to be Up and Running
           # in curl command -4 flag stands for forcing curl to use IPv4 (--retry-connrefused won't work otherwise)
@@ -189,12 +189,12 @@ jobs:
           name: Load Repos-Manager Docker Image from File
           command: |
             docker load -i repos-manager-image.tar
-            docker tag repos-manager:$CIRCLE_BRANCH-$CIRCLE_BUILD_NUM checkmarx/integrations-repos-manager:$CIRCLE_BRANCH-$CIRCLE_BUILD_NUM
+            docker tag repos-manager:$CIRCLE_BRANCH-$CIRCLE_SHA1 checkmarx/integrations-repos-manager:$CIRCLE_BRANCH-$CIRCLE_SHA1
       - run:
           name: Publish Docker images to Docker Hub
           command: |
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD} docker.io
-            docker push ${DOCKER_REPO}:$CIRCLE_BRANCH-$CIRCLE_BUILD_NUM
+            docker push ${DOCKER_REPO}:$CIRCLE_BRANCH-$CIRCLE_SHA1
 
 workflows:
   ci-cd:
