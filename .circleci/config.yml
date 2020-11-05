@@ -187,12 +187,14 @@ jobs:
           at: .
       - run:
           name: Load Repos-Manager Docker Image from File
-          command: docker load -i repos-manager-image.tar
+          command: |
+            docker load -i repos-manager-image.tar
+            docker tag repos-manager:latest checkmarx/integrations-repos-manager:latest
       - run:
           name: Publish Docker images to Docker Hub
           command: |
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD} docker.io
-            docker push ${DOCKER_REPO}
+            docker push ${DOCKER_REPO}:latest
 
 workflows:
   ci-cd:
