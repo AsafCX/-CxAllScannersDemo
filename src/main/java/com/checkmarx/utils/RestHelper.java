@@ -12,6 +12,8 @@ import java.util.Map;
 @Component
 public class RestHelper {
 
+    public static final String GENERAL_RUNTIME_EXCEPTION = "Repos-Manager Generic exception, " +
+            "Check logs";
     public static final String SAVE_ACCESS_TOKEN_FAILURE = "Save access token failure - Wasn't " +
             "able to save in database via DataStore service";
     public static final String GENERATE_ACCESS_TOKEN_FAILURE = "Access token generation failure";
