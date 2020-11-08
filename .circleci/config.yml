@@ -194,7 +194,7 @@ jobs:
           name: Publish Docker images to Docker Hub
           command: |
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD} docker.io
-            docker push ${DOCKER_REPO}:$CIRCLE_BRANCH-$CIRCLE_SHA1
+            docker push checkmarx/integrations-repos-manager:$CIRCLE_BRANCH-$CIRCLE_SHA1
 
 workflows:
   ci-cd:
