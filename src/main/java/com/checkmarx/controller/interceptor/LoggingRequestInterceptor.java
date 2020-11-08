@@ -16,20 +16,23 @@ import java.util.stream.Collectors;
 @Configuration
 public class LoggingRequestInterceptor implements HandlerInterceptor {
 
+    StringBuilder stringBuilder;
     @Override
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response, Object object) throws Exception {
-
-        log.debug("=============== Request {} {} ===============",request.getMethod(), request.getRequestURI());
-
+        stringBuilder = new StringBuilder();
+        stringBuilder.append("\n=============== Request ").append(request.getMethod()).append(" ")
+                .append(request.getRequestURI()).append(" ===============\n");
         printHeaders(request);
         printParameters(request);
         if (! HttpMethod.GET.matches(request.getMethod())){
             printBody(request);
         }
-        log.debug("===================================================");
+        stringBuilder.append("===================================================\n");
+        log.debug(stringBuilder.toString());
         long startTime = System.currentTimeMillis();
         request.setAttribute("executionTime", startTime);
+
         return true;
     }
 
@@ -51,11 +54,11 @@ public class LoggingRequestInterceptor implements HandlerInterceptor {
 
     private void printHeaders(HttpServletRequest request) {
         final Enumeration<String> headerNames = request.getHeaderNames();
-        log.debug("      Request headers");
+        stringBuilder.append("      Request headers\n");
         while (headerNames.hasMoreElements()) {
             final String headerName = headerNames.nextElement();
             final String header = request.getHeader(headerName);
-            log.debug("{} = {}", headerName, header);
+            stringBuilder.append(headerName).append(" = ").append(header).append("\n");
         }
     }
 
@@ -65,15 +68,17 @@ public class LoggingRequestInterceptor implements HandlerInterceptor {
             while (parameterNames.hasMoreElements()) {
                 final String paramName = parameterNames.nextElement();
                 final String paramValue = request.getParameter(paramName);
-                log.debug("{} = {}", paramName, paramValue);
+                stringBuilder.append(paramName).append(" = ").append(paramValue).append("\n");
             }
         }
     }
 
     private void printBody(HttpServletRequest request) throws IOException {
         if ("POST".equalsIgnoreCase(request.getMethod())) {
-           log.debug("      Request Body");
-           log.debug(request.getReader().lines().collect(Collectors.joining(System.lineSeparator())));
+            stringBuilder.append("      Request Body\n");
+            stringBuilder.append(request.getReader().lines()
+                                         .collect(Collectors.joining(System.lineSeparator())))
+                    .append("\n");
         }
     }
 
