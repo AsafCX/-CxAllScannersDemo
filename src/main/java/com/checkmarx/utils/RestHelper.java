@@ -24,6 +24,14 @@ public class RestHelper {
     public static final String SCM_ORG_TOKEN_MISSING = "SCM organization token is missing";
     public static final String STORE_SCM_FAILURE = "Store scm failure - Wasn't able to save in " +
             "database via DataStore service";
+    public static final String STORE_SCM_ORG_REPOS_FAILURE = "Store scm org repositories failure " +
+            "- Wasn't able to save in database via DataStore service";
+    public static final String GET_ORG_REPOS_FAILURE = "Get org repositories failure " +
+            "- Wasn't able to get from database via DataStore service";
+    public static final String MISSING_ORG_REPO = "Get org repository failure " +
+            "- Missing org repository in database";
+    public static final String GET_ORG_REPO_FAILURE = "Get org repository failure " +
+            "- Wasn't able to get from database via DataStore service";
 
     @Autowired
     RestTemplate restTemplate;

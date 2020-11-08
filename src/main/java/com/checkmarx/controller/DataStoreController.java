@@ -2,8 +2,10 @@ package com.checkmarx.controller;
 
 import com.checkmarx.controller.exception.DataStoreException;
 import com.checkmarx.controller.exception.GitHubException;
+import com.checkmarx.dto.RepoDto;
 import com.checkmarx.dto.SCMAccessTokenDto;
 import com.checkmarx.dto.SCMDto;
+import com.checkmarx.dto.SCMRepoDto;
 import com.checkmarx.utils.RestHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -28,10 +32,21 @@ public class DataStoreController {
     @Value("${data.source.url.pattern.get.scm}")
     private String urlPatternDataSourceGetSCM;
 
+    @Value("${data.source.url.pattern.store.repo}")
+    private String urlPatternDataSourceStoreRepo;
+
+    @Value("${data.source.url.pattern.get.scm.org.repos}")
+    private String urlPatternDataSourceGetSCMOrgRepos;
+
+    @Value("${data.source.url.pattern.get.scm.org.repo}")
+    private String urlPatternDataSourceGetSCMOrgRepo;
+
+
+
     @Autowired
     RestHelper restHelper;
 
-    public void saveSCMOrgToken(SCMAccessTokenDto scmAccessToken) {
+    public void storeSCMOrgToken(SCMAccessTokenDto scmAccessToken) {
         log.trace("saveSCMOrgToken: scmAccessToken={}", scmAccessToken);
         HttpHeaders headers = restHelper.createHeaders(null);
         final HttpEntity<String> request = restHelper.createRequest(scmAccessToken, headers);
@@ -62,14 +77,14 @@ public class DataStoreController {
 
 
     public void storeScm(SCMDto scmDto) {
-        log.trace("storeScm: scmDto={}", scmDto);
+        log.trace("storeScm: SCMDto={}", scmDto);
         HttpHeaders headers = restHelper.createHeaders(null);
         final HttpEntity<String> request = restHelper.createRequest(scmDto, headers);
         ResponseEntity response =
                 restHelper.sendRequest(urlPatternDataSourceStoreSCM, HttpMethod.POST, request,
                                        ResponseEntity.class);
         if ( !response.getStatusCode().equals(HttpStatus.OK)){
-            log.error(RestHelper.STORE_SCM_FAILURE);
+            log.error(RestHelper.STORE_SCM_FAILURE + " SCMDto={}", scmDto);
             throw new DataStoreException(RestHelper.STORE_SCM_FAILURE);
         }
     }
@@ -83,7 +98,7 @@ public class DataStoreController {
                 restHelper.sendRequest(path, HttpMethod.GET, request,
                                        SCMDto.class);
         if (!response.getStatusCode().equals(HttpStatus.OK)) {
-            log.error(RestHelper.SCM_DETAILS_MISSING + "\nScm: {}", scmUrl);
+            log.error(RestHelper.SCM_DETAILS_MISSING + " Scm: {}", scmUrl);
             throw new DataStoreException(RestHelper.SCM_DETAILS_MISSING);
         } else {
             SCMDto scmDto = response.getBody();
@@ -94,6 +109,52 @@ public class DataStoreController {
                 throw new GitHubException(RestHelper.SCM_DETAILS_MISSING + ", Scm details received from DataStore" +
                                                   " are empty");
             }
+        }
+        return response.getBody();
+    }
+
+    public void storeSCMOrgRepos(SCMRepoDto scmRepoDto) {
+        log.trace("storeSCMOrgRepos: SCMRepoDto={}", scmRepoDto);
+        HttpHeaders headers = restHelper.createHeaders(null);
+        final HttpEntity<String> request = restHelper.createRequest(scmRepoDto, headers);
+        ResponseEntity<SCMDto> response =
+                restHelper.sendRequest(urlPatternDataSourceStoreRepo, HttpMethod.POST, request,
+                                       ResponseEntity.class);
+        if ( !response.getStatusCode().equals(HttpStatus.OK)){
+            log.error(RestHelper.STORE_SCM_ORG_REPOS_FAILURE + " SCMRepoDto={}", scmRepoDto);
+            throw new DataStoreException(RestHelper.STORE_SCM_ORG_REPOS_FAILURE);
+        }
+
+    }
+
+    public List<RepoDto> getSCMReposByOrg(String baseUrl, String orgName) {
+        log.trace("getSCMReposByOrg: baseUrl={}, orgName={}", baseUrl, orgName);
+        HttpHeaders headers = restHelper.createHeaders(null);
+        final HttpEntity<String> request = restHelper.createRequest(null, headers);
+        String path = String.format(urlPatternDataSourceGetSCMOrgRepos, baseUrl, orgName);
+        ResponseEntity<List<RepoDto>> response =
+                restHelper.sendRequest(path, HttpMethod.GET, request, List.class);
+        if ( !response.getStatusCode().equals(HttpStatus.OK)){
+            log.error(RestHelper.GET_ORG_REPOS_FAILURE + " baseUrl={}, orgName={}", baseUrl, orgName);
+            throw new DataStoreException(RestHelper.GET_ORG_REPOS_FAILURE);
+        }
+        return response.getBody();
+    }
+
+    public RepoDto getSCMOrgRepo(String baseUrl, String orgName, String repoName) {
+        log.trace("getSCMOrgRepo: baseUrl={}, orgName={}, repoName={}", baseUrl, orgName, repoName);
+        HttpHeaders headers = restHelper.createHeaders(null);
+        final HttpEntity<String> request = restHelper.createRequest(null, headers);
+        String path = String.format(urlPatternDataSourceGetSCMOrgRepo, repoName, baseUrl, orgName);
+        ResponseEntity<RepoDto> response =
+                restHelper.sendRequest(path, HttpMethod.GET, request
+                        , RepoDto.class);
+        if ( response.getStatusCode().equals(HttpStatus.NOT_FOUND)){
+            log.error(RestHelper.MISSING_ORG_REPO + " orgName={}, repoName={}", orgName, repoName);
+            throw new DataStoreException(RestHelper.MISSING_ORG_REPO);
+        } else if (!response.getStatusCode().equals(HttpStatus.OK)){
+            log.error(RestHelper.GET_ORG_REPO_FAILURE + " orgName={}, repoName={}", orgName, repoName);
+            throw new DataStoreException(RestHelper.GET_ORG_REPO_FAILURE);
         }
         return response.getBody();
     }

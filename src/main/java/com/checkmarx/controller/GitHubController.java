@@ -1,6 +1,7 @@
 package com.checkmarx.controller;
 
 import com.checkmarx.controller.exception.GitHubException;
+import com.checkmarx.dto.RepoDto;
 import com.checkmarx.dto.SCMAccessTokenDto;
 import com.checkmarx.dto.SCMDto;
 import com.checkmarx.dto.github.WebHookDto;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -57,9 +59,6 @@ public class GitHubController {
     private String githubUrl;
 
     @Autowired
-    DataStoreController dataStoreController;
-
-    @Autowired
     GitHubService gitHubService;
 
     @Autowired
@@ -78,7 +77,8 @@ public class GitHubController {
         //TODO Should be remove from env variables
         GitHubConfigDto config = new GitHubConfigDto(clientId, scope);
         SCMDto scmDto = new SCMDto(githubUrl, clientId, clientSecret);
-        dataStoreController.storeScm(scmDto);
+        gitHubService.storeScm(scmDto);
+
         return ResponseEntity.ok(config);
     }
 
@@ -134,13 +134,13 @@ public class GitHubController {
         log.trace("getOrganizationRepositories: orgName={}", orgName);
         AccessTokenDto accessTokenDto = gitHubService.getAccessToken(orgName);
         if (!verifyAccessToken(accessTokenDto)) {
-            log.error(RestHelper.ACCESS_TOKEN_MISSING);
+            log.error(RestHelper.ACCESS_TOKEN_MISSING + " orgName: {}", orgName);
             throw new GitHubException(RestHelper.ACCESS_TOKEN_MISSING);
         }
         SCMAccessTokenDto scmAccessTokenDto = new SCMAccessTokenDto(githubUrl, orgName,
                                                                     accessTokenDto.getAccessToken(),
                                                                     TokenType.ACCESS.getType());
-        dataStoreController.saveSCMOrgToken(scmAccessTokenDto);
+        gitHubService.storeSCMOrgToken(scmAccessTokenDto);
         HttpHeaders headers = restHelper.createHeaders(null);
         headers.setBearerAuth(accessTokenDto.getAccessToken());
         final HttpEntity<String> request = restHelper.createRequest(null, headers);
@@ -151,6 +151,8 @@ public class GitHubController {
             repositoryDto.setWebHookEnabled( isWebHookEnabled(orgName, repositoryDto.getName(),
                                                               accessTokenDto.getAccessToken()));
         }
+        gitHubService.storeSCMOrgRepos(scmAccessTokenDto, orgRepositoryDtos);
+
         return ResponseEntity.ok(orgRepositoryDtos);
     }
 
@@ -184,7 +186,7 @@ public class GitHubController {
      * @return Access token given from GitHub
      */
     private AccessTokenDto generateAccessToken(String oAuthCode) {
-        SCMDto scmDto = dataStoreController.getScm(githubUrl);
+        SCMDto scmDto = gitHubService.getScm(githubUrl);
         if (scmDto == null || StringUtils.isEmpty(scmDto.getClientId()) || StringUtils.isEmpty(scmDto.getClientSecret())){
             log.error(RestHelper.SCM_DETAILS_MISSING);
             throw new GitHubException(RestHelper.SCM_DETAILS_MISSING);
