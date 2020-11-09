@@ -8,9 +8,11 @@ import com.checkmarx.dto.SCMRepoDto;
 import com.checkmarx.dto.github.AccessTokenDto;
 import com.checkmarx.dto.github.OrganizationDto;
 import com.checkmarx.dto.github.RepositoryDto;
+import com.checkmarx.dto.github.WebhookDto;
 import com.checkmarx.utils.Converter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -19,6 +21,9 @@ import java.util.*;
 @Slf4j
 @Service
 public class GitHubService {
+
+    @Value("${cxflow.webhook.url}")
+    private String cxFlowWebHook;
 
     @Autowired
     DataStoreController dataStoreController;
@@ -56,6 +61,10 @@ public class GitHubService {
         dataStoreController.storeSCMOrgToken(scmAccessTokenDto);
     }
 
+    public SCMAccessTokenDto getSCMOrgToken(String scmUrl,String orgName) {
+        return dataStoreController.getSCMOrgToken(scmUrl, orgName);
+    }
+
     public SCMDto getScm(String githubUrl) {
         return dataStoreController.getScm(githubUrl);
     }
@@ -71,6 +80,18 @@ public class GitHubService {
 
     public RepoDto getSCMOrgRepo(String githubUrl, String orgName, String repoName) {
        return dataStoreController.getSCMOrgRepo(githubUrl, orgName, repoName);
+    }
 
+    public void updateSCMOrgRepo(SCMAccessTokenDto scmAccessTokenDto, List<RepositoryDto> orgRepositoryDtos) {
+        SCMRepoDto scmRepoDto = Converter.convertToSCMRepoDto(scmAccessTokenDto, orgRepositoryDtos);
+        dataStoreController.updateSCMOrgRepo(scmRepoDto);
+    }
+
+    public WebhookDto initWebhook() {
+        return  WebhookDto.builder()
+                .name("web")
+                .config(WebhookDto.Config.builder().contentType("json").url(cxFlowWebHook).insecureSsl("0").secret("1234").build())
+                .events(Arrays.asList("push", "pull_request"))
+                .build();
     }
 }

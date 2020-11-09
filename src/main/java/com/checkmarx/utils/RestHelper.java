@@ -36,18 +36,22 @@ public class RestHelper {
     @Autowired
     RestTemplate restTemplate;
 
-    /**
+   /**
      * sendRequest method used as rest request template, sends request via RestTemplate
      *
      * @param path         url path
      * @param method       http method
-     * @param request      request including headers and (optional) body
+     * @param body      request body
+     * @param headerMap      request headers as map
      * @param responseType expected class structure as response
      * @return ResponseEntity of any type
      */
     public ResponseEntity sendRequest(String path, HttpMethod method,
-                                      HttpEntity<String> request,
+                                      Object body,
+                                      Map<String, String> headerMap,
                                       Class responseType) {
+        HttpHeaders headers = createHeaders(headerMap);
+        final HttpEntity<String> request = createRequest(body, headers);
         return restTemplate.exchange(path, method, request, responseType);
     }
 
@@ -81,4 +85,25 @@ public class RestHelper {
         return headers;
     }
 
+    /**
+     * sendBearerAuthRequest method used as rest request template with bearer token in header,
+     * sends request via RestTemplate
+     *
+     * @param path      url path
+     * @param method    http method
+     * @param body      request body
+     * @param headerMap      request headers as map
+     * @param responseType expected class structure as response
+     * @param token access token
+     * @return ResponseEntity of any type
+     */
+    public ResponseEntity sendBearerAuthRequest(String path, HttpMethod method, Object body,
+                                      Map<String, String> headerMap , Class responseType,
+                                      String token) {
+        HttpHeaders headers = createHeaders(headerMap);
+        headers.setBearerAuth(token);
+        final HttpEntity<String> request = createRequest(body, headers);
+        return restTemplate.exchange(path, method, request, responseType);
+
+    }
 }

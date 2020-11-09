@@ -1,10 +1,9 @@
 package com.checkmarx.controller;
 
 import com.checkmarx.controller.exception.GitHubException;
-import com.checkmarx.dto.RepoDto;
 import com.checkmarx.dto.SCMAccessTokenDto;
 import com.checkmarx.dto.SCMDto;
-import com.checkmarx.dto.github.WebHookDto;
+import com.checkmarx.dto.github.WebhookDto;
 import com.checkmarx.dto.github.GitHubConfigDto;
 import com.checkmarx.dto.github.AccessTokenDto;
 import com.checkmarx.dto.github.OrganizationDto;
@@ -21,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @RestController
@@ -40,8 +39,8 @@ public class GitHubController {
     @Value("${github.url.pattern.get.org.repositories}")
     private String urlPatternGetOrgRepositories;
 
-    @Value("${github.url.pattern.get.repo.webhook}")
-    private String urlPatternGetRepoWebHook;
+    @Value("${github.url.pattern.repo.webhook}")
+    private String urlPatternRepoWebhook;
 
     @Value("${cxflow.webhook.url}")
     private String cxFlowWebHook;
@@ -112,13 +111,13 @@ public class GitHubController {
     public ResponseEntity getUserRepositories(
             @RequestHeader("UserAccessToken") String userAccessToken) {
         log.trace("getUserRepositories: UserAccessToken={}", userAccessToken);
-        HttpHeaders headers = restHelper.createHeaders(null);
-        headers.setBearerAuth(userAccessToken);
-        final HttpEntity<String> request = restHelper.createRequest(null, headers);
+
         ResponseEntity<RepositoryDto[]> response =
-                restHelper.sendRequest(urlPatternGetUserRepositories,
-                                                                HttpMethod.GET, request, RepositoryDto[].class);
-        ArrayList<RepositoryDto> userRepositoryDtos = new ArrayList<>(Arrays.asList(response.getBody()));
+                restHelper.sendBearerAuthRequest(urlPatternGetUserRepositories,
+                                                                HttpMethod.GET, null, null,
+                                       RepositoryDto[].class, userAccessToken);
+        ArrayList<RepositoryDto> userRepositoryDtos = new ArrayList<>(Arrays.asList(
+                Objects.requireNonNull(response.getBody())));
         return ResponseEntity.ok(userRepositoryDtos);
     }
 
@@ -137,16 +136,22 @@ public class GitHubController {
             log.error(RestHelper.ACCESS_TOKEN_MISSING + " orgName: {}", orgName);
             throw new GitHubException(RestHelper.ACCESS_TOKEN_MISSING);
         }
-        SCMAccessTokenDto scmAccessTokenDto = new SCMAccessTokenDto(githubUrl, orgName,
-                                                                    accessTokenDto.getAccessToken(),
-                                                                    TokenType.ACCESS.getType());
+        SCMAccessTokenDto scmAccessTokenDto =
+                SCMAccessTokenDto.builder()
+                        .scmUrl(githubUrl)
+                        .orgName(orgName)
+                        .accessToken(accessTokenDto.getAccessToken())
+                        .tokenType(TokenType.ACCESS.getType())
+                        .build();
         gitHubService.storeSCMOrgToken(scmAccessTokenDto);
-        HttpHeaders headers = restHelper.createHeaders(null);
-        headers.setBearerAuth(accessTokenDto.getAccessToken());
-        final HttpEntity<String> request = restHelper.createRequest(null, headers);
+
         String path = String.format(urlPatternGetOrgRepositories, orgName);
-        ResponseEntity<RepositoryDto[]> response =  restHelper.sendRequest(path, HttpMethod.GET, request, RepositoryDto[].class);
-        ArrayList<RepositoryDto> orgRepositoryDtos = new ArrayList<>(Arrays.asList(response.getBody()));
+        ResponseEntity<RepositoryDto[]> response =  restHelper.sendBearerAuthRequest(path, HttpMethod.GET,
+                                                                           null, null,
+                                                                           RepositoryDto[].class, scmAccessTokenDto.getAccessToken());
+
+        ArrayList<RepositoryDto> orgRepositoryDtos = new ArrayList<>(Arrays.asList(
+                Objects.requireNonNull(response.getBody())));
         for (RepositoryDto repositoryDto : orgRepositoryDtos) {
             repositoryDto.setWebHookEnabled( isWebHookEnabled(orgName, repositoryDto.getName(),
                                                               accessTokenDto.getAccessToken()));
@@ -156,16 +161,32 @@ public class GitHubController {
         return ResponseEntity.ok(orgRepositoryDtos);
     }
 
-    private WebHookDto getRepositoryCXFlowWebHook(String orgName, String repoName,
+    @PostMapping(value = "/repos/{orgName}/{repoName}/webhook")
+    public ResponseEntity createWebhook(@PathVariable String orgName, @PathVariable String repoName) {
+        log.trace("createWebhook: orgName={}, repoName={}", orgName, repoName);
+
+        SCMAccessTokenDto scmAccessTokenDto = gitHubService.getSCMOrgToken(githubUrl, orgName);
+        String path = String.format(urlPatternRepoWebhook, orgName, repoName);
+        WebhookDto webhookDto = gitHubService.initWebhook();
+        ResponseEntity<WebhookDto> response =  restHelper.sendBearerAuthRequest(path, HttpMethod.POST,
+                                                                                webhookDto, null,
+                                                                                WebhookDto.class,
+                                                                                scmAccessTokenDto.getAccessToken());
+
+        return ResponseEntity.ok(Objects.requireNonNull(response.getBody()));
+    }
+
+
+
+    private WebhookDto getRepositoryCXFlowWebHook(String orgName, String repoName,
                                                   String accessToken){
-        HttpHeaders headers = restHelper.createHeaders(null);
-        headers.setBearerAuth(accessToken);
-        final HttpEntity<String> request = restHelper.createRequest(null, headers);
-        String path = String.format(urlPatternGetRepoWebHook, orgName, repoName);
-        ResponseEntity<WebHookDto[]> response =  restHelper.sendRequest(path, HttpMethod.GET,
-                                                                       request, WebHookDto[].class);
-        ArrayList<WebHookDto> webHookDtos = new ArrayList<>(Arrays.asList(response.getBody()));
-        for (WebHookDto webHookDto : webHookDtos) {
+        String path = String.format(urlPatternRepoWebhook, orgName, repoName);
+        ResponseEntity<WebhookDto[]> response =  restHelper.sendBearerAuthRequest(path, HttpMethod.GET,
+                                                                                  null, null,
+                                                                                  WebhookDto[].class, accessToken);
+        ArrayList<WebhookDto> webhookDtos = new ArrayList<>(Arrays.asList(
+                Objects.requireNonNull(response.getBody())));
+        for (WebhookDto webHookDto : webhookDtos) {
             if (webHookDto.getConfig().getUrl().equals(cxFlowWebHook))
                 return webHookDto;
         }
@@ -173,7 +194,7 @@ public class GitHubController {
     }
 
     private boolean isWebHookEnabled(String orgName, String repoName, String accessToken) {
-        WebHookDto webHookDto = getRepositoryCXFlowWebHook(orgName, repoName, accessToken);
+        WebhookDto webHookDto = getRepositoryCXFlowWebHook(orgName, repoName, accessToken);
         return webHookDto != null && webHookDto.getActive();
     }
 
@@ -194,8 +215,10 @@ public class GitHubController {
         String path = String.format(urlPatternGenerateOAuthToken, scmDto.getClientId(),
                                     scmDto.getClientSecret(),
                                     oAuthCode);
-        ResponseEntity<AccessTokenDto> response =  restHelper.sendRequest(path, HttpMethod.POST, null, AccessTokenDto.class);
-        if(!response.getStatusCode().equals(HttpStatus.OK) || !verifyAccessToken(response.getBody())){
+        ResponseEntity<AccessTokenDto> response =  restHelper.sendRequest(path, HttpMethod.POST,
+                                                                          null, null,
+                                                                          AccessTokenDto.class);
+        if(!verifyAccessToken(response.getBody())){
             log.error(RestHelper.GENERATE_ACCESS_TOKEN_FAILURE);
             throw new GitHubException(RestHelper.GENERATE_ACCESS_TOKEN_FAILURE);
         }
@@ -209,12 +232,11 @@ public class GitHubController {
      * @return Array list of all user organizations
      */
     private ArrayList<OrganizationDto> getUserOrganizations(String accessToken) {
-        HttpHeaders headers = restHelper.createHeaders(null);
-        headers.setBearerAuth(accessToken);
-        final HttpEntity<String> request = restHelper.createRequest(null, headers);
+
         ResponseEntity<OrganizationDto[]> response =
-                restHelper.sendRequest(urlPatternGetUserOrganizations, HttpMethod.GET, request, OrganizationDto[].class);
-        return new ArrayList<>(Arrays.asList(response.getBody()));
+                restHelper.sendBearerAuthRequest(urlPatternGetUserOrganizations, HttpMethod.GET, null, null,
+                                       OrganizationDto[].class, accessToken);
+        return new ArrayList<>(Arrays.asList(Objects.requireNonNull(response.getBody())));
     }
 
     /**

@@ -38,8 +38,7 @@ public class LoggingRequestInterceptor implements HandlerInterceptor {
 
     @Override
     public void postHandle(HttpServletRequest request,
-                           HttpServletResponse response, Object object, ModelAndView model)
-            throws Exception {
+                           HttpServletResponse response, Object object, ModelAndView model) {
         log.debug("=================== Response ===================");
         log.debug("[postHandle][" + response + "]");
         calcAndPrintExecution(request);
