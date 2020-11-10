@@ -49,7 +49,7 @@ public class DataStoreController {
         log.trace("saveSCMOrgToken: scmAccessToken={}", scmAccessToken);
 
         ResponseEntity response =
-                restHelper.sendRequest(urlPatternDataSourceSaveSCMOrgToken, HttpMethod.POST, scmAccessToken
+                restHelper.sendRequest(urlPatternDataSourceSaveSCMOrgToken, HttpMethod.PUT, scmAccessToken
                         , null , ResponseEntity.class);
         if ( !response.getStatusCode().equals(HttpStatus.OK)){
             log.error(RestHelper.SAVE_ACCESS_TOKEN_FAILURE);

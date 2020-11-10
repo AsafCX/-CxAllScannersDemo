@@ -87,6 +87,14 @@ public class GitHubService {
         dataStoreController.updateSCMOrgRepo(scmRepoDto);
     }
 
+    public void updateSCMOrgRepoWebhook(SCMAccessTokenDto scmAccessTokenDto, RepoDto repoDto) {
+        dataStoreController.updateSCMOrgRepo(SCMRepoDto.builder()
+                                                     .orgName(scmAccessTokenDto.getOrgName())
+                                                     .scmUrl(scmAccessTokenDto.getScmUrl())
+                                                     .repoList(Collections.singletonList(repoDto))
+                                                     .build());
+    }
+
     public WebhookDto initWebhook() {
         return  WebhookDto.builder()
                 .name("web")

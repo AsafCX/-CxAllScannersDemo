@@ -1,6 +1,7 @@
 package com.checkmarx.controller;
 
 import com.checkmarx.controller.exception.GitHubException;
+import com.checkmarx.dto.RepoDto;
 import com.checkmarx.dto.SCMAccessTokenDto;
 import com.checkmarx.dto.SCMDto;
 import com.checkmarx.dto.github.WebhookDto;
@@ -156,12 +157,12 @@ public class GitHubController {
             repositoryDto.setWebHookEnabled( isWebHookEnabled(orgName, repositoryDto.getName(),
                                                               accessTokenDto.getAccessToken()));
         }
-        gitHubService.storeSCMOrgRepos(scmAccessTokenDto, orgRepositoryDtos);
+        gitHubService.updateSCMOrgRepo(scmAccessTokenDto, orgRepositoryDtos);
 
         return ResponseEntity.ok(orgRepositoryDtos);
     }
 
-    @PostMapping(value = "/repos/{orgName}/{repoName}/webhook")
+    @PostMapping(value = "/orgs/{orgName}/repos/{repoName}/webhook")
     public ResponseEntity createWebhook(@PathVariable String orgName, @PathVariable String repoName) {
         log.trace("createWebhook: orgName={}, repoName={}", orgName, repoName);
 
@@ -173,6 +174,8 @@ public class GitHubController {
                                                                                 WebhookDto.class,
                                                                                 scmAccessTokenDto.getAccessToken());
 
+        gitHubService.updateSCMOrgRepoWebhook(scmAccessTokenDto,
+                                              RepoDto.builder().name(repoName).isWebhookConfigured(true).build());
         return ResponseEntity.ok(Objects.requireNonNull(response.getBody()));
     }
 
