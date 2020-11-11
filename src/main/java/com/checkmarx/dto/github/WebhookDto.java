@@ -27,7 +27,7 @@ public @Data class WebhookDto {
     @JsonProperty("type")
     private String type;
     @JsonProperty("id")
-    private Integer id;
+    private Long id;
     @JsonProperty("name")
     private String name;
     @JsonProperty("active")

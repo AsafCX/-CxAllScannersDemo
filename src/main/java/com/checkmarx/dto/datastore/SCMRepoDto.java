@@ -1,4 +1,4 @@
-package com.checkmarx.dto;
+package com.checkmarx.dto.datastore;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,18 +8,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "name",
-        "is_webhook_configured"
+        "scm_url",
+        "org_name",
+        "repoList"
 })
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RepoDto {
-    @JsonProperty("name")
-    private String name;
-    @JsonProperty("is_webhook_configured")
-    private boolean isWebhookConfigured;
+public class SCMRepoDto {
+    @JsonProperty("scm_url")
+    private String scmUrl;
+    @JsonProperty("org_name")
+    private String orgName;
+    @JsonProperty("repoList")
+    private List<RepoDto> repoList;
 }

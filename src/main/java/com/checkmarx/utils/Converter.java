@@ -1,8 +1,8 @@
 package com.checkmarx.utils;
 
-import com.checkmarx.dto.RepoDto;
-import com.checkmarx.dto.SCMAccessTokenDto;
-import com.checkmarx.dto.SCMRepoDto;
+import com.checkmarx.dto.datastore.RepoDto;
+import com.checkmarx.dto.datastore.SCMAccessTokenDto;
+import com.checkmarx.dto.datastore.SCMRepoDto;
 import com.checkmarx.dto.github.RepositoryDto;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +34,7 @@ public class Converter {
         return RepoDto.builder()
                 .name(repoDto.getName())
                 .isWebhookConfigured(repoDto.isWebHookEnabled())
+                .webhookId(repoDto.getWebhookId())
                 .build();
     }
 }

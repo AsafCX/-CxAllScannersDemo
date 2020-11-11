@@ -1,4 +1,4 @@
-package com.checkmarx.dto;
+package com.checkmarx.dto.datastore;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

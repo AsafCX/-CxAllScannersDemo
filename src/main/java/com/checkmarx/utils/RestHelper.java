@@ -32,6 +32,8 @@ public class RestHelper {
             "- Missing org repository in database";
     public static final String GET_ORG_REPO_FAILURE = "Get org repository failure " +
             "- Wasn't able to get from database via DataStore service";
+    public static final String WEBHOOK_DELETE_FAILURE = "Failed to delete repo webhook, missing " +
+            "data";
 
     @Autowired
     RestTemplate restTemplate;
