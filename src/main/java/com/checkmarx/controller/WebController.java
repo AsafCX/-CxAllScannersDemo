@@ -1,7 +1,5 @@
 package com.checkmarx.controller;
 
-import com.checkmarx.dto.github.OrgGithubDto;
-import com.checkmarx.dto.github.RepoGithubDto;
 import com.checkmarx.dto.web.OrgWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.dto.web.ScmConfigDto;
