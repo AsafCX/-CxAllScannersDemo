@@ -183,7 +183,7 @@ public class GitHubService implements ScmService {
             throw new GitHubException(RestHelper.GENERAL_RUNTIME_EXCEPTION);
         }
         RepoDto repoDto =
-                RepoDto.builder().name(repoName).webhookId(webhookId).isWebhookConfigured(false).build();
+                RepoDto.builder().name(repoName).webhookId(null).isWebhookConfigured(false).build();
         dataStoreController.updateScmOrgRepo(ScmRepoDto.builder()
                                                      .orgName(scmAccessTokenDto.getOrgName())
                                                      .scmUrl(scmAccessTokenDto.getScmUrl())

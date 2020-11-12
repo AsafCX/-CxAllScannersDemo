@@ -65,6 +65,7 @@ public class Converter {
         return RepoWebDto.builder()
                 .id(repoGithubDto.getName())
                 .name(repoGithubDto.getName())
+                .webhookId(repoGithubDto.getWebhookId())
                 .webhookEnabled(repoGithubDto.isWebHookEnabled())
                 .build();
     }
