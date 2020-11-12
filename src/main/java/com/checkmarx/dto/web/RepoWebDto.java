@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @JsonPropertyOrder({
         "id",
         "name",
-        "webhook_id",
-        "webhook_enabled"
+        "webhookId",
+        "webhookEnabled"
 })
 @Builder
 @AllArgsConstructor
@@ -24,8 +24,8 @@ public @Data class RepoWebDto {
     private String id;
     @JsonProperty("name")
     private String name;
-    @JsonProperty("webhook_id")
+    @JsonProperty("webhookId")
     private String webhookId;
-    @JsonProperty("webhook_enabled")
+    @JsonProperty("webhookEnabled")
     private boolean webhookEnabled;
 }
