@@ -42,7 +42,7 @@ public class LoggingRequestInterceptor implements HandlerInterceptor {
         log.debug("=================== Response ===================");
         log.debug("[postHandle][" + response + "]");
         calcAndPrintExecution(request);
-        log.info("===================================================");
+        log.debug("===================================================");
     }
 
     private void calcAndPrintExecution(HttpServletRequest request) {

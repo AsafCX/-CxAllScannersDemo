@@ -1,4 +1,4 @@
-package com.checkmarx.dto.datastore;
+package com.checkmarx.dto.web;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,19 +10,22 @@ import lombok.NoArgsConstructor;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
+        "id",
         "name",
         "webhook_id",
-        "is_webhook_configured"
+        "webhook_enabled"
 })
-@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RepoDto {
+public @Data class RepoWebDto {
+
+    @JsonProperty("id")
+    private String id;
     @JsonProperty("name")
     private String name;
     @JsonProperty("webhook_id")
     private String webhookId;
-    @JsonProperty("is_webhook_configured")
-    private boolean isWebhookConfigured;
+    @JsonProperty("webhook_enabled")
+    private boolean webhookEnabled;
 }

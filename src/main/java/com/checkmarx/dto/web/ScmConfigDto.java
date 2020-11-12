@@ -8,7 +8,7 @@ import lombok.Data;
 public @Data class ScmConfigDto {
 
     private String clientId;
-    private  String scope;
+    private String scope;
 
 }
 

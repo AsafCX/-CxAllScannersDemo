@@ -22,12 +22,12 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public @Data class WebhookDto {
+public @Data class WebhookGithubDto {
 
     @JsonProperty("type")
     private String type;
     @JsonProperty("id")
-    private Long id;
+    private String id;
     @JsonProperty("name")
     private String name;
     @JsonProperty("active")

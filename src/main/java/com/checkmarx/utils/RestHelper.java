@@ -34,6 +34,7 @@ public class RestHelper {
             "- Wasn't able to get from database via DataStore service";
     public static final String WEBHOOK_DELETE_FAILURE = "Failed to delete repo webhook, missing " +
             "data";
+    public static final String SCM_NOT_SUPPORTED = "Given Scm isn't supported";
 
     @Autowired
     RestTemplate restTemplate;

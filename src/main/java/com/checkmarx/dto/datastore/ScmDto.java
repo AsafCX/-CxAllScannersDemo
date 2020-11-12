@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 })
 @Data
 @NoArgsConstructor
-public class SCMDto {
+public class ScmDto {
     @JsonProperty("base_url")
     private String baseUrl;
     @JsonProperty("client_id")
@@ -22,7 +22,7 @@ public class SCMDto {
     @JsonProperty("client_secret")
     private String clientSecret;
 
-    public SCMDto(String baseUrl, String clientId, String clientSecret) {
+    public ScmDto(String baseUrl, String clientId, String clientSecret) {
         this.baseUrl = baseUrl;
         this.clientId = clientId;
         this.clientSecret = clientSecret;

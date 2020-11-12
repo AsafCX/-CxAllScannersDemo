@@ -10,19 +10,22 @@ import lombok.NoArgsConstructor;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "name",
-        "webhook_id",
-        "is_webhook_configured"
+        "scm_url",
+        "org_name",
+        "accessToken",
+        "tokenType"
 })
-@Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class RepoDto {
-    @JsonProperty("name")
-    private String name;
-    @JsonProperty("webhook_id")
-    private String webhookId;
-    @JsonProperty("is_webhook_configured")
-    private boolean isWebhookConfigured;
+@AllArgsConstructor
+public @Data class ScmAccessTokenDto {
+    @JsonProperty("scm_url")
+    private String scmUrl;
+    @JsonProperty("org_name")
+    private String orgName;
+    @JsonProperty("accessToken")
+    private String accessToken;
+    @JsonProperty("tokenType")
+    private String tokenType;
+
 }

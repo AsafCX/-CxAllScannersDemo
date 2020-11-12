@@ -8,24 +8,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
         "scm_url",
         "org_name",
-        "accessToken",
-        "tokenType"
+        "repoList"
 })
+@Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public @Data class SCMAccessTokenDto {
+@NoArgsConstructor
+public class ScmRepoDto {
     @JsonProperty("scm_url")
     private String scmUrl;
     @JsonProperty("org_name")
     private String orgName;
-    @JsonProperty("accessToken")
-    private String accessToken;
-    @JsonProperty("tokenType")
-    private String tokenType;
-
+    @JsonProperty("repoList")
+    private List<RepoDto> repoList;
 }

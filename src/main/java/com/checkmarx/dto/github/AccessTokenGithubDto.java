@@ -12,7 +12,7 @@ import lombok.Data;
         "scope",
         "token_type"
 })
-public @Data class AccessTokenDto {
+public @Data class AccessTokenGithubDto {
 
     @JsonProperty("access_token")
     private String accessToken;
