@@ -29,7 +29,7 @@ public class LoggingRequestInterceptor implements HandlerInterceptor {
             printBody(request);
         }
         stringBuilder.append("===================================================\n");
-        log.debug(stringBuilder.toString());
+        log.trace(stringBuilder.toString());
         long startTime = System.currentTimeMillis();
         request.setAttribute("executionTime", startTime);
 
@@ -39,15 +39,15 @@ public class LoggingRequestInterceptor implements HandlerInterceptor {
     @Override
     public void postHandle(HttpServletRequest request,
                            HttpServletResponse response, Object object, ModelAndView model) {
-        log.debug("=================== Response ===================");
-        log.debug("[postHandle][" + response + "]");
+        log.trace("=================== Response ===================");
+        log.trace("[postHandle][" + response + "]");
         calcAndPrintExecution(request);
-        log.debug("===================================================");
+        log.trace("===================================================");
     }
 
     private void calcAndPrintExecution(HttpServletRequest request) {
         long startTime = (Long) request.getAttribute("executionTime");
-        log.debug("Execution time: {} ms",
+        log.trace("Execution time: {} ms",
                 System.currentTimeMillis() - startTime);
     }
 
