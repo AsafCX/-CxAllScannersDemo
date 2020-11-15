@@ -71,14 +71,14 @@ public class GitHubService implements ScmService {
             Collections.synchronizedMap(new HashMap<>());
 
     @Override
-    public ScmDto getScm(@NonNull String baseUrl) {
-        return dataStoreController.getScm(baseUrl);
-    }
-
-    @Override
     public ScmConfigDto getScmConfiguration() {
         ScmDto scmDto = dataStoreController.getScm(githubUrl);
         return ScmConfigDto.builder().clientId(scmDto.getClientId()).scope(scope).build();
+    }
+
+    @Override
+    public ScmDto getScm(@NonNull String baseUrl) {
+        return dataStoreController.getScm(baseUrl);
     }
 
     @Override
@@ -132,7 +132,8 @@ public class GitHubService implements ScmService {
                 repoGithubDto.setWebHookEnabled(false);
             }
         }
-        updateScmOrgRepos(scmAccessTokenDto, orgRepoGithubDtos);
+        ScmRepoDto scmRepoDto = Converter.convertToSCMRepoDto(scmAccessTokenDto, orgRepoGithubDtos);
+        updateScmOrgRepos(scmRepoDto);
 
         return Converter.convertToListRepoWebDto(orgRepoGithubDtos);
     }
@@ -141,6 +142,16 @@ public class GitHubService implements ScmService {
     public RepoDto getScmOrgRepo(@NonNull String githubUrl, @NonNull String orgName,
                                  @NonNull String repoName) {
        return dataStoreController.getScmOrgRepo(githubUrl, orgName, repoName);
+    }
+
+    @Override
+    public void storeScmOrgRepos(@NonNull ScmRepoDto scmRepoDto) {
+        dataStoreController.storeScmOrgRepos(scmRepoDto);
+    }
+
+    @Override
+    public void updateScmOrgRepos(@NonNull ScmRepoDto scmRepoDto) {
+        dataStoreController.updateScmOrgRepo(scmRepoDto);
     }
 
     @Override
@@ -198,11 +209,6 @@ public class GitHubService implements ScmService {
         return Converter.convertToListRepoWebDto(Arrays.asList(Objects.requireNonNull(response.getBody())));
     }
 
-    public void updateScmOrgRepos(ScmAccessTokenDto scmAccessTokenDto, List<RepoGithubDto> orgRepoGithubDtos) {
-        ScmRepoDto scmRepoDto = Converter.convertToSCMRepoDto(scmAccessTokenDto, orgRepoGithubDtos);
-        dataStoreController.updateScmOrgRepo(scmRepoDto);
-    }
-
     public WebhookGithubDto initWebhook() {
         return  WebhookGithubDto.builder()
                 .name("web")
@@ -232,11 +238,6 @@ public class GitHubService implements ScmService {
             throw new GitHubException(RestHelper.GENERATE_ACCESS_TOKEN_FAILURE);
         }
         return response.getBody();
-    }
-
-    public void storeScmOrgRepos(ScmAccessTokenDto scmAccessTokenDto, List<RepoGithubDto> orgRepoGithubDtos) {
-        ScmRepoDto scmRepoDto = Converter.convertToSCMRepoDto(scmAccessTokenDto, orgRepoGithubDtos);
-        dataStoreController.storeScmOrgRepos(scmRepoDto);
     }
 
     /**
