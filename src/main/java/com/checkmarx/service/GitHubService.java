@@ -24,6 +24,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
@@ -77,25 +78,14 @@ public class GitHubService implements ScmService {
     }
 
     @Override
-    public ScmDto getScm(@NonNull String baseUrl) {
-        return dataStoreController.getScm(baseUrl);
-    }
-
-    @Override
-    public @NonNull void storeScmOrgToken(@NonNull ScmAccessTokenDto scmAccessTokenDto) {
-        dataStoreController.storeScmOrgToken(scmAccessTokenDto);
-    }
-
-    @Override
-    public ScmAccessTokenDto getScmOrgToken(@NonNull String scmUrl, @NonNull String orgName) {
-        return dataStoreController.getSCMOrgToken(scmUrl, orgName);
-    }
-
-    @Override
     public List<OrgWebDto> getOrganizations(@NonNull String authCode) {
         AccessTokenGithubDto accessToken = generateAccessToken(authCode);
         log.info("Access token generated successfully");
-        ArrayList<OrgGithubDto> userOrgGithubDtos = getUserOrganizations(accessToken.getAccessToken());
+
+        ResponseEntity<OrgGithubDto[]> response =
+                restHelper.sendBearerAuthRequest(urlPatternGetUserOrganizations, HttpMethod.GET, null, null,
+                                                 OrgGithubDto[].class, accessToken.getAccessToken());
+        ArrayList<OrgGithubDto> userOrgGithubDtos = new ArrayList<>(Arrays.asList(Objects.requireNonNull(response.getBody())));
         addAccessToken(accessToken, userOrgGithubDtos);
         return Converter.convertToListOrgWebDtos(userOrgGithubDtos);
     }
@@ -114,7 +104,7 @@ public class GitHubService implements ScmService {
                         .accessToken(accessTokenGithubDto.getAccessToken())
                         .tokenType(TokenType.ACCESS.getType())
                         .build();
-        storeScmOrgToken(scmAccessTokenDto);
+        dataStoreController.storeScmOrgToken(scmAccessTokenDto);
 
         String path = String.format(urlPatternGetOrgRepositories, orgName);
         ResponseEntity<RepoGithubDto[]> response =  restHelper.sendBearerAuthRequest(path, HttpMethod.GET,
@@ -133,30 +123,18 @@ public class GitHubService implements ScmService {
             }
         }
         ScmRepoDto scmRepoDto = Converter.convertToSCMRepoDto(scmAccessTokenDto, orgRepoGithubDtos);
-        updateScmOrgRepos(scmRepoDto);
-
+        dataStoreController.updateScmOrgRepo(scmRepoDto);
         return Converter.convertToListRepoWebDto(orgRepoGithubDtos);
     }
 
     @Override
-    public RepoDto getScmOrgRepo(@NonNull String githubUrl, @NonNull String orgName,
-                                 @NonNull String repoName) {
+    public RepoDto getScmOrgRepo(@NonNull String orgName, @NonNull String repoName) {
        return dataStoreController.getScmOrgRepo(githubUrl, orgName, repoName);
     }
 
     @Override
-    public void storeScmOrgRepos(@NonNull ScmRepoDto scmRepoDto) {
-        dataStoreController.storeScmOrgRepos(scmRepoDto);
-    }
-
-    @Override
-    public void updateScmOrgRepos(@NonNull ScmRepoDto scmRepoDto) {
-        dataStoreController.updateScmOrgRepo(scmRepoDto);
-    }
-
-    @Override
     public String createWebhook(@NonNull String orgName, @NonNull String repoName) {
-        ScmAccessTokenDto scmAccessTokenDto = getScmOrgToken(githubUrl, orgName);
+        ScmAccessTokenDto scmAccessTokenDto = dataStoreController.getSCMOrgToken(githubUrl, orgName);
         String path = String.format(urlPatternRepoWebhook, orgName, repoName);
         WebhookGithubDto webhookGithubDto = initWebhook();
         ResponseEntity<WebhookGithubDto> response =  restHelper.sendBearerAuthRequest(path, HttpMethod.POST,
@@ -164,6 +142,10 @@ public class GitHubService implements ScmService {
                                                                                       WebhookGithubDto.class,
                                                                                       scmAccessTokenDto.getAccessToken());
         webhookGithubDto = response.getBody();
+        if(webhookGithubDto == null || StringUtils.isEmpty(webhookGithubDto.getId())){
+            log.error(RestHelper.WEBHOOK_CREATE_FAILURE);
+            throw new GitHubException(RestHelper.WEBHOOK_CREATE_FAILURE);
+        }
         RepoDto repoDto = RepoDto.builder().name(repoName).isWebhookConfigured(true).webhookId(
                 webhookGithubDto.getId()).build();
         dataStoreController.updateScmOrgRepo(ScmRepoDto.builder()
@@ -177,7 +159,7 @@ public class GitHubService implements ScmService {
     @Override
     public void deleteWebhook(@NonNull String orgName, @NonNull String repoName,
                               @NonNull String webhookId) {
-        ScmAccessTokenDto scmAccessTokenDto = getScmOrgToken(githubUrl, orgName);
+        ScmAccessTokenDto scmAccessTokenDto = dataStoreController.getSCMOrgToken(githubUrl, orgName);
         String path = String.format(urlPatternRepoDeleteWebhook, orgName, repoName, webhookId);
 
         try {
@@ -200,7 +182,7 @@ public class GitHubService implements ScmService {
                                                      .build());
     }
 
-    public WebhookGithubDto initWebhook() {
+    private WebhookGithubDto initWebhook() {
         return  WebhookGithubDto.builder()
                 .name("web")
                 .config(WebhookGithubDto.Config.builder().contentType("json").url(cxFlowWebHook).insecureSsl("0").secret("1234").build())
@@ -217,7 +199,7 @@ public class GitHubService implements ScmService {
      * @return Access token given from GitHub
      */
     private AccessTokenGithubDto generateAccessToken(String oAuthCode) {
-        ScmDto scmDto = getScm(githubUrl);
+        ScmDto scmDto = dataStoreController.getScm(githubUrl);
         String path = String.format(urlPatternGenerateOAuthToken, scmDto.getClientId(),
                                     scmDto.getClientSecret(),
                                     oAuthCode);
@@ -229,20 +211,6 @@ public class GitHubService implements ScmService {
             throw new GitHubException(RestHelper.GENERATE_ACCESS_TOKEN_FAILURE);
         }
         return response.getBody();
-    }
-
-    /**
-     * getUserOrganizations method using access token retrieve all user organisations via GitHub api
-     *
-     * @param accessToken generated before using GitHub api, Gives access to relevant GitHub data
-     * @return Array list of all user organizations
-     */
-    private ArrayList<OrgGithubDto> getUserOrganizations(@NonNull String accessToken) {
-
-        ResponseEntity<OrgGithubDto[]> response =
-                restHelper.sendBearerAuthRequest(urlPatternGetUserOrganizations, HttpMethod.GET, null, null,
-                                                 OrgGithubDto[].class, accessToken);
-        return new ArrayList<>(Arrays.asList(Objects.requireNonNull(response.getBody())));
     }
 
     private void addAccessToken(AccessTokenGithubDto accesToken, List<OrgGithubDto> orgsDto) {
