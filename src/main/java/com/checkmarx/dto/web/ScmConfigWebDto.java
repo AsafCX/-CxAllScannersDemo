@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 @Builder
-public @Data class ScmConfigDto {
+public @Data class ScmConfigWebDto {
 
     private String clientId;
     private String scope;

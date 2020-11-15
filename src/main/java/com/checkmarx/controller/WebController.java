@@ -2,7 +2,7 @@ package com.checkmarx.controller;
 
 import com.checkmarx.dto.web.OrgWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
-import com.checkmarx.dto.web.ScmConfigDto;
+import com.checkmarx.dto.web.ScmConfigWebDto;
 import com.checkmarx.service.ScmService;
 import com.checkmarx.utils.RestHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +37,9 @@ public class WebController {
     @GetMapping(value = "/{scmName}/config")
     public ResponseEntity getConfiguration(@PathVariable String scmName) {
         log.trace("getConfiguration: scmName={}", scmName);
-        ScmConfigDto scmConfigDto = getScmService(scmName).getScmConfiguration();
-        log.info("Return Scm: {} Configuration: {}",scmName, scmConfigDto);
-        return ResponseEntity.ok(scmConfigDto);
+        ScmConfigWebDto scmConfigWebDto = getScmService(scmName).getScmConfiguration();
+        log.info("Return Scm: {} Configuration: {}", scmName, scmConfigWebDto);
+        return ResponseEntity.ok(scmConfigWebDto);
     }
 
     /**

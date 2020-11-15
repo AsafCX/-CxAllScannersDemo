@@ -6,14 +6,14 @@ import com.checkmarx.dto.datastore.ScmDto;
 import com.checkmarx.dto.datastore.ScmRepoDto;
 import com.checkmarx.dto.web.OrgWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
-import com.checkmarx.dto.web.ScmConfigDto;
+import com.checkmarx.dto.web.ScmConfigWebDto;
 import lombok.NonNull;
 
 import java.util.List;
 
 public interface ScmService {
 
-    public ScmConfigDto getScmConfiguration();
+    public ScmConfigWebDto getScmConfiguration();
     public ScmDto getScm(@NonNull String baseUrl);
     public void storeScmOrgToken(@NonNull ScmAccessTokenDto scmAccessTokenDto);
     public ScmAccessTokenDto getScmOrgToken(@NonNull String scmUrl, @NonNull String orgName);

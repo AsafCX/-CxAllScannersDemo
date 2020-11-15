@@ -12,7 +12,7 @@ import com.checkmarx.dto.github.RepoGithubDto;
 import com.checkmarx.dto.github.WebhookGithubDto;
 import com.checkmarx.dto.web.OrgWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
-import com.checkmarx.dto.web.ScmConfigDto;
+import com.checkmarx.dto.web.ScmConfigWebDto;
 import com.checkmarx.utils.Converter;
 import com.checkmarx.utils.RestHelper;
 import com.checkmarx.utils.TokenType;
@@ -71,9 +71,9 @@ public class GitHubService implements ScmService {
             Collections.synchronizedMap(new HashMap<>());
 
     @Override
-    public ScmConfigDto getScmConfiguration() {
+    public ScmConfigWebDto getScmConfiguration() {
         ScmDto scmDto = dataStoreController.getScm(githubUrl);
-        return ScmConfigDto.builder().clientId(scmDto.getClientId()).scope(scope).build();
+        return ScmConfigWebDto.builder().clientId(scmDto.getClientId()).scope(scope).build();
     }
 
     @Override
