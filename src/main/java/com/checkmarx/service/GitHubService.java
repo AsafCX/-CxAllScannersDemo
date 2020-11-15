@@ -200,15 +200,6 @@ public class GitHubService implements ScmService {
                                                      .build());
     }
 
-    @Override
-    public List<RepoWebDto> getUserRepositories(@NonNull String userAccessToken) {
-        ResponseEntity<RepoGithubDto[]> response =
-                restHelper.sendBearerAuthRequest(urlPatternGetUserRepositories,
-                                                 HttpMethod.GET, null, null,
-                                                 RepoGithubDto[].class, userAccessToken);
-        return Converter.convertToListRepoWebDto(Arrays.asList(Objects.requireNonNull(response.getBody())));
-    }
-
     public WebhookGithubDto initWebhook() {
         return  WebhookGithubDto.builder()
                 .name("web")

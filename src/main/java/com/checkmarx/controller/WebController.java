@@ -60,23 +60,6 @@ public class WebController {
     }
 
     /**
-     * Rest api used to get all user repositories from given scm
-     *
-     * @param scmName Given Scm to handle
-     * @param userAccessToken access token using it for scm authorization header
-     * @return ResponseEntity with https status:200, Body: list of all user repositories (private
-     *         and public)
-     */
-    @GetMapping(value = "/{scmName}/user/repos")
-    public ResponseEntity getUserRepositories(@PathVariable String scmName, @RequestHeader String userAccessToken) {
-        log.trace("getUserRepositories: scmName={}",scmName);
-        List<RepoWebDto> userRepoGithubDtos =
-                getScmService(scmName).getUserRepositories(userAccessToken);
-        log.info("Return Scm: {} user repositories: {}", scmName, userRepoGithubDtos);
-        return ResponseEntity.ok(userRepoGithubDtos);
-    }
-
-    /**
      * Rest api used to get for specific organization all repositories (private and public)
      *
      * @param scmName Given Scm to handle

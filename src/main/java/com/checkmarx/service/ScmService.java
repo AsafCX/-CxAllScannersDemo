@@ -25,5 +25,4 @@ public interface ScmService {
     public void updateScmOrgRepos(@NonNull ScmRepoDto scmRepoDto);
     public String createWebhook(@NonNull String orgName, @NonNull String repoName);
     public void deleteWebhook(@NonNull String orgName, @NonNull String repoName, @NonNull String webhookId);
-    public List<RepoWebDto> getUserRepositories(@NonNull String userAccessToken);
 }
