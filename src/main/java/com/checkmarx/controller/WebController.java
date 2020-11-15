@@ -99,9 +99,9 @@ public class WebController {
                                         @PathVariable String orgName,
                                         @PathVariable String repoName) {
         log.trace("createWebhook: scmName={}, orgName={}, repoName={}", scmName, orgName, repoName);
-        getScmService(scmName).createWebhook(orgName, repoName);
+        String webhookId = getScmService(scmName).createWebhook(orgName, repoName);
         log.info("{} CXFlow Webhook created successfully!",repoName);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(webhookId);
     }
 
     @DeleteMapping(value = "/{scmName}/orgs/{orgName}/repos/{repoName}/webhooks/{webhookId}")

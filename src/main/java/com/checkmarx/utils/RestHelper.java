@@ -28,13 +28,15 @@ public class RestHelper {
             "- Wasn't able to save in database via DataStore service";
     public static final String GET_ORG_REPOS_FAILURE = "Get org repositories failure " +
             "- Wasn't able to get from database via DataStore service";
-    public static final String MISSING_ORG_REPO = "Get org repository failure " +
+    public static final String MISSING_ORG_REPO = "Org repository failure " +
             "- Missing org repository in database";
     public static final String GET_ORG_REPO_FAILURE = "Get org repository failure " +
             "- Wasn't able to get from database via DataStore service";
     public static final String WEBHOOK_DELETE_FAILURE = "Failed to delete repo webhook, missing " +
             "data";
     public static final String SCM_NOT_SUPPORTED = "Given Scm isn't supported";
+    public static final String UPDATE_ORG_REPO_FAILURE = "Update org repository failure " +
+            "- Wasn't able to update database via DataStore service";
 
     @Autowired
     RestTemplate restTemplate;

@@ -12,24 +12,25 @@ import java.util.List;
 
 public interface ScmService {
 
-    @NonNull
-    public ScmDto getScm(String baseUrl);
-    @NonNull
-    public void storeScmOrgToken(ScmAccessTokenDto scmAccessTokenDto);
-    @NonNull
-    public ScmAccessTokenDto getScmOrgToken(String scmUrl, String orgName);
-    @NonNull
-    public List<OrgWebDto> getOrganizations(String authCode);
-    @NonNull
-    public List<RepoWebDto> getScmOrgRepos(String orgName);
-    @NonNull
-    public RepoDto getScmOrgRepo(String githubUrl, String orgName, String repoName);
-    @NonNull
-    public void createWebhook(String orgName, String repoName);
-    @NonNull
-    public void deleteWebhook(String orgName, String repoName, String webhookId);
-    @NonNull
-    public List<RepoWebDto> getUserRepositories(String userAccessToken);
-    @NonNull
+
+    public ScmDto getScm(@NonNull String baseUrl);
+
+    public void storeScmOrgToken(@NonNull ScmAccessTokenDto scmAccessTokenDto);
+
+    public ScmAccessTokenDto getScmOrgToken(@NonNull String scmUrl, @NonNull String orgName);
+
+    public List<OrgWebDto> getOrganizations(@NonNull String authCode);
+
+    public List<RepoWebDto> getScmOrgRepos(@NonNull String orgName);
+
+    public RepoDto getScmOrgRepo(@NonNull String githubUrl, @NonNull String orgName,
+                                 @NonNull String repoName);
+
+    public String createWebhook(@NonNull String orgName, @NonNull String repoName);
+
+    public void deleteWebhook(@NonNull String orgName, @NonNull String repoName, @NonNull String webhookId);
+
+    public List<RepoWebDto> getUserRepositories(@NonNull String userAccessToken);
+
     public ScmConfigDto getScmConfiguration();
 }
