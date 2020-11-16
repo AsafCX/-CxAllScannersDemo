@@ -1,4 +1,4 @@
-# cx-integrations-repo-manager
+# 🎯 cx-integrations-repo-manager
 Organizations repositories manager
 
 ## Release Notes
