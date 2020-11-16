@@ -3,7 +3,7 @@ package com.checkmarx.controller;
 import com.checkmarx.controller.exception.DataStoreException;
 import com.checkmarx.controller.exception.GitHubException;
 import com.checkmarx.dto.datastore.*;
-import com.checkmarx.dto.web.CxGoWebDto;
+import com.checkmarx.dto.web.OrgSettingsWebDto;
 import com.checkmarx.utils.RestHelper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -210,10 +210,10 @@ public class DataStoreController implements DataController {
     }
 
     @Override
-    public CxGoWebDto getScmOrgCxGo(@NonNull String scmUrl, @NonNull String orgName) {
+    public OrgSettingsWebDto getScmOrgCxGo(@NonNull String scmUrl, @NonNull String orgName) {
         log.trace("getScmOrgCxGo: scmUrl={}, orgName:{}", scmUrl, orgName);
         //TODO edit to real RST request
-        return CxGoWebDto.builder().team("CxFlowTeam").cxgoSecret("1234").build();
+        return OrgSettingsWebDto.builder().team("CxFlowTeam").cxgoSecret("1234").build();
     }
 
     @Override

@@ -6,7 +6,7 @@ import com.checkmarx.dto.datastore.ScmAccessTokenDto;
 import com.checkmarx.dto.datastore.ScmRepoDto;
 import com.checkmarx.dto.github.OrgGithubDto;
 import com.checkmarx.dto.github.RepoGithubDto;
-import com.checkmarx.dto.web.CxGoWebDto;
+import com.checkmarx.dto.web.OrgSettingsWebDto;
 import com.checkmarx.dto.web.OrgWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import org.springframework.stereotype.Component;
@@ -73,10 +73,10 @@ public class Converter {
     }
 
     public static CxFlowPropertiesDto convertToCxFlowProperties(String scmUrl, String orgName,
-                                                                CxGoWebDto cxGoWebDto) {
+                                                                OrgSettingsWebDto orgSettingsWebDto) {
         return CxFlowPropertiesDto.builder()
-                .cxTeam(cxGoWebDto.getTeam())
-                .cxGoToken(cxGoWebDto.getCxgoSecret())
+                .cxTeam(orgSettingsWebDto.getTeam())
+                .cxGoToken(orgSettingsWebDto.getCxgoSecret())
                 .orgName(orgName)
                 .scmUrl(scmUrl)
                 .build();

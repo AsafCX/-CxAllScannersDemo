@@ -1,7 +1,7 @@
 package com.checkmarx.service;
 
 import com.checkmarx.dto.datastore.RepoDto;
-import com.checkmarx.dto.web.CxGoWebDto;
+import com.checkmarx.dto.web.OrgSettingsWebDto;
 import com.checkmarx.dto.web.OrgWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.dto.web.ScmConfigWebDto;
@@ -18,6 +18,6 @@ public interface ScmService {
     public String createWebhook(@NonNull String orgName, @NonNull String repoName);
     public void deleteWebhook(@NonNull String orgName, @NonNull String repoName,
                               @NonNull String webhookId);
-    public CxGoWebDto getCxGoSettings(@NonNull String orgName);
-    public void setCxGoSettings(@NonNull String orgName, @NonNull CxGoWebDto cxGoWebDto);
+    public OrgSettingsWebDto getCxGoSettings(@NonNull String orgName);
+    public void setCxGoSettings(@NonNull String orgName, @NonNull OrgSettingsWebDto orgSettingsWebDto);
 }

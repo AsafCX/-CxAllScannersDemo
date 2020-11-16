@@ -1,6 +1,6 @@
 package com.checkmarx.controller;
 
-import com.checkmarx.dto.web.CxGoWebDto;
+import com.checkmarx.dto.web.OrgSettingsWebDto;
 import com.checkmarx.dto.web.OrgWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.dto.web.ScmConfigWebDto;
@@ -101,19 +101,21 @@ public class WebController {
     }
 
     @GetMapping(value = "/{scmName}/orgs/{orgName}/settings")
-    public ResponseEntity getCxGo(@PathVariable String scmName, @PathVariable String orgName) {
-        log.trace("getCxGo: scmName={}, orgName={}", scmName, orgName);
-        CxGoWebDto cxGoWebDto = getScmService(scmName).getCxGoSettings(orgName);
-        log.info("Return CxGo settings: {} for scm: {}, org: {}", cxGoWebDto, scmName, orgName);
-        return ResponseEntity.ok(cxGoWebDto);
+    public ResponseEntity getOrgSettings(@PathVariable String scmName, @PathVariable String orgName) {
+        log.trace("getOrgSettings: scmName={}, orgName={}", scmName, orgName);
+        OrgSettingsWebDto orgSettingsWebDto = getScmService(scmName).getCxGoSettings(orgName);
+        log.info("Return CxGo organization settings: {} for scm: {}, org: {}", orgSettingsWebDto, scmName,
+                 orgName);
+        return ResponseEntity.ok(orgSettingsWebDto);
     }
 
     @PutMapping(value = "/{scmName}/orgs/{orgName}/settings")
-    public ResponseEntity setCxGo(@PathVariable String scmName, @PathVariable String orgName,
-                                  @RequestBody CxGoWebDto cxGoWebDto) {
-        log.trace("setCxGo: scmName={}, orgName={}, CxGoWebDto={}", scmName, orgName, cxGoWebDto);
-        getScmService(scmName).setCxGoSettings(orgName, cxGoWebDto);
-        log.info("{} CxGo settings saved successfully!", cxGoWebDto);
+    public ResponseEntity setOrgSettings(@PathVariable String scmName, @PathVariable String orgName,
+                                  @RequestBody OrgSettingsWebDto orgSettingsWebDto) {
+        log.trace("setOrgSettings: scmName={}, orgName={}, OrgSettingsWebDto={}", scmName, orgName,
+                  orgSettingsWebDto);
+        getScmService(scmName).setCxGoSettings(orgName, orgSettingsWebDto);
+        log.info("{} CxGo organization settings saved successfully!", orgSettingsWebDto);
         return ResponseEntity.ok().build();
     }
 

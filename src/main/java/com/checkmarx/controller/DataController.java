@@ -1,7 +1,7 @@
 package com.checkmarx.controller;
 
 import com.checkmarx.dto.datastore.*;
-import com.checkmarx.dto.web.CxGoWebDto;
+import com.checkmarx.dto.web.OrgSettingsWebDto;
 import lombok.NonNull;
 
 import java.util.List;
@@ -17,6 +17,6 @@ public interface DataController {
     public RepoDto getScmOrgRepo(@NonNull String scmUrl, @NonNull String orgName,
                                  @NonNull String repoName);
     public void updateScmOrgRepo(@NonNull ScmRepoDto scmRepoDto);
-    public CxGoWebDto getScmOrgCxGo(@NonNull String scmUrl,@NonNull String orgName);
+    public OrgSettingsWebDto getScmOrgCxGo(@NonNull String scmUrl, @NonNull String orgName);
     public void setScmOrgCxGo(@NonNull CxFlowPropertiesDto cxFlowPropertiesDto);
 }

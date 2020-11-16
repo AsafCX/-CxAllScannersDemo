@@ -7,7 +7,7 @@ import com.checkmarx.dto.github.AccessTokenGithubDto;
 import com.checkmarx.dto.github.OrgGithubDto;
 import com.checkmarx.dto.github.RepoGithubDto;
 import com.checkmarx.dto.github.WebhookGithubDto;
-import com.checkmarx.dto.web.CxGoWebDto;
+import com.checkmarx.dto.web.OrgSettingsWebDto;
 import com.checkmarx.dto.web.OrgWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.dto.web.ScmConfigWebDto;
@@ -181,15 +181,15 @@ public class GitHubService implements ScmService {
     }
 
     @Override
-    public CxGoWebDto getCxGoSettings(@NonNull String orgName) {
+    public OrgSettingsWebDto getCxGoSettings(@NonNull String orgName) {
         return dataStoreController.getScmOrgCxGo(githubUrl, orgName);
     }
 
     @Override
-    public void setCxGoSettings(@NonNull String orgName, @NonNull CxGoWebDto cxGoWebDto) {
+    public void setCxGoSettings(@NonNull String orgName, @NonNull OrgSettingsWebDto orgSettingsWebDto) {
         CxFlowPropertiesDto cxFlowPropertiesDto = Converter.convertToCxFlowProperties(githubUrl,
                                                                                       orgName,
-                                                                                      cxGoWebDto);
+                                                                                      orgSettingsWebDto);
         dataStoreController.setScmOrgCxGo(cxFlowPropertiesDto);
     }
 

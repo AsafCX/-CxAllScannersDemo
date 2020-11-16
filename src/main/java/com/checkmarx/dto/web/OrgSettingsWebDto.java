@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public @Data class CxGoWebDto {
+public @Data class OrgSettingsWebDto {
 
     @JsonProperty("team")
     private String team;
