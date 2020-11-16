@@ -2,10 +2,8 @@ package com.checkmarx.controller;
 
 import com.checkmarx.controller.exception.DataStoreException;
 import com.checkmarx.controller.exception.GitHubException;
-import com.checkmarx.dto.datastore.RepoDto;
-import com.checkmarx.dto.datastore.ScmAccessTokenDto;
-import com.checkmarx.dto.datastore.ScmDto;
-import com.checkmarx.dto.datastore.ScmRepoDto;
+import com.checkmarx.dto.datastore.*;
+import com.checkmarx.dto.web.CxGoWebDto;
 import com.checkmarx.utils.RestHelper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -143,31 +141,31 @@ public class DataStoreController implements DataController {
     }
 
     @Override
-    public List<RepoDto> getScmOrgRepos(@NonNull String baseUrl, @NonNull String orgName) {
-        log.trace("getScmOrgRepos: baseUrl={}, orgName={}", baseUrl, orgName);
+    public List<RepoDto> getScmOrgRepos(@NonNull String scmUrl, @NonNull String orgName) {
+        log.trace("getScmOrgRepos: scmUrl={}, orgName={}", scmUrl, orgName);
 
-        String path = String.format(urlPatternDataSourceGetScmOrgRepos, baseUrl, orgName);
+        String path = String.format(urlPatternDataSourceGetScmOrgRepos, scmUrl, orgName);
         ResponseEntity<List<RepoDto>> response = null;
         try {
             response = restHelper.sendRequest(path, HttpMethod.GET, null, null, List.class);
         }  catch(HttpClientErrorException ex){
             log.error("HttpClientErrorException: {}", ex.getMessage());
-            log.error(RestHelper.GET_ORG_REPOS_FAILURE + " baseUrl={}, orgName={}", baseUrl,
+            log.error(RestHelper.GET_ORG_REPOS_FAILURE + " scmUrl={}, orgName={}", scmUrl,
                       orgName);
-            throw new DataStoreException(RestHelper.GET_ORG_REPOS_FAILURE + " baseUrl="+ baseUrl+
+            throw new DataStoreException(RestHelper.GET_ORG_REPOS_FAILURE + " scmUrl="+ scmUrl +
                                                  ", orgName="+ orgName);
         }
-        log.debug("Get from DataStore Scm: {} Org: {} Repos: {} passed successfully", baseUrl,
+        log.debug("Get from DataStore Scm: {} Org: {} Repos: {} passed successfully", scmUrl,
                   orgName, response.getBody());
         return response.getBody();
     }
 
     @Override
-    public RepoDto getScmOrgRepo(@NonNull String baseUrl, @NonNull String orgName,
+    public RepoDto getScmOrgRepo(@NonNull String scmUrl, @NonNull String orgName,
                                  @NonNull String repoName) {
-        log.trace("getScmOrgRepo: baseUrl={}, orgName={}, repoName={}", baseUrl, orgName, repoName);
+        log.trace("getScmOrgRepo: scmUrl={}, orgName={}, repoName={}", scmUrl, orgName, repoName);
 
-        String path = String.format(urlPatternDataSourceGetScmOrgRepo, repoName, baseUrl, orgName);
+        String path = String.format(urlPatternDataSourceGetScmOrgRepo, repoName, scmUrl, orgName);
         ResponseEntity<RepoDto> responseEntity = null;
         try {
             responseEntity = restHelper.sendRequest(path, HttpMethod.GET, null, null, RepoDto.class);
@@ -183,7 +181,7 @@ public class DataStoreController implements DataController {
                 throw new DataStoreException(RestHelper.GET_ORG_REPO_FAILURE);
             }
         }
-        log.debug("Get from DataStore Scm: {} Org: {} Repo: {} passed successfully", baseUrl,
+        log.debug("Get from DataStore Scm: {} Org: {} Repo: {} passed successfully", scmUrl,
                   orgName, repoName);
         return responseEntity.getBody();
     }
@@ -209,5 +207,18 @@ public class DataStoreController implements DataController {
         }
         log.debug("Update in DataStore Scm: {} Org: {} Repo: {} passed successfully",
                   scmRepoDto.getScmUrl(), scmRepoDto.getOrgName(), scmRepoDto.getRepoList());
+    }
+
+    @Override
+    public CxGoWebDto getScmOrgCxGo(@NonNull String scmUrl, @NonNull String orgName) {
+        log.trace("getScmOrgCxGo: scmUrl={}, orgName:{}", scmUrl, orgName);
+        //TODO edit to real RST request
+        return CxGoWebDto.builder().team("CxFlowTeam").cxgoSecret("1234").build();
+    }
+
+    @Override
+    public void setScmOrgCxGo(@NonNull CxFlowPropertiesDto cxFlowPropertiesDto) {
+        //TODO edit to real RST request
+        log.info("Update in DataStore CxFlow properties: {} passed successfully", cxFlowPropertiesDto);
     }
 }

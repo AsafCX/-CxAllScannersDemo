@@ -1,10 +1,12 @@
 package com.checkmarx.utils;
 
+import com.checkmarx.dto.datastore.CxFlowPropertiesDto;
 import com.checkmarx.dto.datastore.RepoDto;
 import com.checkmarx.dto.datastore.ScmAccessTokenDto;
 import com.checkmarx.dto.datastore.ScmRepoDto;
 import com.checkmarx.dto.github.OrgGithubDto;
 import com.checkmarx.dto.github.RepoGithubDto;
+import com.checkmarx.dto.web.CxGoWebDto;
 import com.checkmarx.dto.web.OrgWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import org.springframework.stereotype.Component;
@@ -67,6 +69,16 @@ public class Converter {
                 .name(repoGithubDto.getName())
                 .webhookId(repoGithubDto.getWebhookId())
                 .webhookEnabled(repoGithubDto.isWebHookEnabled())
+                .build();
+    }
+
+    public static CxFlowPropertiesDto convertToCxFlowProperties(String scmUrl, String orgName,
+                                                                CxGoWebDto cxGoWebDto) {
+        return CxFlowPropertiesDto.builder()
+                .cxTeam(cxGoWebDto.getTeam())
+                .cxGoToken(cxGoWebDto.getCxgoSecret())
+                .orgName(orgName)
+                .scmUrl(scmUrl)
                 .build();
     }
 }

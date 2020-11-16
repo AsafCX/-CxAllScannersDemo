@@ -2,14 +2,12 @@ package com.checkmarx.service;
 
 import com.checkmarx.controller.DataController;
 import com.checkmarx.controller.exception.GitHubException;
-import com.checkmarx.dto.datastore.RepoDto;
-import com.checkmarx.dto.datastore.ScmAccessTokenDto;
-import com.checkmarx.dto.datastore.ScmDto;
-import com.checkmarx.dto.datastore.ScmRepoDto;
+import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.github.AccessTokenGithubDto;
 import com.checkmarx.dto.github.OrgGithubDto;
 import com.checkmarx.dto.github.RepoGithubDto;
 import com.checkmarx.dto.github.WebhookGithubDto;
+import com.checkmarx.dto.web.CxGoWebDto;
 import com.checkmarx.dto.web.OrgWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.dto.web.ScmConfigWebDto;
@@ -180,6 +178,19 @@ public class GitHubService implements ScmService {
                                                      .scmUrl(scmAccessTokenDto.getScmUrl())
                                                      .repoList(Collections.singletonList(repoDto))
                                                      .build());
+    }
+
+    @Override
+    public CxGoWebDto getCxGoSettings(@NonNull String orgName) {
+        return dataStoreController.getScmOrgCxGo(githubUrl, orgName);
+    }
+
+    @Override
+    public void setCxGoSettings(@NonNull String orgName, @NonNull CxGoWebDto cxGoWebDto) {
+        CxFlowPropertiesDto cxFlowPropertiesDto = Converter.convertToCxFlowProperties(githubUrl,
+                                                                                      orgName,
+                                                                                      cxGoWebDto);
+        dataStoreController.setScmOrgCxGo(cxFlowPropertiesDto);
     }
 
     private WebhookGithubDto initWebhook() {

@@ -1,5 +1,6 @@
 package com.checkmarx.controller;
 
+import com.checkmarx.dto.web.CxGoWebDto;
 import com.checkmarx.dto.web.OrgWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.dto.web.ScmConfigWebDto;
@@ -98,6 +99,24 @@ public class WebController {
         log.info("{} CXFlow Webhook removed successfully!",repoName);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping(value = "/{scmName}/orgs/{orgName}/settings")
+    public ResponseEntity getCxGo(@PathVariable String scmName, @PathVariable String orgName) {
+        log.trace("getCxGo: scmName={}, orgName={}", scmName, orgName);
+        CxGoWebDto cxGoWebDto = getScmService(scmName).getCxGoSettings(orgName);
+        log.info("Return CxGo settings: {} for scm: {}, org: {}", cxGoWebDto, scmName, orgName);
+        return ResponseEntity.ok(cxGoWebDto);
+    }
+
+    @PutMapping(value = "/{scmName}/orgs/{orgName}/settings")
+    public ResponseEntity setCxGo(@PathVariable String scmName, @PathVariable String orgName,
+                                  @RequestBody CxGoWebDto cxGoWebDto) {
+        log.trace("setCxGo: scmName={}, orgName={}, CxGoWebDto={}", scmName, orgName, cxGoWebDto);
+        getScmService(scmName).setCxGoSettings(orgName, cxGoWebDto);
+        log.info("{} CxGo settings saved successfully!", cxGoWebDto);
+        return ResponseEntity.ok().build();
+    }
+
 
     private ScmService getScmService(String scmName) {
         return (ScmService) applicationContext.getBean(scmName);
