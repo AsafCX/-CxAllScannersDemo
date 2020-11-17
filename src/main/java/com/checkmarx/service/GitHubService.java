@@ -240,7 +240,7 @@ public class GitHubService implements ScmService {
         synchronized (synchronizedMap) {
             if (synchronizedMap.containsKey(orgName)) {
                 accessToken = synchronizedMap.get(orgName);
-                synchronizedMap.remove(orgName);
+                synchronizedMap.values().removeAll(Collections.singleton(accessToken));
             }
         }
         return accessToken;
