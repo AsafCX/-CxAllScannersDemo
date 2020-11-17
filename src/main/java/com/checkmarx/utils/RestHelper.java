@@ -37,6 +37,11 @@ public class RestHelper {
     public static final String SCM_NOT_SUPPORTED = "Given Scm isn't supported";
     public static final String UPDATE_ORG_REPO_FAILURE = "Update org repository failure " +
             "- Wasn't able to update database via DataStore service";
+    public static final String MISSING_SCM_ORG = "Scm org failure - missing scm organization in " +
+            "database";
+    public static final String STORE_SCM_ORG_PROPERTIES_FAILURE = "Store scm org properties " +
+            "failure " +
+            "- Wasn't able to save in database via DataStore service";
 
     @Autowired
     RestTemplate restTemplate;

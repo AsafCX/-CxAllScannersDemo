@@ -84,13 +84,13 @@ public class GitHubService implements ScmService {
                 restHelper.sendBearerAuthRequest(urlPatternGetUserOrganizations, HttpMethod.GET, null, null,
                                                  OrgGithubDto[].class, accessToken.getAccessToken());
         ArrayList<OrgGithubDto> userOrgGithubDtos = new ArrayList<>(Arrays.asList(Objects.requireNonNull(response.getBody())));
-        addAccessToken(accessToken, userOrgGithubDtos);
+        addLocalAccessToken(accessToken, userOrgGithubDtos);
         return Converter.convertToListOrgWebDtos(userOrgGithubDtos);
     }
 
     @Override
     public List<RepoWebDto> getScmOrgRepos(@NonNull String orgName) {
-        AccessTokenGithubDto accessTokenGithubDto = getAccessToken(orgName);
+        AccessTokenGithubDto accessTokenGithubDto = getLocalAccessToken(orgName);
         if (!verifyAccessToken(accessTokenGithubDto)) {
             log.error(RestHelper.ACCESS_TOKEN_MISSING + " orgName: {}", orgName);
             throw new GitHubException(RestHelper.ACCESS_TOKEN_MISSING);
@@ -182,7 +182,7 @@ public class GitHubService implements ScmService {
 
     @Override
     public OrgSettingsWebDto getCxGoSettings(@NonNull String orgName) {
-        return dataStoreController.getScmOrgCxGo(githubUrl, orgName);
+        return dataStoreController.getScmOrgSettings(githubUrl, orgName);
     }
 
     @Override
@@ -190,7 +190,7 @@ public class GitHubService implements ScmService {
         CxFlowPropertiesDto cxFlowPropertiesDto = Converter.convertToCxFlowProperties(githubUrl,
                                                                                       orgName,
                                                                                       orgSettingsWebDto);
-        dataStoreController.setScmOrgCxGo(cxFlowPropertiesDto);
+        dataStoreController.storeScmOrgSettings(cxFlowPropertiesDto);
     }
 
     private WebhookGithubDto initWebhook() {
@@ -224,7 +224,7 @@ public class GitHubService implements ScmService {
         return response.getBody();
     }
 
-    private void addAccessToken(AccessTokenGithubDto accesToken, List<OrgGithubDto> orgsDto) {
+    private void addLocalAccessToken(AccessTokenGithubDto accesToken, List<OrgGithubDto> orgsDto) {
         synchronized (synchronizedMap) {
             for (OrgGithubDto orgDto : orgsDto) {
                 if (synchronizedMap.containsKey(orgDto.getLogin())) {
@@ -235,11 +235,12 @@ public class GitHubService implements ScmService {
         }
     }
 
-    private AccessTokenGithubDto getAccessToken(String orgName) {
+    private AccessTokenGithubDto getLocalAccessToken(String orgName) {
         AccessTokenGithubDto accessToken = new AccessTokenGithubDto();
         synchronized (synchronizedMap) {
             if (synchronizedMap.containsKey(orgName)) {
                 accessToken = synchronizedMap.get(orgName);
+                synchronizedMap.remove(orgName);
             }
         }
         return accessToken;

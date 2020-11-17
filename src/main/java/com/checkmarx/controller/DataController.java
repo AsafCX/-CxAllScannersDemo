@@ -17,6 +17,6 @@ public interface DataController {
     public RepoDto getScmOrgRepo(@NonNull String scmUrl, @NonNull String orgName,
                                  @NonNull String repoName);
     public void updateScmOrgRepo(@NonNull ScmRepoDto scmRepoDto);
-    public OrgSettingsWebDto getScmOrgCxGo(@NonNull String scmUrl, @NonNull String orgName);
-    public void setScmOrgCxGo(@NonNull CxFlowPropertiesDto cxFlowPropertiesDto);
+    public OrgSettingsWebDto getScmOrgSettings(@NonNull String scmUrl, @NonNull String orgName);
+    public void storeScmOrgSettings(@NonNull CxFlowPropertiesDto cxFlowPropertiesDto);
 }

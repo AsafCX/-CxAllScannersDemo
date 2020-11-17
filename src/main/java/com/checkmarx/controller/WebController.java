@@ -31,90 +31,90 @@ public class WebController {
      * Rest api used by FE application on start-up, Retrieve client id from DataStore and
      * scope from app properties file
      *
-     * @param scmName Given Scm to handle
+     * @param scmType Given Scm to handle
      *
      * @return ResponseEntity with status:200, Body: Github client id & scope
      */
-    @GetMapping(value = "/{scmName}/config")
-    public ResponseEntity getConfiguration(@PathVariable String scmName) {
-        log.trace("getConfiguration: scmName={}", scmName);
-        ScmConfigWebDto scmConfigWebDto = getScmService(scmName).getScmConfiguration();
-        log.info("Return Scm: {} Configuration: {}", scmName, scmConfigWebDto);
+    @GetMapping(value = "/{scmType}/config")
+    public ResponseEntity getConfiguration(@PathVariable String scmType) {
+        log.trace("getConfiguration: scmType={}", scmType);
+        ScmConfigWebDto scmConfigWebDto = getScmService(scmType).getScmConfiguration();
+        log.info("Return Scm: {} Configuration: {}", scmType, scmConfigWebDto);
         return ResponseEntity.ok(scmConfigWebDto);
     }
 
     /**
      * Rest api used to first create OAuth access token and retrieve all user organizations from given scm
      *
-     * @param scmName Given Scm to handle
+     * @param scmType Given Scm to handle
      * @param authCode given from FE application after first-step OAuth implementation passed
      *                  successfully, taken from request param "code", using it to create access token
      * @return ResponseEntity with status:200, Body: list of all user organizations
      */
-    @PostMapping(value = "/{scmName}/user/orgs")
-    public ResponseEntity getOrganizations(@PathVariable String scmName,
+    @PostMapping(value = "/{scmType}/user/orgs")
+    public ResponseEntity getOrganizations(@PathVariable String scmType,
                                            @RequestParam String authCode) {
-        log.trace("getOrganizations: scmName={}, authCode={}", scmName, authCode);
-        List<OrgWebDto> userOrgGithubDtos = getScmService(scmName).getOrganizations(authCode);
-        log.info("Return Scm: {} Organizations: {}", scmName, userOrgGithubDtos);
+        log.trace("getOrganizations: scmType={}, authCode={}", scmType, authCode);
+        List<OrgWebDto> userOrgGithubDtos = getScmService(scmType).getOrganizations(authCode);
+        log.info("Return Scm: {} Organizations: {}", scmType, userOrgGithubDtos);
         return ResponseEntity.ok(userOrgGithubDtos);
     }
 
     /**
      * Rest api used to get for specific organization all repositories (private and public)
      *
-     * @param scmName Given Scm to handle
+     * @param scmType Given Scm to handle
      * @param orgName organization name used to retrieve the relevant repositories
      * @return ResponseEntity with http status:200, Body: all organization repositories (public
      *         and private)
      */
-    @GetMapping(value = "/{scmName}/orgs/{orgName}/repos")
-    public ResponseEntity getOrganizationRepositories(@PathVariable String scmName,
+    @GetMapping(value = "/{scmType}/orgs/{orgName}/repos")
+    public ResponseEntity getOrganizationRepositories(@PathVariable String scmType,
                                                       @PathVariable String orgName) {
-        log.trace("getOrganizationRepositories: scmName={}, orgName={}", scmName, orgName);
-        List<RepoWebDto> orgRepoGithubDtos = getScmService(scmName).getScmOrgRepos(orgName);
-        log.info("Return Scm: {} Organization: {} repositories: {}", scmName, orgName,
+        log.trace("getOrganizationRepositories: scmType={}, orgName={}", scmType, orgName);
+        List<RepoWebDto> orgRepoGithubDtos = getScmService(scmType).getScmOrgRepos(orgName);
+        log.info("Return Scm: {} Organization: {} repositories: {}", scmType, orgName,
                  orgRepoGithubDtos);
         return ResponseEntity.ok(orgRepoGithubDtos);
     }
 
-    @PostMapping(value = "/{scmName}/orgs/{orgName}/repos/{repoName}/webhooks")
-    public ResponseEntity createWebhook(@PathVariable String scmName,
+    @PostMapping(value = "/{scmType}/orgs/{orgName}/repos/{repoName}/webhooks")
+    public ResponseEntity createWebhook(@PathVariable String scmType,
                                         @PathVariable String orgName,
                                         @PathVariable String repoName) {
-        log.trace("createWebhook: scmName={}, orgName={}, repoName={}", scmName, orgName, repoName);
-        String webhookId = getScmService(scmName).createWebhook(orgName, repoName);
+        log.trace("createWebhook: scmType={}, orgName={}, repoName={}", scmType, orgName, repoName);
+        String webhookId = getScmService(scmType).createWebhook(orgName, repoName);
         log.info("{} CXFlow Webhook created successfully!",repoName);
         return ResponseEntity.ok(webhookId);
     }
 
-    @DeleteMapping(value = "/{scmName}/orgs/{orgName}/repos/{repoName}/webhooks/{webhookId}")
-    public ResponseEntity deleteWebhook(@PathVariable String scmName,
+    @DeleteMapping(value = "/{scmType}/orgs/{orgName}/repos/{repoName}/webhooks/{webhookId}")
+    public ResponseEntity deleteWebhook(@PathVariable String scmType,
                                         @PathVariable String orgName,
                                         @PathVariable String repoName,
                                         @PathVariable String webhookId) {
-        log.trace("deleteWebhook: scmName={}, orgName={}, repoName={}, webhookId={}",scmName, orgName,
+        log.trace("deleteWebhook: scmType={}, orgName={}, repoName={}, webhookId={}",scmType, orgName,
                   repoName, webhookId);
-        getScmService(scmName).deleteWebhook(orgName, repoName, webhookId);
+        getScmService(scmType).deleteWebhook(orgName, repoName, webhookId);
         log.info("{} CXFlow Webhook removed successfully!",repoName);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/{scmName}/orgs/{orgName}/settings")
-    public ResponseEntity getOrgSettings(@PathVariable String scmName, @PathVariable String orgName) {
-        log.trace("getOrgSettings: scmName={}, orgName={}", scmName, orgName);
-        OrgSettingsWebDto orgSettingsWebDto = getScmService(scmName).getCxGoSettings(orgName);
-        log.info("Return CxGo organization settings: {} for scm: {}, org: {}", orgSettingsWebDto, scmName,
+    @GetMapping(value = "/{scmType}/orgs/{orgName}/settings")
+    public ResponseEntity getOrgSettings(@PathVariable String scmType, @PathVariable String orgName) {
+        log.trace("getOrgSettings: scmType={}, orgName={}", scmType, orgName);
+        OrgSettingsWebDto orgSettingsWebDto = getScmService(scmType).getCxGoSettings(orgName);
+        log.info("Return CxGo organization settings: {} for scm: {}, org: {}", orgSettingsWebDto, scmType,
                  orgName);
         return ResponseEntity.ok(orgSettingsWebDto);
     }
 
-    @PutMapping(value = "/{scmName}/orgs/{orgName}/settings")
-    public ResponseEntity setOrgSettings(@PathVariable String scmName, @PathVariable String orgName,
+    @PutMapping(value = "/{scmType}/orgs/{orgName}/settings")
+    public ResponseEntity setOrgSettings(@PathVariable String scmType, @PathVariable String orgName,
                                   @RequestBody OrgSettingsWebDto orgSettingsWebDto) {
-        log.trace("setOrgSettings: scmName={}, orgName={}, OrgSettingsWebDto={}", scmName, orgName,
+        log.trace("setOrgSettings: scmType={}, orgName={}, OrgSettingsWebDto={}", scmType, orgName,
                   orgSettingsWebDto);
-        getScmService(scmName).setCxGoSettings(orgName, orgSettingsWebDto);
+        getScmService(scmType).setCxGoSettings(orgName, orgSettingsWebDto);
         log.info("{} CxGo organization settings saved successfully!", orgSettingsWebDto);
         return ResponseEntity.ok().build();
     }

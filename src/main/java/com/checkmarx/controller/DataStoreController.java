@@ -43,6 +43,9 @@ public class DataStoreController implements DataController {
     @Value("${data.source.url.pattern.get.scm.org.repo}")
     private String urlPatternDataSourceGetScmOrgRepo;
 
+    @Value("${data.source.url.pattern.cxflow.properties}")
+    private String urlPatternDataSourceScmOrgProperties;
+
 
     @Autowired
     RestHelper restHelper;
@@ -210,15 +213,34 @@ public class DataStoreController implements DataController {
     }
 
     @Override
-    public OrgSettingsWebDto getScmOrgCxGo(@NonNull String scmUrl, @NonNull String orgName) {
+    public OrgSettingsWebDto getScmOrgSettings(@NonNull String scmUrl, @NonNull String orgName) {
         log.trace("getScmOrgCxGo: scmUrl={}, orgName:{}", scmUrl, orgName);
         //TODO edit to real RST request
         return OrgSettingsWebDto.builder().team("CxFlowTeam").cxgoSecret("1234").build();
     }
 
     @Override
-    public void setScmOrgCxGo(@NonNull CxFlowPropertiesDto cxFlowPropertiesDto) {
-        //TODO edit to real RST request
+    public void storeScmOrgSettings(@NonNull CxFlowPropertiesDto cxFlowPropertiesDto) {
+        log.trace("storeScmOrgCxGo: CxFlowPropertiesDto={}", cxFlowPropertiesDto);
+
+        try {
+            restHelper.sendRequest(urlPatternDataSourceScmOrgProperties, HttpMethod.POST, cxFlowPropertiesDto,
+                                   null, CxFlowPropertiesDto.class);
+        }  catch(HttpClientErrorException ex){
+            if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                log.error(RestHelper.MISSING_SCM_ORG + " scmType={}, orgName={}",
+                          cxFlowPropertiesDto.getScmUrl(),
+                          cxFlowPropertiesDto.getOrgName());
+                throw new DataStoreException(RestHelper.MISSING_SCM_ORG);
+            } else {
+                log.error("HttpClientErrorException: {}", ex.getMessage());
+                log.error(RestHelper.STORE_SCM_ORG_PROPERTIES_FAILURE + " scmType={}, orgName={}"
+                        , cxFlowPropertiesDto.getScmUrl(),
+                          cxFlowPropertiesDto.getOrgName());
+                throw new DataStoreException(RestHelper.STORE_SCM_ORG_PROPERTIES_FAILURE);
+            }
+        }
+
         log.info("Update in DataStore CxFlow properties: {} passed successfully", cxFlowPropertiesDto);
     }
 }
