@@ -39,9 +39,11 @@ public class RestHelper {
             "- Wasn't able to update database via DataStore service";
     public static final String MISSING_SCM_ORG = "Scm org failure - missing scm organization in " +
             "database";
-    public static final String STORE_SCM_ORG_PROPERTIES_FAILURE = "Store scm org properties " +
+    public static final String STORE_SCM_ORG_PROPERTIES_FAILURE = "Store scm org settings " +
             "failure " +
             "- Wasn't able to save in database via DataStore service";
+    public static final String GET_SCM_ORG_PROPERTIES_FAILURE = "Get org settings failure " +
+            "- Wasn't able to get from database via DataStore service";
 
     @Autowired
     RestTemplate restTemplate;

@@ -20,7 +20,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ScmRepoDto {
+public class OrgReposDto {
     @JsonProperty("scm_url")
     private String scmUrl;
     @JsonProperty("org_name")

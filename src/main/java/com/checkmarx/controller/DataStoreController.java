@@ -43,6 +43,9 @@ public class DataStoreController implements DataController {
     @Value("${data.source.url.pattern.get.scm.org.repo}")
     private String urlPatternDataSourceGetScmOrgRepo;
 
+    @Value("${data.source.url.pattern.get.scm.org}")
+    private String urlPatternDataSourceScmOrg;
+
     @Value("${data.source.url.pattern.cxflow.properties}")
     private String urlPatternDataSourceScmOrgProperties;
 
@@ -128,19 +131,19 @@ public class DataStoreController implements DataController {
     }
 
     @Override
-    public void storeScmOrgRepos(@NonNull ScmRepoDto scmRepoDto) {
-        log.trace("storeScmOrgRepos: ScmRepoDto={}", scmRepoDto);
+    public void storeScmOrgRepos(@NonNull OrgReposDto orgReposDto) {
+        log.trace("storeScmOrgRepos: ScmRepoDto={}", orgReposDto);
 
         try {
-            restHelper.sendRequest(urlPatternDataSourceRepos, HttpMethod.POST, scmRepoDto, null,
+            restHelper.sendRequest(urlPatternDataSourceRepos, HttpMethod.POST, orgReposDto, null,
                                    ResponseEntity.class);
         }  catch(HttpClientErrorException ex){
             log.error("HttpClientErrorException: {}", ex.getMessage());
-            log.error(RestHelper.STORE_SCM_ORG_REPOS_FAILURE + " ScmRepoDto={}", scmRepoDto);
+            log.error(RestHelper.STORE_SCM_ORG_REPOS_FAILURE + " ScmRepoDto={}", orgReposDto);
             throw new DataStoreException(RestHelper.STORE_SCM_ORG_REPOS_FAILURE);
         }
-        log.debug("Save Scm: {} Org: {} Repos:{} passed successfully", scmRepoDto.getScmUrl(),
-                  scmRepoDto.getOrgName(), scmRepoDto.getRepoList());
+        log.debug("Save Scm: {} Org: {} Repos:{} passed successfully", orgReposDto.getScmUrl(),
+                  orgReposDto.getOrgName(), orgReposDto.getRepoList());
     }
 
     @Override
@@ -190,57 +193,76 @@ public class DataStoreController implements DataController {
     }
 
     @Override
-    public void updateScmOrgRepo(@NonNull ScmRepoDto scmRepoDto) {
-        log.trace("updateScmOrgRepo: SCMRepoDto={}", scmRepoDto);
+    public void updateScmOrgRepo(@NonNull OrgReposDto orgReposDto) {
+        log.trace("updateScmOrgRepo: SCMRepoDto={}", orgReposDto);
 
         try {
-            restHelper.sendRequest(urlPatternDataSourceRepos, HttpMethod.PUT, scmRepoDto,
-                                   null, ScmRepoDto.class);
+            restHelper.sendRequest(urlPatternDataSourceRepos, HttpMethod.PUT, orgReposDto,
+                                   null, OrgReposDto.class);
         }  catch(HttpClientErrorException ex){
             if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                log.error(RestHelper.MISSING_ORG_REPO + " orgName={}, repoName={}", scmRepoDto.getOrgName(),
-                          scmRepoDto.getRepoList());
+                log.error(RestHelper.MISSING_ORG_REPO + " orgName={}, repoName={}", orgReposDto.getOrgName(),
+                          orgReposDto.getRepoList());
                 throw new DataStoreException(RestHelper.MISSING_ORG_REPO);
             } else {
                 log.error("HttpClientErrorException: {}", ex.getMessage());
-                log.error(RestHelper.UPDATE_ORG_REPO_FAILURE + " orgName={}, repoName={}", scmRepoDto.getOrgName(),
-                          scmRepoDto.getRepoList());
+                log.error(RestHelper.UPDATE_ORG_REPO_FAILURE + " orgName={}, repoName={}", orgReposDto
+                                  .getOrgName(),
+                          orgReposDto.getRepoList());
                 throw new DataStoreException(RestHelper.GET_ORG_REPO_FAILURE);
             }
         }
         log.debug("Update in DataStore Scm: {} Org: {} Repo: {} passed successfully",
-                  scmRepoDto.getScmUrl(), scmRepoDto.getOrgName(), scmRepoDto.getRepoList());
+                  orgReposDto.getScmUrl(), orgReposDto.getOrgName(), orgReposDto.getRepoList());
     }
 
     @Override
-    public OrgSettingsWebDto getScmOrgSettings(@NonNull String scmUrl, @NonNull String orgName) {
-        log.trace("getScmOrgCxGo: scmUrl={}, orgName:{}", scmUrl, orgName);
-        //TODO edit to real RST request
-        return OrgSettingsWebDto.builder().team("CxFlowTeam").cxgoSecret("1234").build();
+    public OrgPropertiesDto getScmOrgSettings(@NonNull String scmUrl, @NonNull String orgName) {
+        log.trace("getScmOrgSettings: scmUrl={}, orgName:{}", scmUrl, orgName);
+
+        ResponseEntity<OrgPropertiesDto> responseEntity = null;
+        String path = String.format(urlPatternDataSourceScmOrg, scmUrl, orgName);
+        try {
+            responseEntity = restHelper.sendRequest(path, HttpMethod.GET, null, null, OrgPropertiesDto.class);
+        }  catch(HttpClientErrorException ex){
+            if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                log.error(RestHelper.MISSING_SCM_ORG + " scmUrl={}, orgName={}", scmUrl, orgName);
+                throw new DataStoreException(RestHelper.MISSING_SCM_ORG);
+            } else {
+                log.error("HttpClientErrorException: {}", ex.getMessage());
+                log.error(RestHelper.GET_SCM_ORG_PROPERTIES_FAILURE + " scmUrl={}, orgName={}",
+                          scmUrl, orgName);
+                throw new DataStoreException(RestHelper.GET_SCM_ORG_PROPERTIES_FAILURE);
+            }
+        }
+        OrgPropertiesDto orgPropertiesDto = responseEntity.getBody();
+        log.info("orgPropertiesDto: {}", orgPropertiesDto);
+        return responseEntity.getBody();
     }
 
     @Override
-    public void storeScmOrgSettings(@NonNull CxFlowPropertiesDto cxFlowPropertiesDto) {
-        log.trace("storeScmOrgCxGo: CxFlowPropertiesDto={}", cxFlowPropertiesDto);
+    public void storeScmOrgSettings(@NonNull OrgPropertiesDto orgPropertiesDto) {
+        log.trace("storeScmOrgSettings: CxFlowPropertiesDto={}", orgPropertiesDto);
 
         try {
-            restHelper.sendRequest(urlPatternDataSourceScmOrgProperties, HttpMethod.POST, cxFlowPropertiesDto,
-                                   null, CxFlowPropertiesDto.class);
+            restHelper.sendRequest(urlPatternDataSourceScmOrgProperties, HttpMethod.POST,
+                                   orgPropertiesDto,
+                                   null, OrgPropertiesDto.class);
         }  catch(HttpClientErrorException ex){
             if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 log.error(RestHelper.MISSING_SCM_ORG + " scmType={}, orgName={}",
-                          cxFlowPropertiesDto.getScmUrl(),
-                          cxFlowPropertiesDto.getOrgName());
+                          orgPropertiesDto.getScmUrl(),
+                          orgPropertiesDto.getOrgName());
                 throw new DataStoreException(RestHelper.MISSING_SCM_ORG);
             } else {
                 log.error("HttpClientErrorException: {}", ex.getMessage());
                 log.error(RestHelper.STORE_SCM_ORG_PROPERTIES_FAILURE + " scmType={}, orgName={}"
-                        , cxFlowPropertiesDto.getScmUrl(),
-                          cxFlowPropertiesDto.getOrgName());
+                        , orgPropertiesDto.getScmUrl(),
+                          orgPropertiesDto.getOrgName());
                 throw new DataStoreException(RestHelper.STORE_SCM_ORG_PROPERTIES_FAILURE);
             }
         }
 
-        log.info("Update in DataStore CxFlow properties: {} passed successfully", cxFlowPropertiesDto);
+        log.info("Update org settings: {} in DataStore passed successfully", orgPropertiesDto);
     }
 }

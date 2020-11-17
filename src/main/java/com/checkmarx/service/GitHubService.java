@@ -120,14 +120,15 @@ public class GitHubService implements ScmService {
                 repoGithubDto.setWebHookEnabled(false);
             }
         }
-        ScmRepoDto scmRepoDto = Converter.convertToSCMRepoDto(scmAccessTokenDto, orgRepoGithubDtos);
-        dataStoreController.updateScmOrgRepo(scmRepoDto);
+        OrgReposDto orgReposDto = Converter.convertToSCMRepoDto(scmAccessTokenDto, orgRepoGithubDtos);
+        dataStoreController.updateScmOrgRepo(orgReposDto);
         return Converter.convertToListRepoWebDto(orgRepoGithubDtos);
     }
 
     @Override
-    public RepoDto getScmOrgRepo(@NonNull String orgName, @NonNull String repoName) {
-       return dataStoreController.getScmOrgRepo(githubUrl, orgName, repoName);
+    public RepoWebDto getScmOrgRepo(@NonNull String orgName, @NonNull String repoName) {
+        RepoDto repoDto = dataStoreController.getScmOrgRepo(githubUrl, orgName, repoName);
+        return Converter.convertRepoDtoToRepoWebDto(repoDto);
     }
 
     @Override
@@ -146,7 +147,7 @@ public class GitHubService implements ScmService {
         }
         RepoDto repoDto = RepoDto.builder().name(repoName).isWebhookConfigured(true).webhookId(
                 webhookGithubDto.getId()).build();
-        dataStoreController.updateScmOrgRepo(ScmRepoDto.builder()
+        dataStoreController.updateScmOrgRepo(OrgReposDto.builder()
                                                      .orgName(scmAccessTokenDto.getOrgName())
                                                      .scmUrl(scmAccessTokenDto.getScmUrl())
                                                      .repoList(Collections.singletonList(repoDto))
@@ -173,7 +174,7 @@ public class GitHubService implements ScmService {
         }
         RepoDto repoDto =
                 RepoDto.builder().name(repoName).webhookId(null).isWebhookConfigured(false).build();
-        dataStoreController.updateScmOrgRepo(ScmRepoDto.builder()
+        dataStoreController.updateScmOrgRepo(OrgReposDto.builder()
                                                      .orgName(scmAccessTokenDto.getOrgName())
                                                      .scmUrl(scmAccessTokenDto.getScmUrl())
                                                      .repoList(Collections.singletonList(repoDto))
@@ -181,16 +182,18 @@ public class GitHubService implements ScmService {
     }
 
     @Override
-    public OrgSettingsWebDto getCxGoSettings(@NonNull String orgName) {
-        return dataStoreController.getScmOrgSettings(githubUrl, orgName);
+    public OrgSettingsWebDto getOrgSettings(@NonNull String orgName) {
+        OrgPropertiesDto orgPropertiesDto = dataStoreController.getScmOrgSettings(githubUrl,
+                                                                                 orgName);
+        return Converter.convertOrgProToOrgSettingsWebDto(orgPropertiesDto);
     }
 
     @Override
-    public void setCxGoSettings(@NonNull String orgName, @NonNull OrgSettingsWebDto orgSettingsWebDto) {
-        CxFlowPropertiesDto cxFlowPropertiesDto = Converter.convertToCxFlowProperties(githubUrl,
-                                                                                      orgName,
-                                                                                      orgSettingsWebDto);
-        dataStoreController.storeScmOrgSettings(cxFlowPropertiesDto);
+    public void setOrgSettings(@NonNull String orgName, @NonNull OrgSettingsWebDto orgSettingsWebDto) {
+        OrgPropertiesDto orgPropertiesDto = Converter.convertToCxFlowProperties(githubUrl,
+                                                                                orgName,
+                                                                                orgSettingsWebDto);
+        dataStoreController.storeScmOrgSettings(orgPropertiesDto);
     }
 
     private WebhookGithubDto initWebhook() {

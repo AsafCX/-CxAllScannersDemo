@@ -1,7 +1,6 @@
 package com.checkmarx.controller;
 
 import com.checkmarx.dto.datastore.*;
-import com.checkmarx.dto.web.OrgSettingsWebDto;
 import lombok.NonNull;
 
 import java.util.List;
@@ -12,11 +11,11 @@ public interface DataController {
     public ScmAccessTokenDto getSCMOrgToken(@NonNull String scmUrl, @NonNull String orgName);
     public void storeScm(@NonNull ScmDto scmDto);
     public ScmDto getScm(@NonNull String scmUrl);
-    public void storeScmOrgRepos(@NonNull ScmRepoDto scmRepoDto);
+    public void storeScmOrgRepos(@NonNull OrgReposDto orgReposDto);
     public List<RepoDto> getScmOrgRepos(@NonNull String scmUrl, @NonNull String orgName);
     public RepoDto getScmOrgRepo(@NonNull String scmUrl, @NonNull String orgName,
                                  @NonNull String repoName);
-    public void updateScmOrgRepo(@NonNull ScmRepoDto scmRepoDto);
-    public OrgSettingsWebDto getScmOrgSettings(@NonNull String scmUrl, @NonNull String orgName);
-    public void storeScmOrgSettings(@NonNull CxFlowPropertiesDto cxFlowPropertiesDto);
+    public void updateScmOrgRepo(@NonNull OrgReposDto orgReposDto);
+    public OrgPropertiesDto getScmOrgSettings(@NonNull String scmUrl, @NonNull String orgName);
+    public void storeScmOrgSettings(@NonNull OrgPropertiesDto orgPropertiesDto);
 }

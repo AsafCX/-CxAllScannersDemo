@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CxFlowPropertiesDto {
+public class OrgPropertiesDto {
     @JsonProperty("scm_url")
     private String scmUrl;
     @JsonProperty("org_name")

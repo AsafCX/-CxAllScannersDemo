@@ -103,8 +103,8 @@ public class WebController {
     @GetMapping(value = "/{scmType}/orgs/{orgName}/settings")
     public ResponseEntity getOrgSettings(@PathVariable String scmType, @PathVariable String orgName) {
         log.trace("getOrgSettings: scmType={}, orgName={}", scmType, orgName);
-        OrgSettingsWebDto orgSettingsWebDto = getScmService(scmType).getCxGoSettings(orgName);
-        log.info("Return CxGo organization settings: {} for scm: {}, org: {}", orgSettingsWebDto, scmType,
+        OrgSettingsWebDto orgSettingsWebDto = getScmService(scmType).getOrgSettings(orgName);
+        log.info("Return organization settings: {} for scm: {}, org: {}", orgSettingsWebDto, scmType,
                  orgName);
         return ResponseEntity.ok(orgSettingsWebDto);
     }
@@ -114,8 +114,8 @@ public class WebController {
                                   @RequestBody OrgSettingsWebDto orgSettingsWebDto) {
         log.trace("setOrgSettings: scmType={}, orgName={}, OrgSettingsWebDto={}", scmType, orgName,
                   orgSettingsWebDto);
-        getScmService(scmType).setCxGoSettings(orgName, orgSettingsWebDto);
-        log.info("{} CxGo organization settings saved successfully!", orgSettingsWebDto);
+        getScmService(scmType).setOrgSettings(orgName, orgSettingsWebDto);
+        log.info("{} organization settings saved successfully!", orgSettingsWebDto);
         return ResponseEntity.ok().build();
     }
 
