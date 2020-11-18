@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface DataController {
 
-    public void storeScmOrgToken(@NonNull ScmAccessTokenDto scmAccessToken);
+    public void storeScmOrgsToken(@NonNull List<ScmAccessTokenDto> scmAccessTokenDtos);
     public ScmAccessTokenDto getSCMOrgToken(@NonNull String scmUrl, @NonNull String orgName);
     public void storeScm(@NonNull ScmDto scmDto);
     public ScmDto getScm(@NonNull String scmUrl);

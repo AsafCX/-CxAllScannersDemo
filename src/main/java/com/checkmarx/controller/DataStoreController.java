@@ -3,7 +3,6 @@ package com.checkmarx.controller;
 import com.checkmarx.controller.exception.DataStoreException;
 import com.checkmarx.controller.exception.GitHubException;
 import com.checkmarx.dto.datastore.*;
-import com.checkmarx.dto.web.OrgSettingsWebDto;
 import com.checkmarx.utils.RestHelper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -49,24 +48,22 @@ public class DataStoreController implements DataController {
     @Value("${data.source.url.pattern.cxflow.properties}")
     private String urlPatternDataSourceScmOrgProperties;
 
-
     @Autowired
     RestHelper restHelper;
 
     @Override
-    public void storeScmOrgToken(@NonNull ScmAccessTokenDto scmAccessToken) {
-        log.trace("storeScmOrgToken: scmAccessToken={}", scmAccessToken);
+    public void storeScmOrgsToken(@NonNull List<ScmAccessTokenDto> scmAccessTokenDtos) {
+        log.trace("storeScmOrgsToken: ScmAccessTokenDto={}", scmAccessTokenDtos);
 
         try {
-            restHelper.sendRequest(urlPatternDataSourceSaveScmOrgToken, HttpMethod.PUT, scmAccessToken
+            restHelper.sendRequest(urlPatternDataSourceSaveScmOrgToken, HttpMethod.PUT, scmAccessTokenDtos
                     , null , ResponseEntity.class);
         }  catch(HttpClientErrorException ex){
             log.error("HttpClientErrorException: {}", ex.getMessage());
             log.error(RestHelper.SAVE_ACCESS_TOKEN_FAILURE);
             throw new DataStoreException(RestHelper.SAVE_ACCESS_TOKEN_FAILURE);
         }
-        log.debug("Save Scm: {} org: {} token passed successfully!", scmAccessToken.getScmUrl(),
-                 scmAccessToken.getOrgName());
+        log.debug("Save orgs: {} token passed successfully!", scmAccessTokenDtos);
     }
 
     @Override

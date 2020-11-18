@@ -4,6 +4,7 @@ import com.checkmarx.dto.datastore.OrgPropertiesDto;
 import com.checkmarx.dto.datastore.RepoDto;
 import com.checkmarx.dto.datastore.ScmAccessTokenDto;
 import com.checkmarx.dto.datastore.OrgReposDto;
+import com.checkmarx.dto.github.AccessTokenGithubDto;
 import com.checkmarx.dto.github.OrgGithubDto;
 import com.checkmarx.dto.github.RepoGithubDto;
 import com.checkmarx.dto.web.OrgSettingsWebDto;
@@ -18,7 +19,7 @@ import java.util.List;
 public class Converter {
 
 
-    public static OrgReposDto convertToSCMRepoDto(ScmAccessTokenDto scmAccessTokenDto, List<RepoGithubDto> orgRepoGithubDtos) {
+    public static OrgReposDto convertToOrgRepoDto(ScmAccessTokenDto scmAccessTokenDto, List<RepoGithubDto> orgRepoGithubDtos) {
         return OrgReposDto.builder()
                         .scmUrl(scmAccessTokenDto.getScmUrl())
                         .orgName(scmAccessTokenDto.getOrgName())
@@ -96,5 +97,18 @@ public class Converter {
                 .team(orgPropertiesDto.getCxTeam())
                 .cxgoSecret(orgPropertiesDto.getCxGoToken())
                 .build();
+    }
+
+    public static List<ScmAccessTokenDto> convertToListOrgAccessToken(AccessTokenGithubDto accessToken, List<OrgGithubDto> userOrgGithubDtos) {
+        List<ScmAccessTokenDto> scmAccessTokenDtos = new ArrayList<>();
+        for (OrgGithubDto orgGithubDto: userOrgGithubDtos) {
+            scmAccessTokenDtos.add(ScmAccessTokenDto.builder()
+                                           .orgName(orgGithubDto.getLogin())
+                                           .scmUrl("github.com")
+                                           .accessToken(accessToken.getAccessToken())
+                                           .tokenType(TokenType.ACCESS.getType())
+                                           .build());
+        }
+        return scmAccessTokenDtos;
     }
 }
