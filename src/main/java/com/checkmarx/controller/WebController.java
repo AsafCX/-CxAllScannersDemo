@@ -49,7 +49,7 @@ public class WebController {
      *                  successfully, taken from request param "code", using it to create access token
      * @return ResponseEntity with status:200, Body: list of all user organizations
      */
-    @Operation(summary = "Rest api used to first create OAuth access token and retrieve all user " +
+    @Operation(summary = "Rest api used to create OAuth access token and retrieve all user " +
             "organizations from given scm")
     @PostMapping(value = "/{scmType}/user/orgs")
     public ResponseEntity getOrganizations(@PathVariable String scmType,
