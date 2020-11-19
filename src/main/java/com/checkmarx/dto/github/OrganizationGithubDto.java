@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @AllArgsConstructor
 @NoArgsConstructor
-public @Data class OrgGithubDto {
+public @Data class OrganizationGithubDto {
 
     @JsonProperty("login")
     private String login;

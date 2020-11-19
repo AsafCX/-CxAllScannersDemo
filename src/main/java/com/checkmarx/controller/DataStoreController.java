@@ -1,7 +1,7 @@
 package com.checkmarx.controller;
 
 import com.checkmarx.controller.exception.DataStoreException;
-import com.checkmarx.controller.exception.GitHubException;
+import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.datastore.*;
 import com.checkmarx.utils.RestHelper;
 import lombok.NonNull;
@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 
 @Slf4j
@@ -21,36 +22,54 @@ import java.util.List;
 @Qualifier("dataStoreController")
 public class DataStoreController implements DataController {
 
-    @Value("${data.source.url.pattern.save.scm.token}")
+    @Value("${DATA_STORE}")
+    private String dataStoreBase;
+
     private String urlPatternDataSourceSaveScmOrgToken;
 
-    @Value("${data.source.url.pattern.get.scm.token}")
     private String urlPatternDataSourceGetScmOrgToken;
 
-    @Value("${data.source.url.pattern.store.scm}")
     private String urlPatternDataSourceStoreScm;
 
-    @Value("${data.source.url.pattern.get.scm}")
     private String urlPatternDataSourceGetScm;
 
-    @Value("${data.source.url.pattern.repos}")
     private String urlPatternDataSourceRepos;
 
-    @Value("${data.source.url.pattern.get.scm.org.repos}")
     private String urlPatternDataSourceGetScmOrgRepos;
 
-    @Value("${data.source.url.pattern.get.scm.org.repo}")
     private String urlPatternDataSourceGetScmOrgRepo;
 
-    @Value("${data.source.url.pattern.get.scm.org}")
     private String urlPatternDataSourceScmOrg;
 
-    @Value("${data.source.url.pattern.cxflow.properties}")
     private String urlPatternDataSourceScmOrgProperties;
+    
 
     @Autowired
     RestHelper restHelper;
 
+
+    @PostConstruct
+    private void initMembers() {
+        urlPatternDataSourceSaveScmOrgToken = dataStoreBase + "/tokens/storeScmAccessToken";
+
+        urlPatternDataSourceGetScmOrgToken = dataStoreBase + "/tokens?scmUrl=%s&orgName=%s";
+
+        urlPatternDataSourceStoreScm = dataStoreBase + "/scms/storeScm";
+
+        urlPatternDataSourceGetScm = dataStoreBase + "/scms/%s";
+
+        urlPatternDataSourceRepos = dataStoreBase + "/repos";
+
+        urlPatternDataSourceGetScmOrgRepos = dataStoreBase + "/repos?scmBaseUrl=%s&orgName=%s";
+
+        urlPatternDataSourceGetScmOrgRepo = dataStoreBase + "/repos/%s?scmBaseUrl=%s&orgName=%s";
+
+        urlPatternDataSourceScmOrg = dataStoreBase + "/orgs/properties?scmBaseUrl=%s&orgName=%s";
+
+        urlPatternDataSourceScmOrgProperties = dataStoreBase + "/orgs/properties";
+
+    }
+    
     @Override
     public void storeScmOrgsToken(@NonNull List<ScmAccessTokenDto> scmAccessTokenDtos) {
         log.trace("storeScmOrgsToken: ScmAccessTokenDto={}", scmAccessTokenDtos);
@@ -120,7 +139,7 @@ public class DataStoreController implements DataController {
                 .isEmpty(scmDto.getClientId()) || StringUtils.isEmpty(scmDto.getClientSecret())){
             log.error(RestHelper.SCM_DETAILS_MISSING + ", Scm details received from DataStore" +
                               " are empty");
-            throw new GitHubException(RestHelper.SCM_DETAILS_MISSING + ", Scm details received from DataStore" +
+            throw new ScmException(RestHelper.SCM_DETAILS_MISSING + ", Scm details received from DataStore" +
                                               " are empty");
         }
         log.debug("Get from DataStore Scm: {} passed successfully",scmUrl);

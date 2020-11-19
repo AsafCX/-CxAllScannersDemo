@@ -1,14 +1,19 @@
 package com.checkmarx.utils;
 
+
+import com.checkmarx.dto.AccessTokenDto;
 import com.checkmarx.dto.datastore.OrgPropertiesDto;
+import com.checkmarx.dto.datastore.OrgReposDto;
 import com.checkmarx.dto.datastore.RepoDto;
 import com.checkmarx.dto.datastore.ScmAccessTokenDto;
-import com.checkmarx.dto.datastore.OrgReposDto;
+
+import com.checkmarx.dto.github.OrganizationGithubDto;
+
 import com.checkmarx.dto.github.AccessTokenGithubDto;
-import com.checkmarx.dto.github.OrgGithubDto;
+
 import com.checkmarx.dto.github.RepoGithubDto;
 import com.checkmarx.dto.web.OrgSettingsWebDto;
-import com.checkmarx.dto.web.OrgWebDto;
+import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import org.springframework.stereotype.Component;
 
@@ -44,16 +49,16 @@ public class Converter {
                 .build();
     }
 
-    public static List<OrgWebDto> convertToListOrgWebDtos(List<OrgGithubDto> userOrgGithubDtos) {
-        List<OrgWebDto> orgWebDtos = new ArrayList<>();
-        for (OrgGithubDto orgGithubDto: userOrgGithubDtos) {
+    public static List<OrganizationWebDto> convertToListOrgWebDtos(List<OrganizationGithubDto> userOrgGithubDtos) {
+        List<OrganizationWebDto> orgWebDtos = new ArrayList<>();
+        for (OrganizationGithubDto orgGithubDto: userOrgGithubDtos) {
             orgWebDtos.add(Converter.convertToOrgWebDto(orgGithubDto));
         }
         return orgWebDtos;
     }
 
-    public static OrgWebDto convertToOrgWebDto(OrgGithubDto orgGithubDto) {
-        return OrgWebDto.builder().id(orgGithubDto.getLogin()).name(orgGithubDto.getLogin()).build();
+    public static OrganizationWebDto convertToOrgWebDto(OrganizationGithubDto orgGithubDto) {
+        return OrganizationWebDto.builder().id(orgGithubDto.getLogin()).name(orgGithubDto.getLogin()).build();
     }
 
     public static List<RepoWebDto> convertToListRepoWebDto(List<RepoGithubDto> orgRepoGithubDtos) {
@@ -99,15 +104,28 @@ public class Converter {
                 .build();
     }
 
-    public static List<ScmAccessTokenDto> convertToListOrgAccessToken(AccessTokenGithubDto accessToken, List<OrgGithubDto> userOrgGithubDtos) {
+    public static List<ScmAccessTokenDto> convertToListGithubOrgAccessToken(AccessTokenDto accessToken, List<OrganizationGithubDto> userOrgGithubDtos, String scmUrl) {
         List<ScmAccessTokenDto> scmAccessTokenDtos = new ArrayList<>();
-        for (OrgGithubDto orgGithubDto: userOrgGithubDtos) {
+        for (OrganizationGithubDto orgGithubDto: userOrgGithubDtos) {
             scmAccessTokenDtos.add(ScmAccessTokenDto.builder()
                                            .orgName(orgGithubDto.getLogin())
-                                           .scmUrl("github.com")
+                                            .scmUrl(scmUrl)
                                            .accessToken(accessToken.getAccessToken())
                                            .tokenType(TokenType.ACCESS.getType())
                                            .build());
+        }
+        return scmAccessTokenDtos;
+    }
+
+    public static List<ScmAccessTokenDto> convertToListGitlabOrgAccessToken(AccessTokenDto accessToken, List<OrganizationWebDto> userOrgGithubDtos, String scmUrl) {
+        List<ScmAccessTokenDto> scmAccessTokenDtos = new ArrayList<>();
+        for (OrganizationWebDto orgDto: userOrgGithubDtos) {
+            scmAccessTokenDtos.add(ScmAccessTokenDto.builder()
+                    .orgName(orgDto.getId())
+                    .scmUrl(scmUrl)
+                    .accessToken(accessToken.getAccessToken())
+                    .tokenType(TokenType.ACCESS.getType())
+                    .build());
         }
         return scmAccessTokenDtos;
     }

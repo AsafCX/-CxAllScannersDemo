@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public @Data class OrgWebDto {
+public @Data class OrganizationWebDto {
 
     @JsonProperty("id")
     private String id;

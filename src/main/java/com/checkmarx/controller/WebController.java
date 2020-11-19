@@ -1,11 +1,13 @@
 package com.checkmarx.controller;
 
 import com.checkmarx.dto.web.OrgSettingsWebDto;
-import com.checkmarx.dto.web.OrgWebDto;
+
+import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.dto.web.ScmConfigWebDto;
+import com.checkmarx.service.GenericScmService;
 import com.checkmarx.service.ScmService;
-import com.checkmarx.utils.RestHelper;
+
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,13 +22,10 @@ import java.util.List;
 public class WebController {
 
     @Autowired
-    ScmService scmService;
-
-    @Autowired
-    RestHelper restHelper;
-
-    @Autowired
     ApplicationContext applicationContext;
+    
+    @Autowired
+    GenericScmService genericScmService;
 
     /**
      * @param scmType Given Scm to handle
@@ -38,12 +37,16 @@ public class WebController {
     @GetMapping(value = "/{scmType}/config")
     public ResponseEntity getConfiguration(@PathVariable String scmType) {
         log.trace("getConfiguration: scmType={}", scmType);
-        ScmConfigWebDto scmConfigWebDto = getScmService(scmType).getScmConfiguration();
+        String baseUrl = getScmService(scmType).getBaseUrl();
+        String scopes = getScmService(scmType).getScopes();
+        ScmConfigWebDto scmConfigWebDto = genericScmService.getScmConfiguration(baseUrl,scopes);
         log.info("Return Scm: {} Configuration: {}", scmType, scmConfigWebDto);
         return ResponseEntity.ok(scmConfigWebDto);
     }
 
     /**
+     * Rest api used to first create OAuth access token and retrieve all user organizations from given scm
+     *
      * @param scmType Given Scm to handle
      * @param authCode given from FE application after first-step OAuth implementation passed
      *                  successfully, taken from request param "code", using it to create access token
@@ -55,7 +58,7 @@ public class WebController {
     public ResponseEntity getOrganizations(@PathVariable String scmType,
                                            @RequestParam String authCode) {
         log.trace("getOrganizations: scmType={}, authCode={}", scmType, authCode);
-        List<OrgWebDto> userOrgGithubDtos = getScmService(scmType).getOrganizations(authCode);
+        List<OrganizationWebDto> userOrgGithubDtos = getScmService(scmType).getOrganizations(authCode);
         log.info("Return Scm: {} Organizations: {}", scmType, userOrgGithubDtos);
         return ResponseEntity.ok(userOrgGithubDtos);
     }
@@ -123,7 +126,8 @@ public class WebController {
     @GetMapping(value = "/{scmType}/orgs/{orgName}/settings")
     public ResponseEntity getOrgSettings(@PathVariable String scmType, @PathVariable String orgName) {
         log.trace("getOrgSettings: scmType={}, orgName={}", scmType, orgName);
-        OrgSettingsWebDto orgSettingsWebDto = getScmService(scmType).getOrgSettings(orgName);
+        String baseUrl = getScmService(scmType).getBaseUrl();
+        OrgSettingsWebDto orgSettingsWebDto = genericScmService.getOrgSettings(orgName,baseUrl);
         log.info("Return organization settings: {} for scm: {}, org: {}", orgSettingsWebDto, scmType,
                  orgName);
         return ResponseEntity.ok(orgSettingsWebDto);
@@ -140,7 +144,8 @@ public class WebController {
                                   @RequestBody OrgSettingsWebDto orgSettingsWebDto) {
         log.trace("setOrgSettings: scmType={}, orgName={}, OrgSettingsWebDto={}", scmType, orgName,
                   orgSettingsWebDto);
-        getScmService(scmType).setOrgSettings(orgName, orgSettingsWebDto);
+        String baseUrl = getScmService(scmType).getBaseUrl();
+        genericScmService.setOrgSettings(orgName, orgSettingsWebDto,baseUrl);
         log.info("{} organization settings saved successfully!", orgSettingsWebDto);
         return ResponseEntity.ok().build();
     }

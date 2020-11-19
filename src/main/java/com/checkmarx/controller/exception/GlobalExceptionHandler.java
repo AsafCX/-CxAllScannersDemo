@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(value = {DataStoreException.class, GitHubException.class})
+    @ExceptionHandler(value = {DataStoreException.class, ScmException.class})
     public ResponseEntity<Object> handleCustomException(RuntimeException e){
             ExceptionDetails exceptionDetails = ExceptionDetails.builder()
                     .message(e.getMessage())
