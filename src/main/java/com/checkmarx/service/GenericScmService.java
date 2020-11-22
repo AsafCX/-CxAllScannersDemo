@@ -1,30 +1,21 @@
 package com.checkmarx.service;
 
 import com.checkmarx.controller.DataController;
-import com.checkmarx.controller.exception.ScmException;
-import com.checkmarx.dto.AccessTokenDto;
+import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.OrgPropertiesDto;
-import com.checkmarx.dto.datastore.RepoDto;
+import com.checkmarx.dto.datastore.ScmAccessTokenDto;
 import com.checkmarx.dto.datastore.ScmDto;
 import com.checkmarx.dto.web.OrgSettingsWebDto;
-
-import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.dto.web.ScmConfigWebDto;
 import com.checkmarx.utils.Converter;
 import com.checkmarx.utils.RestHelper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.HashMap;
-
-import java.util.Map;
-
 @Slf4j
-@Service("AbstractScmService")
+@Service("GenericScmService")
 public class GenericScmService {
     
     @Autowired
@@ -32,15 +23,6 @@ public class GenericScmService {
 
     @Autowired
     RestHelper restHelper;
-
-
-    public RepoWebDto getScmOrgRepo(@NonNull String orgName, @NonNull String repoName, String baseUrl) {
-        RepoDto repoDto = dataStoreController.getScmOrgRepo(baseUrl, orgName, repoName);
-        return Converter.convertRepoDtoToRepoWebDto(repoDto);
-    }
-    
-    private Map<String, AccessTokenDto> synchronizedMap =
-            Collections.synchronizedMap(new HashMap<>());
 
 
     public ScmConfigWebDto getScmConfiguration(String baseUrl, String scopes) {
@@ -62,4 +44,15 @@ public class GenericScmService {
                 orgSettingsWebDto);
         dataStoreController.storeScmOrgSettings(orgPropertiesDto);
     }
+
+    public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgName, String baseUrl) {
+        ScmAccessTokenDto scmAccessTokenDto = dataStoreController.getSCMOrgToken(baseUrl, orgName);
+        OrgPropertiesDto orgPropertiesDto = dataStoreController.getScmOrgSettings(baseUrl, orgName);
+        return CxFlowConfigDto.builder()
+                .team(orgPropertiesDto.getCxTeam())
+                .cxgoSecret(orgPropertiesDto.getCxGoToken())
+                .token(scmAccessTokenDto.getAccessToken())
+                .build();
+    }
+
 }

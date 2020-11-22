@@ -12,7 +12,6 @@ import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.utils.Converter;
 import com.checkmarx.utils.RestHelper;
-import com.checkmarx.utils.TokenType;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +35,6 @@ public class GitHubService implements ScmService {
     
     private String URL_GET_ORGANIZATIONS = "https://api.github.com/user/orgs";
     
-    private String URL_GET_PROPERTIES = "https://api.github.com/user/repos";
-    
     private String URL_GET_REPOS = "https://api.github.com/orgs/%s/repos?type=all&per_page=100";
     
     private String URL_GET_WEBHOOK = "https://api.github.com/repos/%s/%s/hooks";
@@ -57,13 +54,6 @@ public class GitHubService implements ScmService {
 
     @Value("${cxflow.webhook.url}")
     private String cxFlowWebHook;
-    
-
-    protected String buildTokenPath(String oAuthCode, ScmDto scmDto) {
-        return String.format(URL_GENERATE_TOKEN, scmDto.getClientId(),
-                scmDto.getClientSecret(),
-                oAuthCode);
-    }
 
     /**
      * generateAccessToken method using OAuth code, client id and client secret generates access

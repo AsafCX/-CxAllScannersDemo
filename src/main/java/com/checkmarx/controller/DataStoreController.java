@@ -22,7 +22,7 @@ import java.util.List;
 @Qualifier("dataStoreController")
 public class DataStoreController implements DataController {
 
-    @Value("${DATA_STORE}")
+    @Value("${data.store}")
     private String dataStoreBase;
 
     private String urlPatternDataSourceSaveScmOrgToken;
