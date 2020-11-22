@@ -251,8 +251,6 @@ public class DataStoreController implements DataController {
                 throw new DataStoreException(RestHelper.GET_SCM_ORG_PROPERTIES_FAILURE);
             }
         }
-        OrgPropertiesDto orgPropertiesDto = responseEntity.getBody();
-        log.info("orgPropertiesDto: {}", orgPropertiesDto);
         return responseEntity.getBody();
     }
 

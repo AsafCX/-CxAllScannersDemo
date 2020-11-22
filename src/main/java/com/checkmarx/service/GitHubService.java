@@ -3,6 +3,7 @@ package com.checkmarx.service;
 import com.checkmarx.controller.DataController;
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.AccessTokenDto;
+import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.github.AccessTokenGithubDto;
 import com.checkmarx.dto.github.OrganizationGithubDto;
@@ -40,7 +41,9 @@ public class GitHubService implements ScmService {
     private String URL_GET_WEBHOOK = "https://api.github.com/repos/%s/%s/hooks";
     
     private String URL_DELETE_WEBHOOK = "https://api.github.com/repos/%s/%s/hooks/%s";
-    
+
+    private String URL_VALIDATE_TOKEN = "https://api.github.com/user";
+
     private String GIT_HUB_URL = "github.com";
     
     private String SCOPES = "repo,admin:repo_hook,read:org,read:user";
@@ -88,7 +91,7 @@ public class GitHubService implements ScmService {
      * @return true if verification passed successfully
      */
     protected boolean verifyAccessToken(AccessTokenDto accessToken) {
-        return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
+        return accessToken != null && !StringUtils.isEmpty(accessToken.getAccessToken());
     }
 
     @Override
@@ -183,7 +186,21 @@ public class GitHubService implements ScmService {
                                                      .build());
     }
 
-  
+    @Override
+    public CxFlowConfigDto validateCxFlowConfiguration(@NonNull CxFlowConfigDto cxFlowConfigDto) {
+        if(!StringUtils.isEmpty(cxFlowConfigDto.getToken()) && !StringUtils.isEmpty(cxFlowConfigDto.getTeam()) && !StringUtils.isEmpty(cxFlowConfigDto.getCxgoSecret())){
+            try {
+                restHelper.sendBearerAuthRequest(URL_VALIDATE_TOKEN, HttpMethod.GET,null, null,
+                                                 CxFlowConfigDto.class,
+                                                 cxFlowConfigDto.getToken());
+            } catch (HttpClientErrorException ex){
+                log.error("Github Token validation failure: {}", ex.getMessage());
+                throw new ScmException("Github Token authorization failure");
+            }
+        }
+        log.info("Github token validation passed successfully!");
+        return cxFlowConfigDto;
+    }
 
     private WebhookGithubDto initWebhook() {
         return  WebhookGithubDto.builder()

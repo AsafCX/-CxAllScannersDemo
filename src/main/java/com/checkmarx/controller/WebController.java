@@ -147,7 +147,7 @@ public class WebController {
         log.trace("setOrgSettings: scmType={}, orgName={}, OrgSettingsWebDto={}", scmType, orgName,
                   orgSettingsWebDto);
         String baseUrl = getScmService(scmType).getBaseUrl();
-        genericScmService.setOrgSettings(orgName, orgSettingsWebDto,baseUrl);
+        genericScmService.setOrgSettings(orgName, orgSettingsWebDto, baseUrl);
         log.info("{} organization settings saved successfully!", orgSettingsWebDto);
         return ResponseEntity.ok().build();
     }
@@ -155,15 +155,17 @@ public class WebController {
     /**
      * @param scmType Given Scm to handle
      * @param orgName organization name
-     * @return ResponseEntity with http status:200
+     * @return ResponseEntity with http status:200 body: CxFlow Configuration including CxGo
+     * secret, team and Scm access token
      */
-    @Operation(summary = "Rest api used by CxFlow app - in order to get CxFlow org settings")
+    @Operation(summary = "Rest api used by CxFlow app - Get CxFlow org settings and token")
     @GetMapping(value = "/{scmType}/orgs/{orgName}/cxflow")
     public ResponseEntity<CxFlowConfigDto> getCxFlowConfiguration(@PathVariable String scmType,
                                                   @PathVariable String orgName) {
         log.trace("getCxFlowConfiguration: scmType={}, orgName={}", scmType, orgName);
         String baseUrl = getScmService(scmType).getBaseUrl();
         CxFlowConfigDto cxFlowConfigDto = genericScmService.getCxFlowConfiguration(orgName, baseUrl);
+        cxFlowConfigDto = getScmService(scmType).validateCxFlowConfiguration(cxFlowConfigDto);
         log.info("Return CxFlow organization: {} settings: {}", orgName, cxFlowConfigDto);
         return ResponseEntity.ok(cxFlowConfigDto);
     }

@@ -25,4 +25,13 @@ public @Data class CxFlowConfigDto {
     private String cxgoSecret;
     @JsonProperty("token")
     private String token;
+
+    @Override
+    public String toString() {
+        return "CxFlowConfigDto{" +
+                "team='" + team + '\'' +
+                ", cxgoSecret='" + cxgoSecret + '\'' +
+                ", token='**********" + '\'' +
+                '}';
+    }
 }

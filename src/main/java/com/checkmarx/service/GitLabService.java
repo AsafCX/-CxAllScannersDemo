@@ -2,10 +2,8 @@ package com.checkmarx.service;
 
 import com.checkmarx.controller.DataController;
 import com.checkmarx.controller.exception.ScmException;
-import com.checkmarx.dto.AccessTokenDto;
+import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
-import com.checkmarx.dto.github.AccessTokenGithubDto;
-import com.checkmarx.dto.github.OrganizationGithubDto;
 import com.checkmarx.dto.github.RepoGithubDto;
 import com.checkmarx.dto.github.WebhookGithubDto;
 import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
@@ -13,7 +11,6 @@ import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.utils.Converter;
 import com.checkmarx.utils.RestHelper;
-import com.checkmarx.utils.TokenType;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -177,6 +174,11 @@ public class GitLabService implements ScmService  {
         //TODO
     }
 
+    @Override
+    public CxFlowConfigDto validateCxFlowConfiguration(@NonNull CxFlowConfigDto cxFlowConfigDto) {
+        //TODO
+        return null;
+    }
 
 
     private WebhookGithubDto initWebhook() {
