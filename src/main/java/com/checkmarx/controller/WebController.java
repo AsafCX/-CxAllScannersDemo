@@ -159,12 +159,13 @@ public class WebController {
      */
     @Operation(summary = "Rest api used by CxFlow app - in order to get CxFlow org settings")
     @GetMapping(value = "/{scmType}/orgs/{orgName}/cxflow")
-    public ResponseEntity getCxFlowConfiguration(@PathVariable String scmType, @PathVariable String orgName) {
+    public ResponseEntity<CxFlowConfigDto> getCxFlowConfiguration(@PathVariable String scmType,
+                                                  @PathVariable String orgName) {
         log.trace("getCxFlowConfiguration: scmType={}, orgName={}", scmType, orgName);
         String baseUrl = getScmService(scmType).getBaseUrl();
         CxFlowConfigDto cxFlowConfigDto = genericScmService.getCxFlowConfiguration(orgName, baseUrl);
         log.info("Return CxFlow organization: {} settings: {}", orgName, cxFlowConfigDto);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(cxFlowConfigDto);
     }
 
 
