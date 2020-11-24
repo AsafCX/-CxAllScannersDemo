@@ -1,4 +1,4 @@
-package com.checkmarx.controller;
+package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.DataStoreException;
 import com.checkmarx.controller.exception.ScmException;
@@ -10,17 +10,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
 
 @Slf4j
-@RestController
-@Qualifier("dataStoreController")
-public class DataStoreController implements DataController {
+@Service
+@Qualifier("dataStoreService")
+public class DataStoreService implements DataService {
 
     @Value("${data.store}")
     private String dataStoreBase;

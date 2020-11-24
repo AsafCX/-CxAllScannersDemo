@@ -1,6 +1,5 @@
 package com.checkmarx.service;
 
-import com.checkmarx.controller.DataController;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.OrgPropertiesDto;
 import com.checkmarx.dto.datastore.ScmAccessTokenDto;
@@ -19,21 +18,21 @@ import org.springframework.stereotype.Service;
 public class ConfigurationService {
     
     @Autowired
-    DataController dataStoreController;
+    DataService dataStoreService;
 
     @Autowired
     RestHelper restHelper;
 
 
     public ScmConfigWebDto getScmConfiguration(String baseUrl, String scopes) {
-        ScmDto scmDto = dataStoreController.getScm(baseUrl);
+        ScmDto scmDto = dataStoreService.getScm(baseUrl);
         return ScmConfigWebDto.builder().clientId(scmDto.getClientId()).scope(scopes).build();
     }
 
      
     public OrgSettingsWebDto getOrgSettings(@NonNull String orgName, String baseUrl) {
-        OrgPropertiesDto orgPropertiesDto = dataStoreController.getScmOrgSettings(baseUrl,
-                orgName);
+        OrgPropertiesDto orgPropertiesDto = dataStoreService.getScmOrgSettings(baseUrl,
+                                                                               orgName);
         return Converter.convertOrgProToOrgSettingsWebDto(orgPropertiesDto);
     }
 
@@ -42,12 +41,12 @@ public class ConfigurationService {
         OrgPropertiesDto orgPropertiesDto = Converter.convertToCxFlowProperties(baseUrl,
                 orgName,
                 orgSettingsWebDto);
-        dataStoreController.storeScmOrgSettings(orgPropertiesDto);
+        dataStoreService.storeScmOrgSettings(orgPropertiesDto);
     }
 
     public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgName, String baseUrl) {
-        ScmAccessTokenDto scmAccessTokenDto = dataStoreController.getSCMOrgToken(baseUrl, orgName);
-        OrgPropertiesDto orgPropertiesDto = dataStoreController.getScmOrgSettings(baseUrl, orgName);
+        ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(baseUrl, orgName);
+        OrgPropertiesDto orgPropertiesDto = dataStoreService.getScmOrgSettings(baseUrl, orgName);
         return CxFlowConfigDto.builder()
                 .team(orgPropertiesDto.getCxTeam())
                 .cxgoSecret(orgPropertiesDto.getCxGoToken())

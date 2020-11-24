@@ -1,6 +1,5 @@
 package com.checkmarx.service;
 
-import com.checkmarx.controller.DataController;
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
@@ -57,7 +56,7 @@ public class GitLabService implements ScmService  {
     RestHelper restHelper;
 
     @Autowired
-    DataController dataStoreController;
+    DataService dataStoreService;
 
     @Value("${cxflow.webhook.url}")
     private String cxFlowWebHook;
@@ -83,7 +82,7 @@ public class GitLabService implements ScmService  {
         List<OrganizationWebDto> organizationWebDtos = new ArrayList<>(Arrays.asList(Objects.requireNonNull(response.getBody())));
         List<ScmAccessTokenDto> scmAccessTokenDtos =
                 Converter.convertToListGitlabOrgAccessToken(accessToken, organizationWebDtos, getBaseUrl());
-        dataStoreController.storeScmOrgsToken(scmAccessTokenDtos);
+        dataStoreService.storeScmOrgsToken(scmAccessTokenDtos);
         return organizationWebDtos;
     }
 
@@ -96,7 +95,7 @@ public class GitLabService implements ScmService  {
      * @return Access token given from GitHub
      */
     private AccessTokenGitlabDto generateAccessToken(String oAuthCode) {
-        ScmDto scmDto = dataStoreController.getScm(getBaseUrl());
+        ScmDto scmDto = dataStoreService.getScm(getBaseUrl());
         String path = String.format(URL_AUTH_TOKEN, scmDto.getClientId(),
                 scmDto.getClientSecret(),
                 oAuthCode,
@@ -126,7 +125,7 @@ public class GitLabService implements ScmService  {
     
     @Override
     public List<RepoWebDto> getScmOrgRepos(@NonNull String orgId) {
-        ScmAccessTokenDto scmAccessTokenDto = dataStoreController.getSCMOrgToken(getBaseUrl(), orgId);
+        ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseUrl(), orgId);
         String path = String.format(URL_GET_REPOS, orgId);
         ResponseEntity<RepoGitlabDto[]> response =  restHelper.sendBearerAuthRequest(path, HttpMethod.GET,
                 null, null,
@@ -145,14 +144,14 @@ public class GitLabService implements ScmService  {
             }
         }
         OrgReposDto orgReposDto = Converter.convertToOrgGitlabRepoDto(scmAccessTokenDto, filteredRepos);
-        dataStoreController.updateScmOrgRepo(orgReposDto);
+        dataStoreService.updateScmOrgRepo(orgReposDto);
         return Converter.convertToListRepoGitlabWebDto(filteredRepos);
     }
 
 
     @Override
     public String createWebhook(@NonNull String orgId, @NonNull String projectId ) {
-        ScmAccessTokenDto scmAccessTokenDto = dataStoreController.getSCMOrgToken(getBaseUrl(), orgId);
+        ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseUrl(), orgId);
         String path = String.format(URL_CREATE_WEBHOOK, projectId, scmAccessTokenDto.getAccessToken()) ;
          ResponseEntity<WebhookGitLabDto> response =  restHelper.sendBearerAuthRequest(path, HttpMethod.POST,
                  new WebhookGitLabDto(), null,
@@ -165,7 +164,7 @@ public class GitLabService implements ScmService  {
         }
         RepoDto repoDto = RepoDto.builder().repoId(projectId).isWebhookConfigured(true).webhookId(
                 webhookGithubDto.getId()).build();
-        dataStoreController.updateScmOrgRepo(OrgReposDto.builder()
+        dataStoreService.updateScmOrgRepo(OrgReposDto.builder()
                 .orgName(scmAccessTokenDto.getOrgId())
                 .scmUrl(scmAccessTokenDto.getScmUrl())
                 .repoList(Collections.singletonList(repoDto))
@@ -176,7 +175,7 @@ public class GitLabService implements ScmService  {
     @Override
     public void deleteWebhook(@NonNull String orgId, @NonNull String repoId,
                               @NonNull String webhookId) {
-        ScmAccessTokenDto scmAccessTokenDto = dataStoreController.getSCMOrgToken(getBaseUrl(), orgId);
+        ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseUrl(), orgId);
         String path = String.format(URL_DELETE_WEBHOOK, orgId, repoId, webhookId);
 
         try {
@@ -191,7 +190,7 @@ public class GitLabService implements ScmService  {
             throw new ScmException(RestHelper.GENERAL_RUNTIME_EXCEPTION);
         }
         RepoDto repoDto = RepoDto.builder().repoId(repoId).webhookId(null).isWebhookConfigured(false).build();
-        dataStoreController.updateScmOrgRepo(OrgReposDto.builder()
+        dataStoreService.updateScmOrgRepo(OrgReposDto.builder()
                 .orgName(scmAccessTokenDto.getOrgId())
                 .scmUrl(scmAccessTokenDto.getScmUrl())
                 .repoList(Collections.singletonList(repoDto))

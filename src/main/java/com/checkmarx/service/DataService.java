@@ -1,11 +1,11 @@
-package com.checkmarx.controller;
+package com.checkmarx.service;
 
 import com.checkmarx.dto.datastore.*;
 import lombok.NonNull;
 
 import java.util.List;
 
-public interface DataController {
+public interface DataService {
 
     public void storeScmOrgsToken(@NonNull List<ScmAccessTokenDto> scmAccessTokenDtos);
     public ScmAccessTokenDto getSCMOrgToken(@NonNull String scmUrl, @NonNull String orgName);
