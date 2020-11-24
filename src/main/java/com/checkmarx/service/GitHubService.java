@@ -195,15 +195,17 @@ public class GitHubService implements ScmService {
 
     @Override
     public CxFlowConfigDto validateCxFlowConfiguration(@NonNull CxFlowConfigDto cxFlowConfigDto) {
-        if(!StringUtils.isEmpty(cxFlowConfigDto.getToken()) && !StringUtils.isEmpty(cxFlowConfigDto.getTeam()) && !StringUtils.isEmpty(cxFlowConfigDto.getCxgoSecret())){
-            try {
-                restHelper.sendBearerAuthRequest(URL_VALIDATE_TOKEN, HttpMethod.GET,null, null,
-                                                 CxFlowConfigDto.class,
-                                                 cxFlowConfigDto.getToken());
-            } catch (HttpClientErrorException ex){
-                log.error("Github Token validation failure: {}", ex.getMessage());
-                throw new ScmException("Github Token authorization failure");
-            }
+        if(StringUtils.isEmpty(cxFlowConfigDto.getToken()) || StringUtils.isEmpty(cxFlowConfigDto.getTeam()) || StringUtils.isEmpty(cxFlowConfigDto.getCxgoSecret())) {
+            log.error("CxFlow configuration settings validation failure, missing data");
+            throw new ScmException("CxFlow configuration settings validation failure, missing data");
+        }
+        try {
+            restHelper.sendBearerAuthRequest(URL_VALIDATE_TOKEN, HttpMethod.GET,null, null,
+                                             CxFlowConfigDto.class,
+                                             cxFlowConfigDto.getToken());
+        } catch (HttpClientErrorException ex){
+            log.error("Github Token validation failure: {}", ex.getMessage());
+            throw new ScmException("Github Token authorization failure");
         }
         log.info("Github token validation passed successfully!");
         return cxFlowConfigDto;

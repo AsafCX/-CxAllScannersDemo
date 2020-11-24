@@ -130,9 +130,17 @@ public class Converter {
     
 
     public static OrgSettingsWebDto convertOrgProToOrgSettingsWebDto(OrgPropertiesDto orgPropertiesDto) {
+        String cxTeam = "";
+        String cxGoToken = "";
+        if (orgPropertiesDto.getCxTeam() != null){
+            cxTeam = orgPropertiesDto.getCxTeam();
+        }
+        if (orgPropertiesDto.getCxGoToken() != null){
+            cxGoToken = orgPropertiesDto.getCxGoToken();
+        }
         return OrgSettingsWebDto.builder()
-                .team(orgPropertiesDto.getCxTeam())
-                .cxgoSecret(orgPropertiesDto.getCxGoToken())
+                .team(cxTeam)
+                .cxgoSecret(cxGoToken)
                 .build();
     }
 
