@@ -30,7 +30,7 @@ public @Data class CxFlowConfigDto {
     public String toString() {
         return "CxFlowConfigDto{" +
                 "team='" + team + '\'' +
-                ", cxgoSecret='" + cxgoSecret + '\'' +
+                ", cxgoSecret='**********" + '\'' +
                 ", token='**********" + '\'' +
                 '}';
     }
