@@ -7,7 +7,6 @@ import com.checkmarx.dto.datastore.ScmDto;
 import com.checkmarx.dto.web.OrgSettingsWebDto;
 import com.checkmarx.dto.web.ScmConfigWebDto;
 import com.checkmarx.utils.Converter;
-import com.checkmarx.utils.RestHelper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +18,6 @@ public class ConfigurationService {
     
     @Autowired
     DataService dataStoreService;
-
-    @Autowired
-    RestHelper restHelper;
-
 
     public ScmConfigWebDto getScmConfiguration(String baseUrl, String scopes) {
         ScmDto scmDto = dataStoreService.getScm(baseUrl);

@@ -10,7 +10,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class RestHelper {
+public class RestWrapper {
 
     public static final String GENERAL_RUNTIME_EXCEPTION = "Repos-Manager Generic exception, " +
             "Check logs";
