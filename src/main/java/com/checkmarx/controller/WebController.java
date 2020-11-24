@@ -170,7 +170,6 @@ public class WebController {
         return ResponseEntity.ok(cxFlowConfigDto);
     }
 
-
     private ScmService getScmService(String scmName) {
         return (ScmService) applicationContext.getBean(scmName);
     }

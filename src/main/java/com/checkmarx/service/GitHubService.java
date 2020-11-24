@@ -120,21 +120,28 @@ public class GitHubService implements ScmService {
         ArrayList<RepoGithubDto> orgRepoGithubDtos = new ArrayList<>(Arrays.asList(
                 Objects.requireNonNull(response.getBody())));
         for (RepoGithubDto repoGithubDto : orgRepoGithubDtos) {
-            WebhookGithubDto webhookGithubDto = getRepositoryCxFlowWebhook(orgName, repoGithubDto.getName(),
-                    scmAccessTokenDto.getAccessToken());
-            if(webhookGithubDto != null) {
-                repoGithubDto.setWebHookEnabled(true);
-                repoGithubDto.setWebhookId(webhookGithubDto.getId());
-            } else {
-                repoGithubDto.setWebHookEnabled(false);
+            try {
+                WebhookGithubDto webhookGithubDto = getRepositoryCxFlowWebhook(orgName,
+                                                                               repoGithubDto.getName(),
+                                                                               scmAccessTokenDto.getAccessToken());
+                if (webhookGithubDto != null) {
+                    repoGithubDto.setWebHookEnabled(true);
+                    repoGithubDto.setWebhookId(webhookGithubDto.getId());
+                } else {
+                    repoGithubDto.setWebHookEnabled(false);
+                }
+            } catch (HttpClientErrorException ex){
+                if(ex.getStatusCode().equals(HttpStatus.NOT_FOUND)){
+                    log.info("User can't access repository '{}' webhook settings",
+                             repoGithubDto.getName());
+                    orgRepoGithubDtos.remove(repoGithubDto);
+                }
             }
         }
         OrgReposDto orgReposDto = Converter.convertToOrgRepoDto(scmAccessTokenDto, orgRepoGithubDtos);
         dataStoreController.updateScmOrgRepo(orgReposDto);
         return Converter.convertToListRepoWebDto(orgRepoGithubDtos);
     }
-
-
 
     @Override
     public String createWebhook(@NonNull String orgName, @NonNull String repoName) {
