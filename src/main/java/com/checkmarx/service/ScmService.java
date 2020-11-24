@@ -11,9 +11,9 @@ public interface ScmService {
 
 
     List<OrganizationWebDto> getOrganizations(@NonNull String authCode);
-    List<RepoWebDto> getScmOrgRepos(@NonNull String orgName);
-    String createWebhook(@NonNull String orgName, @NonNull String repoName);
-    void deleteWebhook(@NonNull String orgName, @NonNull String repoName,
+    List<RepoWebDto> getScmOrgRepos(@NonNull String orgId);
+    String createWebhook(@NonNull String orgId, @NonNull String repoId);
+    void deleteWebhook(@NonNull String orgId, @NonNull String repoId,
                               @NonNull String webhookId);
     CxFlowConfigDto validateCxFlowConfiguration(@NonNull CxFlowConfigDto cxFlowConfigDto);
     String getBaseUrl();

@@ -1,4 +1,4 @@
-package com.checkmarx.dto.datastore;
+package com.checkmarx.dto.gitlab;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,21 +8,24 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "name",
-        "webhook_id",
-        "is_webhook_configured"
+        "id",
+        "name"
 })
-@Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class RepoDto {
-    @JsonProperty("name")
-    private String repoId;
-    @JsonProperty("webhook_id")
-    private String webhookId;
-    @JsonProperty("is_webhook_configured")
-    private boolean isWebhookConfigured;
+@AllArgsConstructor
+public @Data class WebhookGitLabDto {
+    
+    @JsonProperty("id")
+    private String id;
+    @JsonProperty("url")
+    private String url;
+    @JsonProperty("project_id")
+    private Boolean project_id;
+  
 }
+

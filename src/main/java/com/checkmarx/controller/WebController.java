@@ -6,7 +6,7 @@ import com.checkmarx.dto.web.OrgSettingsWebDto;
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.dto.web.ScmConfigWebDto;
-import com.checkmarx.service.GenericScmService;
+import com.checkmarx.service.ConfigurationService;
 import com.checkmarx.service.ScmService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,7 +26,7 @@ public class WebController {
     ApplicationContext applicationContext;
     
     @Autowired
-    GenericScmService genericScmService;
+    ConfigurationService genericScmService;
 
     /**
      * @param scmType Given Scm to handle
@@ -66,107 +66,107 @@ public class WebController {
 
     /**
      * @param scmType Given Scm to handle
-     * @param orgName organization name used to retrieve the relevant repositories
+     * @param orgId organization name used to retrieve the relevant repositories
      * @return ResponseEntity with http status:200, Body: all organization repositories (public
      *         and private)
      */
     @Operation(summary = "Rest api used to get for specific organization all repositories (private and public)")
-    @GetMapping(value = "/{scmType}/orgs/{orgName}/repos")
+    @GetMapping(value = "/{scmType}/orgs/{orgId}/repos")
     public ResponseEntity<List<RepoWebDto>> getOrganizationRepositories(@PathVariable String scmType,
-                                                      @PathVariable String orgName) {
-        log.trace("getOrganizationRepositories: scmType={}, orgName={}", scmType, orgName);
-        List<RepoWebDto> orgRepoGithubDtos = getScmService(scmType).getScmOrgRepos(orgName);
-        log.info("Return Scm: {} Organization: {} repositories: {}", scmType, orgName,
+                                                      @PathVariable String orgId) {
+        log.trace("getOrganizationRepositories: scmType={}, orgId={}", scmType, orgId);
+        List<RepoWebDto> orgRepoGithubDtos = getScmService(scmType).getScmOrgRepos(orgId);
+        log.info("Return Scm: {} Organization: {} repositories: {}", scmType, orgId,
                  orgRepoGithubDtos);
         return ResponseEntity.ok(orgRepoGithubDtos);
     }
 
     /**
      * @param scmType Given Scm to handle
-     * @param orgName organization name
-     * @param repoName repository name to create webhook
+     * @param orgId organization name
+     * @param repoId repository name to create webhook
      * @return ResponseEntity with http status:200, Body: webhook id
      */
     @Operation(summary = "Rest api used to create webhook for given scm organization repository")
-    @PostMapping(value = "/{scmType}/orgs/{orgName}/repos/{repoName}/webhooks")
+    @PostMapping(value = "/{scmType}/orgs/{orgId}/repos/{repoId}/webhooks")
     public ResponseEntity<String> createWebhook(@PathVariable String scmType,
-                                        @PathVariable String orgName,
-                                        @PathVariable String repoName) {
-        log.trace("createWebhook: scmType={}, orgName={}, repoName={}", scmType, orgName, repoName);
-        String webhookId = getScmService(scmType).createWebhook(orgName, repoName);
-        log.info("{} CXFlow Webhook created successfully!",repoName);
+                                        @PathVariable String orgId,
+                                        @PathVariable String repoId) {
+        log.trace("createWebhook: scmType={}, orgId={}, repoName={}", scmType, orgId, repoId);
+        String webhookId = getScmService(scmType).createWebhook(orgId, repoId);
+        log.info("{} CXFlow Webhook created successfully!",repoId);
         return ResponseEntity.ok(webhookId);
     }
 
     /**
      * @param scmType Given Scm to handle
-     * @param orgName organization name
-     * @param repoName repository name
+     * @param orgId organization name
+     * @param repoId repository name
      * @param webhookId webhook id to delete
      * @return ResponseEntity with http status:200
      */
     @Operation(summary = "Rest api used to delete webhook from given scm organization repository")
-    @DeleteMapping(value = "/{scmType}/orgs/{orgName}/repos/{repoName}/webhooks/{webhookId}")
+    @DeleteMapping(value = "/{scmType}/orgs/{orgId}/repos/{repoId}/webhooks/{webhookId}")
     public ResponseEntity deleteWebhook(@PathVariable String scmType,
-                                        @PathVariable String orgName,
-                                        @PathVariable String repoName,
+                                        @PathVariable String orgId,
+                                        @PathVariable String repoId,
                                         @PathVariable String webhookId) {
-        log.trace("deleteWebhook: scmType={}, orgName={}, repoName={}, webhookId={}",scmType, orgName,
-                  repoName, webhookId);
-        getScmService(scmType).deleteWebhook(orgName, repoName, webhookId);
-        log.info("{} CXFlow Webhook removed successfully!",repoName);
+        log.trace("deleteWebhook: scmType={}, repoId={}, repoId={}, webhookId={}",scmType, orgId,
+                repoId, webhookId);
+        getScmService(scmType).deleteWebhook(orgId, repoId, webhookId);
+        log.info("{} CXFlow Webhook removed successfully!",repoId);
         return ResponseEntity.ok().build();
     }
 
     /**
      * @param scmType Given Scm to handle
-     * @param orgName organization name
+     * @param orgId organization name
      * @return ResponseEntity with http status:200, Body: organization settings
      */
     @Operation(summary = "Rest api used to retrieve scm organization settings")
-    @GetMapping(value = "/{scmType}/orgs/{orgName}/settings")
+    @GetMapping(value = "/{scmType}/orgs/{orgId}/settings")
     public ResponseEntity<OrgSettingsWebDto> getOrgSettings(@PathVariable String scmType,
-    @PathVariable String orgName) {
-        log.trace("getOrgSettings: scmType={}, orgName={}", scmType, orgName);
+    @PathVariable String orgId) {
+        log.trace("getOrgSettings: scmType={}, orgId={}", scmType, orgId);
         String baseUrl = getScmService(scmType).getBaseUrl();
-        OrgSettingsWebDto orgSettingsWebDto = genericScmService.getOrgSettings(orgName,baseUrl);
+        OrgSettingsWebDto orgSettingsWebDto = genericScmService.getOrgSettings(orgId,baseUrl);
         log.info("Return organization settings: {} for scm: {}, org: {}", orgSettingsWebDto, scmType,
-                 orgName);
+                 orgId);
         return ResponseEntity.ok(orgSettingsWebDto);
     }
 
     /**
      * @param scmType Given Scm to handle
-     * @param orgName organization name
+     * @param orgId organization name
      * @return ResponseEntity with http status:200
      */
     @Operation(summary = "Rest api used to create/update scm organization settings")
-    @PutMapping(value = "/{scmType}/orgs/{orgName}/settings")
-    public ResponseEntity setOrgSettings(@PathVariable String scmType, @PathVariable String orgName,
+    @PutMapping(value = "/{scmType}/orgs/{orgId}/settings")
+    public ResponseEntity setOrgSettings(@PathVariable String scmType, @PathVariable String orgId,
                                   @RequestBody OrgSettingsWebDto orgSettingsWebDto) {
-        log.trace("setOrgSettings: scmType={}, orgName={}, OrgSettingsWebDto={}", scmType, orgName,
+        log.trace("setOrgSettings: scmType={}, orgId={}, OrgSettingsWebDto={}", scmType, orgId,
                   orgSettingsWebDto);
         String baseUrl = getScmService(scmType).getBaseUrl();
-        genericScmService.setOrgSettings(orgName, orgSettingsWebDto, baseUrl);
+        genericScmService.setOrgSettings(orgId, orgSettingsWebDto, baseUrl);
         log.info("{} organization settings saved successfully!", orgSettingsWebDto);
         return ResponseEntity.ok().build();
     }
 
     /**
      * @param scmType Given Scm to handle
-     * @param orgName organization name
+     * @param orgId organization name
      * @return ResponseEntity with http status:200 body: CxFlow Configuration including CxGo
      * secret, team and Scm access token
      */
     @Operation(summary = "Rest api used by CxFlow app - Get CxFlow org settings and token")
-    @GetMapping(value = "/{scmType}/orgs/{orgName}/cxflow")
+    @GetMapping(value = "/{scmType}/orgs/{orgId}/cxflow")
     public ResponseEntity<CxFlowConfigDto> getCxFlowConfiguration(@PathVariable String scmType,
-                                                  @PathVariable String orgName) {
-        log.trace("getCxFlowConfiguration: scmType={}, orgName={}", scmType, orgName);
+                                                  @PathVariable String orgId) {
+        log.trace("getCxFlowConfiguration: scmType={}, orgId={}", scmType, orgId);
         String baseUrl = getScmService(scmType).getBaseUrl();
-        CxFlowConfigDto cxFlowConfigDto = genericScmService.getCxFlowConfiguration(orgName, baseUrl);
+        CxFlowConfigDto cxFlowConfigDto = genericScmService.getCxFlowConfiguration(orgId, baseUrl);
         cxFlowConfigDto = getScmService(scmType).validateCxFlowConfiguration(cxFlowConfigDto);
-        log.info("Return CxFlow organization: {} settings: {}", orgName, cxFlowConfigDto);
+        log.info("Return CxFlow organization: {} settings: {}", orgId, cxFlowConfigDto);
         return ResponseEntity.ok(cxFlowConfigDto);
     }
 

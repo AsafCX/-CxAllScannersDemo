@@ -86,10 +86,10 @@ public class DataStoreController implements DataController {
     }
 
     @Override
-    public ScmAccessTokenDto getSCMOrgToken(@NonNull String scmUrl, @NonNull String orgName) {
-        log.trace("getScmOrgToken: scmUrl={}, orgName={}", scmUrl, orgName);
+    public ScmAccessTokenDto getSCMOrgToken(@NonNull String scmUrl, @NonNull String orgId) {
+        log.trace("getScmOrgToken: scmUrl={}, orgId={}", scmUrl, orgId);
 
-        String path = String.format(urlPatternDataSourceGetScmOrgToken, scmUrl, orgName);
+        String path = String.format(urlPatternDataSourceGetScmOrgToken, scmUrl, orgId);
 
         ResponseEntity<ScmAccessTokenDto> response = null;
         try {
@@ -97,10 +97,10 @@ public class DataStoreController implements DataController {
                                               ScmAccessTokenDto.class);
         }  catch(HttpClientErrorException ex){
             log.error("HttpClientErrorException: {}", ex.getMessage());
-            log.error(RestHelper.SCM_ORG_TOKEN_MISSING + " Scm: {}, orgName: {}", scmUrl, orgName);
+            log.error(RestHelper.SCM_ORG_TOKEN_MISSING + " Scm: {}, orgId: {}", scmUrl, orgId);
             throw new DataStoreException(RestHelper.SCM_ORG_TOKEN_MISSING);
         }
-        log.debug("Get from DataStore token for Scm: {} Org: {} successfully!", scmUrl, orgName);
+        log.debug("Get from DataStore token for Scm: {} Org: {} successfully!", scmUrl, orgId);
         return response.getBody();
     }
 

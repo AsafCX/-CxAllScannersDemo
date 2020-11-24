@@ -22,7 +22,7 @@ public @Data class ScmAccessTokenDto {
     @JsonProperty("scm_url")
     private String scmUrl;
     @JsonProperty("org_name")
-    private String orgName;
+    private String orgId;
     @JsonProperty("accessToken")
     private String accessToken;
     @JsonProperty("tokenType")

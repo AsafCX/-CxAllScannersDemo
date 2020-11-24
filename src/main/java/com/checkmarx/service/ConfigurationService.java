@@ -15,8 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Slf4j
-@Service("GenericScmService")
-public class GenericScmService {
+@Service("ConfigurationService")
+public class ConfigurationService {
     
     @Autowired
     DataController dataStoreController;

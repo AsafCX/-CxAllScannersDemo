@@ -13,4 +13,5 @@ public @Data class OrganizationGithubDto {
 
     @JsonProperty("login")
     private String login;
+
 }
