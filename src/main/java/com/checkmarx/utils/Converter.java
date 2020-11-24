@@ -4,6 +4,7 @@ package com.checkmarx.utils;
 import com.checkmarx.dto.AccessTokenDto;
 import com.checkmarx.dto.datastore.OrgPropertiesDto;
 import com.checkmarx.dto.datastore.OrgReposDto;
+import com.checkmarx.dto.datastore.RepoDto;
 import com.checkmarx.dto.datastore.ScmAccessTokenDto;
 
 import com.checkmarx.dto.github.OrganizationGithubDto;
@@ -38,16 +39,16 @@ public class Converter {
                 .build();
 
     }
-    public static List<com.checkmarx.dto.datastore.RepoDto> convertListToRepoGithubDto(List<RepoGithubDto> dtoList) {
-        List<com.checkmarx.dto.datastore.RepoDto> repoDtos = new ArrayList<>();
+    public static List<RepoDto> convertListToRepoGithubDto(List<RepoGithubDto> dtoList) {
+        List<RepoDto> repoDtos = new ArrayList<>();
         for (RepoGithubDto repoDto: dtoList) {
             repoDtos.add(Converter.convertToDataStoreDtoGithub(repoDto));
         }
         return repoDtos;
     }
 
-    public static List<com.checkmarx.dto.datastore.RepoDto> convertListToRepoGitlabDto(List<RepoGitlabDto> dtoList) {
-        List<com.checkmarx.dto.datastore.RepoDto> repoDtos = new ArrayList<>();
+    public static List<RepoDto> convertListToRepoGitlabDto(List<RepoGitlabDto> dtoList) {
+        List<RepoDto> repoDtos = new ArrayList<>();
         for (RepoGitlabDto repoDto: dtoList) {
             repoDtos.add(Converter.convertToDataStoreDtoGitlab(repoDto));
         }
@@ -55,16 +56,16 @@ public class Converter {
     }
 
     
-    public static com.checkmarx.dto.datastore.RepoDto convertToDataStoreDtoGithub(RepoGithubDto repoDto) {
-        return com.checkmarx.dto.datastore.RepoDto.builder()
+    public static RepoDto convertToDataStoreDtoGithub(RepoGithubDto repoDto) {
+        return RepoDto.builder()
                 .repoId(repoDto.getName())
                 .isWebhookConfigured(repoDto.isWebHookEnabled())
                 .webhookId(repoDto.getWebhookId())
                 .build();
     }
 
-    public static com.checkmarx.dto.datastore.RepoDto convertToDataStoreDtoGitlab(RepoGitlabDto repoDto) {
-        return com.checkmarx.dto.datastore.RepoDto.builder()
+    public static RepoDto convertToDataStoreDtoGitlab(RepoGitlabDto repoDto) {
+        return RepoDto.builder()
                 .repoId(repoDto.getId())
                 .isWebhookConfigured(repoDto.isWebHookEnabled())
                 .webhookId(repoDto.getWebhookId())
