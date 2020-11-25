@@ -45,7 +45,7 @@ public class ConfigurationService {
         return CxFlowConfigDto.builder()
                 .team(orgPropertiesDto.getCxTeam())
                 .cxgoSecret(orgPropertiesDto.getCxGoToken())
-                .token(scmAccessTokenDto.getAccessToken())
+                .scmAccessToken(scmAccessTokenDto.getAccessToken())
                 .build();
     }
 

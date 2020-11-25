@@ -159,7 +159,7 @@ public class WebController {
      * secret, team and Scm access token
      */
     @Operation(summary = "Rest api used by CxFlow app - Get CxFlow org settings and token")
-    @GetMapping(value = "/{scmType}/orgs/{orgId}/cxflow")
+    @GetMapping(value = "/{scmType}/orgs/{orgId}/tenantConfig")
     public ResponseEntity<CxFlowConfigDto> getCxFlowConfiguration(@PathVariable String scmType,
                                                   @PathVariable String orgId) {
         log.trace("getCxFlowConfiguration: scmType={}, orgId={}", scmType, orgId);

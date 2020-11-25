@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @JsonPropertyOrder({
         "team",
         "cxgoSecret",
-        "token"
+        "scmAccessToken"
 })
 @Builder
 @AllArgsConstructor
@@ -23,15 +23,15 @@ public @Data class CxFlowConfigDto {
     private String team;
     @JsonProperty("cxgoSecret")
     private String cxgoSecret;
-    @JsonProperty("token")
-    private String token;
+    @JsonProperty("scmAccessToken")
+    private String scmAccessToken;
 
     @Override
     public String toString() {
         return "CxFlowConfigDto{" +
                 "team='" + team + '\'' +
                 ", cxgoSecret='**********" + '\'' +
-                ", token='**********" + '\'' +
+                ", scmAccessToken='**********" + '\'' +
                 '}';
     }
 }
