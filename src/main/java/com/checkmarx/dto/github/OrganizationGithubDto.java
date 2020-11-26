@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public @Data class OrganizationGithubDto {
 
     @JsonProperty("login")
-    private String login;
+    private String name;
 
 }

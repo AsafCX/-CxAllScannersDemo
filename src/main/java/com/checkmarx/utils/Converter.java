@@ -81,7 +81,7 @@ public class Converter {
     }
 
     public static OrganizationWebDto convertToOrgWebDto(OrganizationGithubDto orgGithubDto) {
-        return OrganizationWebDto.builder().id(orgGithubDto.getLogin()).name(orgGithubDto.getLogin()).build();
+        return OrganizationWebDto.builder().id(orgGithubDto.getName()).name(orgGithubDto.getName()).build();
     }
 
     public static List<RepoWebDto> convertToListRepoGithubWebDto(List<RepoGithubDto> repoDtos) {
@@ -148,7 +148,7 @@ public class Converter {
         List<ScmAccessTokenDto> scmAccessTokenDtos = new ArrayList<>();
         for (OrganizationGithubDto orgGithubDto: userOrgGithubDtos) {
             scmAccessTokenDtos.add(ScmAccessTokenDto.builder()
-                                           .orgId(orgGithubDto.getLogin())
+                                           .orgId(orgGithubDto.getName())
                                             .scmUrl(scmUrl)
                                            .accessToken(accessToken.getAccessToken())
                                            .tokenType(TokenType.ACCESS.getType())

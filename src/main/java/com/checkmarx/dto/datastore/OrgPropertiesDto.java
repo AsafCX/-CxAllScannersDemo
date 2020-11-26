@@ -2,20 +2,12 @@ package com.checkmarx.dto.datastore;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-        "scm_url",
-        "org_name",
-        "cx_flow_url",
-        "cx_go_token",
-        "cx_team"
-})
 @Data
 @Builder
 @AllArgsConstructor
