@@ -3,7 +3,6 @@ package com.checkmarx.service;
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
-import com.checkmarx.dto.github.WebhookGithubDto;
 import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
 import com.checkmarx.dto.gitlab.RepoGitlabDto;
 import com.checkmarx.dto.gitlab.WebhookGitLabDto;
@@ -78,7 +77,7 @@ public class GitLabService implements ScmService  {
 
         ResponseEntity<OrganizationWebDto[]> response =
                 restWrapper.sendBearerAuthRequest(URL_GET_NAMESPACES, HttpMethod.GET, null, null,
-                                                  OrganizationWebDto[].class, accessToken.getAccessToken());
+                        OrganizationWebDto[].class, accessToken.getAccessToken());
         List<OrganizationWebDto> organizationWebDtos = new ArrayList<>(Arrays.asList(Objects.requireNonNull(response.getBody())));
         List<ScmAccessTokenDto> scmAccessTokenDtos =
                 Converter.convertToListGitlabOrgAccessToken(accessToken, organizationWebDtos, getBaseUrl());
@@ -153,25 +152,24 @@ public class GitLabService implements ScmService  {
     @Override
     public String createWebhook(@NonNull String orgId, @NonNull String projectId ) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseUrl(), orgId);
-        String path = String.format(URL_CREATE_WEBHOOK, projectId, scmAccessTokenDto.getAccessToken()) ;
-         ResponseEntity<WebhookGitLabDto> response =  restWrapper
-                 .sendBearerAuthRequest(path, HttpMethod.POST,
-                                        new WebhookGitLabDto(), null,
-                                        WebhookGithubDto.class,
-                                        scmAccessTokenDto.getAccessToken());
-        WebhookGitLabDto webhookGithubDto = response.getBody();
-        if(webhookGithubDto == null || StringUtils.isEmpty(webhookGithubDto.getId())){
+        String path = String.format(URL_CREATE_WEBHOOK, projectId, cxFlowWebHook, scmAccessTokenDto.getAccessToken()) ;
+         ResponseEntity<WebhookGitLabDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.POST,
+                 new WebhookGitLabDto(), null,
+                 WebhookGitLabDto.class,
+                scmAccessTokenDto.getAccessToken());
+        WebhookGitLabDto WebhookGitLabDto = response.getBody();
+        if(WebhookGitLabDto == null || StringUtils.isEmpty(WebhookGitLabDto.getId())){
             log.error(RestWrapper.WEBHOOK_CREATE_FAILURE);
             throw new ScmException(RestWrapper.WEBHOOK_CREATE_FAILURE);
         }
         RepoDto repoDto = RepoDto.builder().repoId(projectId).isWebhookConfigured(true).webhookId(
-                webhookGithubDto.getId()).build();
+                WebhookGitLabDto.getId()).build();
         dataStoreService.updateScmOrgRepo(OrgReposDto.builder()
                 .orgName(scmAccessTokenDto.getOrgId())
                 .scmUrl(scmAccessTokenDto.getScmUrl())
                 .repoList(Collections.singletonList(repoDto))
                 .build());
-        return webhookGithubDto.getId();
+        return WebhookGitLabDto.getId();
     }
 
     @Override
@@ -181,9 +179,9 @@ public class GitLabService implements ScmService  {
         String path = String.format(URL_DELETE_WEBHOOK, orgId, repoId, webhookId);
 
         try {
-            restWrapper.sendBearerAuthRequest(path, HttpMethod.DELETE, null, null,
-                                              WebhookGithubDto.class,
-                                              scmAccessTokenDto.getAccessToken());
+            restWrapper.sendBearerAuthRequest(path, HttpMethod.DELETE,null, null,
+                    WebhookGitLabDto.class,
+                    scmAccessTokenDto.getAccessToken());
         } catch (HttpClientErrorException ex){
             if(ex.getStatusCode().equals(HttpStatus.NOT_FOUND)){
                 log.error("Webhook not found: {}", ex.getMessage());
@@ -210,13 +208,12 @@ public class GitLabService implements ScmService  {
     private WebhookGitLabDto getRepositoryCxFlowWebhook(@NonNull String repoId,
                                                         @NonNull String accessToken){
         String path = String.format(URL_GET_WEBHOOKS, repoId);
-        ResponseEntity<WebhookGitLabDto[]> response =  restWrapper
-                .sendBearerAuthRequest(path, HttpMethod.GET,
-                                       null, null,
-                                       WebhookGitLabDto[].class, accessToken);
-        ArrayList<WebhookGitLabDto> webhookGithubDtos = new ArrayList<>(Arrays.asList(
+        ResponseEntity<WebhookGitLabDto[]> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.GET,
+                null, null,
+                WebhookGitLabDto[].class, accessToken);
+        ArrayList<WebhookGitLabDto> webhookGitLabDtos = new ArrayList<>(Arrays.asList(
                 Objects.requireNonNull(response.getBody())));
-        for (WebhookGitLabDto webhookGitLabDto : webhookGithubDtos) {
+        for (WebhookGitLabDto webhookGitLabDto : webhookGitLabDtos) {
             if (webhookGitLabDto != null  && webhookGitLabDto.getUrl().equals(cxFlowWebHook))
                 return webhookGitLabDto;
         }
