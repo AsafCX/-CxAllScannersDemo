@@ -22,10 +22,11 @@ public @Data class WebhookGithubDto {
     private Config config;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public @Data static class Config {
+    public static class Config {
 
         private String url;
         private String contentType;

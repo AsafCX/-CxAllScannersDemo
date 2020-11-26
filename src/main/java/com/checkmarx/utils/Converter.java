@@ -22,6 +22,7 @@ import java.util.List;
 @Component
 public class Converter {
 
+    private Converter(){}
 
     public static OrgReposDto convertToOrgGithubRepoDto(ScmAccessTokenDto scmAccessTokenDto, List<RepoGithubDto> orgRepoGithubDtos) {
         return OrgReposDto.builder()
