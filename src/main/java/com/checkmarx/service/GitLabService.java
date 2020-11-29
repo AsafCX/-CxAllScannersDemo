@@ -176,7 +176,7 @@ public class GitLabService implements ScmService  {
     public void deleteWebhook(@NonNull String orgId, @NonNull String repoId,
                               @NonNull String webhookId) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseUrl(), orgId);
-        String path = String.format(URL_DELETE_WEBHOOK, orgId, repoId, webhookId);
+        String path = String.format(URL_DELETE_WEBHOOK, repoId, webhookId);
 
         try {
             restWrapper.sendBearerAuthRequest(path, HttpMethod.DELETE,null, null,
