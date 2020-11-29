@@ -17,7 +17,7 @@ import java.util.List;
 public class OrgReposDto {
     @JsonProperty("scm_url")
     private String scmUrl;
-    @JsonProperty("org_name")
-    private String orgName;
+    @JsonProperty("org_identity")
+    private String orgIdentity;
     private List<RepoDto> repoList;
 }

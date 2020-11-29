@@ -15,8 +15,8 @@ import lombok.NoArgsConstructor;
 public class OrgPropertiesDto {
     @JsonProperty("scm_url")
     private String scmUrl;
-    @JsonProperty("org_name")
-    private String orgName;
+    @JsonProperty("org_identity")
+    private String orgIdentity;
     @JsonProperty("cx_flow_url")
     private String cxFlowUrl;
     @JsonProperty("cx_go_token")

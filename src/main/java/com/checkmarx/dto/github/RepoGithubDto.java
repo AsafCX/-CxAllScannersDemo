@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 public @Data class RepoGithubDto {
 
     private String name;
-
     private String webhookId;
     private boolean webHookEnabled;
 }

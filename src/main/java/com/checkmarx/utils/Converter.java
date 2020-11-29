@@ -27,7 +27,7 @@ public class Converter {
     public static OrgReposDto convertToOrgGithubRepoDto(ScmAccessTokenDto scmAccessTokenDto, List<RepoGithubDto> orgRepoGithubDtos) {
         return OrgReposDto.builder()
                 .scmUrl(scmAccessTokenDto.getScmUrl())
-                .orgName(scmAccessTokenDto.getOrgId())
+                .orgIdentity(scmAccessTokenDto.getOrgIdentity())
                 .repoList(Converter.convertListToRepoGithubDto(orgRepoGithubDtos))
                 .build();
 
@@ -35,7 +35,7 @@ public class Converter {
     public static OrgReposDto convertToOrgGitlabRepoDto(ScmAccessTokenDto scmAccessTokenDto, List<RepoGitlabDto> repoDtos) {
         return OrgReposDto.builder()
                 .scmUrl(scmAccessTokenDto.getScmUrl())
-                .orgName(scmAccessTokenDto.getOrgId())
+                .orgIdentity(scmAccessTokenDto.getOrgIdentity())
                 .repoList(Converter.convertListToRepoGitlabDto(repoDtos))
                 .build();
 
@@ -124,7 +124,7 @@ public class Converter {
         return OrgPropertiesDto.builder()
                 .cxTeam(orgSettingsWebDto.getTeam())
                 .cxGoToken(orgSettingsWebDto.getCxgoSecret())
-                .orgName(orgName)
+                .orgIdentity(orgName)
                 .scmUrl(scmUrl)
                 .build();
     }
@@ -149,7 +149,7 @@ public class Converter {
         List<ScmAccessTokenDto> scmAccessTokenDtos = new ArrayList<>();
         for (OrganizationGithubDto orgGithubDto: userOrgGithubDtos) {
             scmAccessTokenDtos.add(ScmAccessTokenDto.builder()
-                                           .orgId(orgGithubDto.getName())
+                                           .orgIdentity(orgGithubDto.getName())
                                             .scmUrl(scmUrl)
                                            .accessToken(accessToken.getAccessToken())
                                            .tokenType(TokenType.ACCESS.getType())
@@ -162,7 +162,7 @@ public class Converter {
         List<ScmAccessTokenDto> scmAccessTokenDtos = new ArrayList<>();
         for (OrganizationWebDto orgDto: organizationWebDtos) {
             scmAccessTokenDtos.add(ScmAccessTokenDto.builder()
-                    .orgId(orgDto.getId())
+                    .orgIdentity(orgDto.getId())
                     .scmUrl(scmUrl)
                     .accessToken(accessToken.getAccessToken())
                     .tokenType(TokenType.ACCESS.getType())

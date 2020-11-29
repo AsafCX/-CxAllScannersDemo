@@ -19,7 +19,8 @@ public class RestWrapper {
     public static final String GENERATE_ACCESS_TOKEN_FAILURE = "Access token generation failure";
     public static final String ACCESS_TOKEN_MISSING = "Access token is missing from local map, " +
             "please reconnect";
-    public static final String SCM_DETAILS_MISSING = "SCM details are missing, Client id & " +
+    public static final String SCM_DETAILS_MISSING = "SCM details are missing, Missing Client id " +
+            "& " +
             "Client Secret";
     public static final String SCM_ORG_TOKEN_MISSING = "SCM organization token is missing";
     public static final String STORE_SCM_FAILURE = "Store scm failure - Wasn't able to save in " +

@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 public @Data class ScmAccessTokenDto {
     @JsonProperty("scm_url")
     private String scmUrl;
-    @JsonProperty("org_name")
-    private String orgId;
+    @JsonProperty("org_identity")
+    private String orgIdentity;
     private String accessToken;
     private String tokenType;
 

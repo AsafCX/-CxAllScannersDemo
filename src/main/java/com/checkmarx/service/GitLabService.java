@@ -165,7 +165,7 @@ public class GitLabService implements ScmService  {
         RepoDto repoDto = RepoDto.builder().repoIdentity(projectId).isWebhookConfigured(true).webhookId(
                 WebhookGitLabDto.getId()).build();
         dataStoreService.updateScmOrgRepo(OrgReposDto.builder()
-                .orgName(scmAccessTokenDto.getOrgId())
+                .orgIdentity(scmAccessTokenDto.getOrgIdentity())
                 .scmUrl(scmAccessTokenDto.getScmUrl())
                 .repoList(Collections.singletonList(repoDto))
                 .build());
@@ -191,7 +191,7 @@ public class GitLabService implements ScmService  {
         }
         RepoDto repoDto = RepoDto.builder().repoIdentity(repoId).webhookId(null).isWebhookConfigured(false).build();
         dataStoreService.updateScmOrgRepo(OrgReposDto.builder()
-                .orgName(scmAccessTokenDto.getOrgId())
+                .orgIdentity(scmAccessTokenDto.getOrgIdentity())
                 .scmUrl(scmAccessTokenDto.getScmUrl())
                 .repoList(Collections.singletonList(repoDto))
                 .build());
