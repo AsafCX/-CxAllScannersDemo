@@ -59,7 +59,7 @@ public class Converter {
     
     public static RepoDto convertToDataStoreDtoGithub(RepoGithubDto repoDto) {
         return RepoDto.builder()
-                .repoId(repoDto.getName())
+                .repoIdentity(repoDto.getName())
                 .isWebhookConfigured(repoDto.isWebHookEnabled())
                 .webhookId(repoDto.getWebhookId())
                 .build();
@@ -67,7 +67,7 @@ public class Converter {
 
     public static RepoDto convertToDataStoreDtoGitlab(RepoGitlabDto repoDto) {
         return RepoDto.builder()
-                .repoId(repoDto.getId())
+                .repoIdentity(repoDto.getId())
                 .isWebhookConfigured(repoDto.isWebHookEnabled())
                 .webhookId(repoDto.getWebhookId())
                 .build();

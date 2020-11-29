@@ -162,7 +162,7 @@ public class GitLabService implements ScmService  {
             log.error(RestWrapper.WEBHOOK_CREATE_FAILURE);
             throw new ScmException(RestWrapper.WEBHOOK_CREATE_FAILURE);
         }
-        RepoDto repoDto = RepoDto.builder().repoId(projectId).isWebhookConfigured(true).webhookId(
+        RepoDto repoDto = RepoDto.builder().repoIdentity(projectId).isWebhookConfigured(true).webhookId(
                 WebhookGitLabDto.getId()).build();
         dataStoreService.updateScmOrgRepo(OrgReposDto.builder()
                 .orgName(scmAccessTokenDto.getOrgId())
@@ -189,7 +189,7 @@ public class GitLabService implements ScmService  {
             }
             throw new ScmException(RestWrapper.GENERAL_RUNTIME_EXCEPTION);
         }
-        RepoDto repoDto = RepoDto.builder().repoId(repoId).webhookId(null).isWebhookConfigured(false).build();
+        RepoDto repoDto = RepoDto.builder().repoIdentity(repoId).webhookId(null).isWebhookConfigured(false).build();
         dataStoreService.updateScmOrgRepo(OrgReposDto.builder()
                 .orgName(scmAccessTokenDto.getOrgId())
                 .scmUrl(scmAccessTokenDto.getScmUrl())

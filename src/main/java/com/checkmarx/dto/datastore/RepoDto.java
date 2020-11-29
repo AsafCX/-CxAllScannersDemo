@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RepoDto {
-    @JsonProperty("name")
-    private String repoId;
+    @JsonProperty("repo_identity")
+    private String repoIdentity;
     @JsonProperty("webhook_id")
     private String webhookId;
     @JsonProperty("is_webhook_configured")
