@@ -14,6 +14,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,25 +30,26 @@ import java.util.stream.Collectors;
 @Service("gitlab")
 public class GitLabService implements ScmService  {
 
+    private static final String URL_AUTH_TOKEN = "https://gitlab.com/oauth/token?client_id=%s&client_secret=%s&code=%s&grant_type=authorization_code&redirect_uri=%s";
 
-    private static String URL_AUTH_TOKEN = "https://gitlab.com/oauth/token?client_id=%s&client_secret=%s&code=%s&grant_type=authorization_code&redirect_uri=%s";
+    private static final String BASE_URL = "https://gitlab.com/api/v4";
 
-    private static String BASE_URL = "https://gitlab.com/api/v4";
+    private static final String URL_GET_NAMESPACES = BASE_URL + "/namespaces/";
 
-    private static String URL_GET_NAMESPACES = BASE_URL + "/namespaces/";
+    private static final String URL_GET_REPOS = BASE_URL + "/projects?simple=true&membership=true";
 
-    private static String URL_GET_REPOS = BASE_URL + "/projects?simple=true&membership=true";
+    private static final String GITLAB_BASE_URL = "gitlab.com";
 
-    private static String GITLAB_BASE_URL = "gitlab.com";
+    private static final String SCOPES ="api";
 
-    private static String SCOPES ="api";
-
-    private String URL_GET_WEBHOOKS = BASE_URL + "/projects/%s/hooks";
+    private static final String URL_GET_WEBHOOKS = BASE_URL + "/projects/%s/hooks";
 
     private static final String URL_DELETE_WEBHOOK = BASE_URL + "/projects/%s/hooks/%s";
 
-    private static final String URL_CREATE_WEBHOOK = BASE_URL + "/projects/%s/hooks?url=%s&token=%s";
-    
+    private static final String URL_CREATE_WEBHOOK = BASE_URL + "/projects/%s/hooks?url=%s&token=%s&merge_requests_events=true&push_events=true";
+
+    private static final String TOKEN_REQUEST_USER_AGENT = "CxIntegrations";
+
     @Value("${redirect.url}")
     private String redirectUrl;
 
@@ -99,9 +101,15 @@ public class GitLabService implements ScmService  {
                 scmDto.getClientSecret(),
                 oAuthCode,
                 redirectUrl);
-        ResponseEntity<AccessTokenGitlabDto> response =  restWrapper.sendRequest(path, HttpMethod.POST,
-                                                                                 null, null,
-                                                                                 AccessTokenGitlabDto.class);
+
+        // If we don't specify any User-Agent, the request will fail with "403 Forbidden: [error code: 1010]".
+        // This issue may not exist in some execution environments.
+        Map<String, String> headers = Collections.singletonMap(HttpHeaders.USER_AGENT, TOKEN_REQUEST_USER_AGENT);
+
+        ResponseEntity<AccessTokenGitlabDto> response = restWrapper.sendRequest(path, HttpMethod.POST,
+                null, headers,
+                AccessTokenGitlabDto.class);
+
         if(!verifyAccessToken(response.getBody())){
             log.error(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
             throw new ScmException(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
@@ -157,19 +165,19 @@ public class GitLabService implements ScmService  {
                  new WebhookGitLabDto(), null,
                  WebhookGitLabDto.class,
                 scmAccessTokenDto.getAccessToken());
-        WebhookGitLabDto WebhookGitLabDto = response.getBody();
-        if(WebhookGitLabDto == null || StringUtils.isEmpty(WebhookGitLabDto.getId())){
+        WebhookGitLabDto webhookGitLabDto = response.getBody();
+        if(webhookGitLabDto == null || StringUtils.isEmpty(webhookGitLabDto.getId())){
             log.error(RestWrapper.WEBHOOK_CREATE_FAILURE);
             throw new ScmException(RestWrapper.WEBHOOK_CREATE_FAILURE);
         }
         RepoDto repoDto = RepoDto.builder().repoIdentity(projectId).isWebhookConfigured(true).webhookId(
-                WebhookGitLabDto.getId()).build();
+                webhookGitLabDto.getId()).build();
         dataStoreService.updateScmOrgRepo(OrgReposDto.builder()
                 .orgIdentity(scmAccessTokenDto.getOrgIdentity())
                 .scmUrl(scmAccessTokenDto.getScmUrl())
                 .repoList(Collections.singletonList(repoDto))
                 .build());
-        return WebhookGitLabDto.getId();
+        return webhookGitLabDto.getId();
     }
 
     @Override
