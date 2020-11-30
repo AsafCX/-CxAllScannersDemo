@@ -12,6 +12,7 @@ import com.checkmarx.service.ScmService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,12 @@ import java.util.List;
 @RestController
 @RequestMapping
 public class WebController {
+
+    @Value("${front.end.domain}")
+    private String frontEndDomain;
+
+    @Value("${front.end.port}")
+    private String frontEndPort;
 
     @Autowired
     ApplicationContext applicationContext;
@@ -42,7 +49,9 @@ public class WebController {
         String scopes = getScmService(scmType).getScopes();
         ScmConfigWebDto scmConfigWebDto = genericScmService.getScmConfiguration(baseUrl,scopes);
         log.info("Return Scm: {} Configuration: {}", scmType, scmConfigWebDto);
-        return ResponseEntity.ok(scmConfigWebDto);
+        return ResponseEntity.ok()
+                .headers(getHeaders())
+                .body(scmConfigWebDto);
     }
 
     /**
@@ -59,9 +68,11 @@ public class WebController {
     public ResponseEntity<List<OrganizationWebDto>> getOrganizations(@PathVariable String scmType,
                                            @RequestParam String authCode) {
         log.trace("getOrganizations: scmType={}, authCode={}", scmType, authCode);
-        List<OrganizationWebDto> userOrgGithubDtos = getScmService(scmType).getOrganizations(authCode);
-        log.info("Return Scm: {} Organizations: {}", scmType, userOrgGithubDtos);
-        return ResponseEntity.ok(userOrgGithubDtos);
+        List<OrganizationWebDto> organizationWebDtos = getScmService(scmType).getOrganizations(authCode);
+        log.info("Return Scm: {} Organizations: {}", scmType, organizationWebDtos);
+        return ResponseEntity.ok()
+                .headers(getHeaders())
+                .body(organizationWebDtos);
     }
 
     /**
@@ -75,10 +86,12 @@ public class WebController {
     public ResponseEntity<List<RepoWebDto>> getOrganizationRepositories(@PathVariable String scmType,
                                                       @PathVariable String orgId) {
         log.trace("getOrganizationRepositories: scmType={}, orgId={}", scmType, orgId);
-        List<RepoWebDto> orgRepoGithubDtos = getScmService(scmType).getScmOrgRepos(orgId);
+        List<RepoWebDto> repoWebDtos = getScmService(scmType).getScmOrgRepos(orgId);
         log.info("Return Scm: {} Organization: {} repositories: {}", scmType, orgId,
-                 orgRepoGithubDtos);
-        return ResponseEntity.ok(orgRepoGithubDtos);
+                 repoWebDtos);
+        return ResponseEntity.ok()
+                .headers(getHeaders())
+                .body(repoWebDtos);
     }
 
     /**
@@ -95,7 +108,9 @@ public class WebController {
         log.trace("createWebhook: scmType={}, orgId={}, repoName={}", scmType, orgId, repoId);
         String webhookId = getScmService(scmType).createWebhook(orgId, repoId);
         log.info("{} CXFlow Webhook created successfully!",repoId);
-        return ResponseEntity.ok(webhookId);
+        return ResponseEntity.ok()
+                .headers(getHeaders())
+                .body(webhookId);
     }
 
     /**
@@ -115,7 +130,9 @@ public class WebController {
                 repoId, webhookId);
         getScmService(scmType).deleteWebhook(orgId, repoId, webhookId);
         log.info("{} CXFlow Webhook removed successfully!",repoId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok()
+                .headers(getHeaders())
+                .build();
     }
 
     /**
@@ -132,7 +149,9 @@ public class WebController {
         OrgSettingsWebDto orgSettingsWebDto = genericScmService.getOrgSettings(orgId,baseUrl);
         log.info("Return organization settings: {} for scm: {}, org: {}", orgSettingsWebDto, scmType,
                  orgId);
-        return ResponseEntity.ok(orgSettingsWebDto);
+        return ResponseEntity.ok()
+                .headers(getHeaders())
+                .body(orgSettingsWebDto);
     }
 
     /**
@@ -149,7 +168,9 @@ public class WebController {
         String baseUrl = getScmService(scmType).getBaseUrl();
         genericScmService.setOrgSettings(orgId, orgSettingsWebDto, baseUrl);
         log.info("{} organization settings saved successfully!", orgSettingsWebDto);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok()
+                .headers(getHeaders())
+                .build();
     }
 
     /**
@@ -172,5 +193,11 @@ public class WebController {
 
     private ScmService getScmService(String scmName) {
         return (ScmService) applicationContext.getBean(scmName);
+    }
+
+    private HttpHeaders getHeaders() {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.setAccessControlAllowOrigin(frontEndDomain + ":" + frontEndPort);
+        return responseHeaders;
     }
 }
