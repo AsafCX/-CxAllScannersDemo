@@ -12,7 +12,6 @@ import com.checkmarx.service.ScmService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -22,12 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping
 public class WebController {
-
-    @Value("${front.end.domain}")
-    private String frontEndDomain;
-
-    @Value("${front.end.port}")
-    private String frontEndPort;
 
     @Autowired
     ApplicationContext applicationContext;
@@ -49,9 +42,7 @@ public class WebController {
         String scopes = getScmService(scmType).getScopes();
         ScmConfigWebDto scmConfigWebDto = genericScmService.getScmConfiguration(baseUrl,scopes);
         log.info("Return Scm: {} Configuration: {}", scmType, scmConfigWebDto);
-        return ResponseEntity.ok()
-                .headers(getHeaders())
-                .body(scmConfigWebDto);
+        return ResponseEntity.ok(scmConfigWebDto);
     }
 
     /**
@@ -70,9 +61,7 @@ public class WebController {
         log.trace("getOrganizations: scmType={}, authCode={}", scmType, authCode);
         List<OrganizationWebDto> organizationWebDtos = getScmService(scmType).getOrganizations(authCode);
         log.info("Return Scm: {} Organizations: {}", scmType, organizationWebDtos);
-        return ResponseEntity.ok()
-                .headers(getHeaders())
-                .body(organizationWebDtos);
+        return ResponseEntity.ok(organizationWebDtos);
     }
 
     /**
@@ -89,9 +78,7 @@ public class WebController {
         List<RepoWebDto> repoWebDtos = getScmService(scmType).getScmOrgRepos(orgId);
         log.info("Return Scm: {} Organization: {} repositories: {}", scmType, orgId,
                  repoWebDtos);
-        return ResponseEntity.ok()
-                .headers(getHeaders())
-                .body(repoWebDtos);
+        return ResponseEntity.ok(repoWebDtos);
     }
 
     /**
@@ -108,9 +95,7 @@ public class WebController {
         log.trace("createWebhook: scmType={}, orgId={}, repoName={}", scmType, orgId, repoId);
         String webhookId = getScmService(scmType).createWebhook(orgId, repoId);
         log.info("{} CXFlow Webhook created successfully!",repoId);
-        return ResponseEntity.ok()
-                .headers(getHeaders())
-                .body(webhookId);
+        return ResponseEntity.ok(webhookId);
     }
 
     /**
@@ -130,9 +115,7 @@ public class WebController {
                 repoId, webhookId);
         getScmService(scmType).deleteWebhook(orgId, repoId, webhookId);
         log.info("{} CXFlow Webhook removed successfully!",repoId);
-        return ResponseEntity.ok()
-                .headers(getHeaders())
-                .build();
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -149,9 +132,7 @@ public class WebController {
         OrgSettingsWebDto orgSettingsWebDto = genericScmService.getOrgSettings(orgId,baseUrl);
         log.info("Return organization settings: {} for scm: {}, org: {}", orgSettingsWebDto, scmType,
                  orgId);
-        return ResponseEntity.ok()
-                .headers(getHeaders())
-                .body(orgSettingsWebDto);
+        return ResponseEntity.ok(orgSettingsWebDto);
     }
 
     /**
@@ -168,9 +149,7 @@ public class WebController {
         String baseUrl = getScmService(scmType).getBaseUrl();
         genericScmService.setOrgSettings(orgId, orgSettingsWebDto, baseUrl);
         log.info("{} organization settings saved successfully!", orgSettingsWebDto);
-        return ResponseEntity.ok()
-                .headers(getHeaders())
-                .build();
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -195,9 +174,4 @@ public class WebController {
         return (ScmService) applicationContext.getBean(scmName);
     }
 
-    private HttpHeaders getHeaders() {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.setAccessControlAllowOrigin(frontEndDomain + ":" + frontEndPort);
-        return responseHeaders;
-    }
 }
