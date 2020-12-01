@@ -2,15 +2,14 @@ package com.checkmarx.utils;
 
 
 import com.checkmarx.dto.AccessTokenDto;
+import com.checkmarx.dto.IDto;
 import com.checkmarx.dto.datastore.OrgPropertiesDto;
 import com.checkmarx.dto.datastore.OrgReposDto;
 import com.checkmarx.dto.datastore.RepoDto;
 import com.checkmarx.dto.datastore.ScmAccessTokenDto;
 
-import com.checkmarx.dto.github.OrganizationGithubDto;
 
-import com.checkmarx.dto.github.RepoGithubDto;
-import com.checkmarx.dto.gitlab.RepoGitlabDto;
+import com.checkmarx.dto.IRepoDto;
 import com.checkmarx.dto.web.OrgSettingsWebDto;
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
@@ -23,49 +22,25 @@ import java.util.List;
 public class Converter {
 
     private Converter(){}
-
-    public static OrgReposDto convertToOrgGithubRepoDto(ScmAccessTokenDto scmAccessTokenDto, List<RepoGithubDto> orgRepoGithubDtos) {
-        return OrgReposDto.builder()
-                .scmUrl(scmAccessTokenDto.getScmUrl())
-                .orgIdentity(scmAccessTokenDto.getOrgIdentity())
-                .repoList(Converter.convertListToRepoGithubDto(orgRepoGithubDtos))
-                .build();
-
-    }
-    public static OrgReposDto convertToOrgGitlabRepoDto(ScmAccessTokenDto scmAccessTokenDto, List<RepoGitlabDto> repoDtos) {
-        return OrgReposDto.builder()
-                .scmUrl(scmAccessTokenDto.getScmUrl())
-                .orgIdentity(scmAccessTokenDto.getOrgIdentity())
-                .repoList(Converter.convertListToRepoGitlabDto(repoDtos))
-                .build();
-
-    }
-    public static List<RepoDto> convertListToRepoGithubDto(List<RepoGithubDto> dtoList) {
-        List<RepoDto> repoDtos = new ArrayList<>();
-        for (RepoGithubDto repoDto: dtoList) {
-            repoDtos.add(Converter.convertToDataStoreDtoGithub(repoDto));
-        }
-        return repoDtos;
-    }
-
-    public static List<RepoDto> convertListToRepoGitlabDto(List<RepoGitlabDto> dtoList) {
-        List<RepoDto> repoDtos = new ArrayList<>();
-        for (RepoGitlabDto repoDto: dtoList) {
-            repoDtos.add(Converter.convertToDataStoreDtoGitlab(repoDto));
-        }
-        return repoDtos;
-    }
-
     
-    public static RepoDto convertToDataStoreDtoGithub(RepoGithubDto repoDto) {
-        return RepoDto.builder()
-                .repoIdentity(repoDto.getName())
-                .isWebhookConfigured(repoDto.isWebHookEnabled())
-                .webhookId(repoDto.getWebhookId())
+    public static OrgReposDto convertToOrgRepoDto(ScmAccessTokenDto scmAccessTokenDto, List<? extends IRepoDto> repoDtos) {
+        return OrgReposDto.builder()
+                .scmUrl(scmAccessTokenDto.getScmUrl())
+                .orgIdentity(scmAccessTokenDto.getOrgIdentity())
+                .repoList(Converter.convertListToRepoDto(repoDtos))
                 .build();
+
     }
 
-    public static RepoDto convertToDataStoreDtoGitlab(RepoGitlabDto repoDto) {
+    public static List<RepoDto> convertListToRepoDto(List<? extends IRepoDto>  dtoList) {
+        List<RepoDto> repoDtos = new ArrayList<>();
+        for (IRepoDto repoDto: dtoList) {
+            repoDtos.add(Converter.convertToDataStoreDto(repoDto));
+        }
+        return repoDtos;
+    }
+
+    public static RepoDto convertToDataStoreDto(IRepoDto repoDto) {
         return RepoDto.builder()
                 .repoIdentity(repoDto.getId())
                 .isWebhookConfigured(repoDto.isWebHookEnabled())
@@ -73,45 +48,30 @@ public class Converter {
                 .build();
     }
     
-    public static List<OrganizationWebDto> convertToListOrgWebDtos(List<OrganizationGithubDto> userOrgGithubDtos) {
+    public static List<OrganizationWebDto> convertToListOrgWebDtos(List<? extends IDto> userOrgGithubDtos) {
         List<OrganizationWebDto> orgWebDtos = new ArrayList<>();
-        for (OrganizationGithubDto orgGithubDto: userOrgGithubDtos) {
+        for (IDto orgGithubDto: userOrgGithubDtos) {
             orgWebDtos.add(Converter.convertToOrgWebDto(orgGithubDto));
         }
         return orgWebDtos;
     }
 
-    public static OrganizationWebDto convertToOrgWebDto(OrganizationGithubDto orgGithubDto) {
-        return OrganizationWebDto.builder().id(orgGithubDto.getName()).name(orgGithubDto.getName()).build();
-    }
-
-    public static List<RepoWebDto> convertToListRepoGithubWebDto(List<RepoGithubDto> repoDtos) {
-        List<RepoWebDto> repoWebDtos = new ArrayList<>();
-        for (RepoGithubDto repoDto : repoDtos) {
-            repoWebDtos.add(Converter.convertRepoDtoToRepoGithubWebDto(repoDto));
-        }
-        return repoWebDtos;
+    public static OrganizationWebDto convertToOrgWebDto(IDto iDto) {
+        return OrganizationWebDto.builder().id(iDto.getId()).name(iDto.getName()).build();
     }
 
 
-    public static List<RepoWebDto> convertToListRepoGitlabWebDto(List<RepoGitlabDto> repoDtos) {
+    public static List<RepoWebDto> convertToListRepoWebDto(List<? extends IRepoDto>  repoDtos) {
         List<RepoWebDto> repoWebDtos = new ArrayList<>();
-        for (RepoGitlabDto repoDto : repoDtos) {
-            repoWebDtos.add(Converter.convertRepoDtoToRepoGitlabWebDto(repoDto));
+        for (IRepoDto repoDto : repoDtos) {
+            repoWebDtos.add(Converter.convertRepoDtoToRepoWebDto(repoDto));
         }
         return repoWebDtos;
     }
     
-    public static RepoWebDto convertRepoDtoToRepoGithubWebDto(RepoGithubDto repoDto) {
-        return RepoWebDto.builder()
-                .id(repoDto.getName())
-                .name(repoDto.getName())
-                .webhookId(repoDto.getWebhookId())
-                .webhookEnabled(repoDto.isWebHookEnabled())
-                .build();
-    }
 
-    public static RepoWebDto convertRepoDtoToRepoGitlabWebDto(RepoGitlabDto repoDto) {
+
+    public static RepoWebDto convertRepoDtoToRepoWebDto(IRepoDto repoDto) {
         return RepoWebDto.builder()
                 .id(repoDto.getId())
                 .name(repoDto.getName())
@@ -144,23 +104,11 @@ public class Converter {
                 .cxgoSecret(cxGoToken)
                 .build();
     }
+    
 
-    public static List<ScmAccessTokenDto> convertToListGithubOrgAccessToken(AccessTokenDto accessToken, List<OrganizationGithubDto> userOrgGithubDtos, String scmUrl) {
+    public static List<ScmAccessTokenDto> convertToListOrgAccessToken(AccessTokenDto accessToken, List<? extends IDto> organizationWebDtos, String scmUrl) {
         List<ScmAccessTokenDto> scmAccessTokenDtos = new ArrayList<>();
-        for (OrganizationGithubDto orgGithubDto: userOrgGithubDtos) {
-            scmAccessTokenDtos.add(ScmAccessTokenDto.builder()
-                                           .orgIdentity(orgGithubDto.getName())
-                                            .scmUrl(scmUrl)
-                                           .accessToken(accessToken.getAccessToken())
-                                           .tokenType(TokenType.ACCESS.getType())
-                                           .build());
-        }
-        return scmAccessTokenDtos;
-    }
-
-    public static List<ScmAccessTokenDto> convertToListGitlabOrgAccessToken(AccessTokenDto accessToken, List<OrganizationWebDto> organizationWebDtos, String scmUrl) {
-        List<ScmAccessTokenDto> scmAccessTokenDtos = new ArrayList<>();
-        for (OrganizationWebDto orgDto: organizationWebDtos) {
+        for (IDto orgDto: organizationWebDtos) {
             scmAccessTokenDtos.add(ScmAccessTokenDto.builder()
                     .orgIdentity(orgDto.getId())
                     .scmUrl(scmUrl)

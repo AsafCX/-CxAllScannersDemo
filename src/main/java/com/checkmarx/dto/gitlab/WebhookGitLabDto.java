@@ -1,5 +1,6 @@
 package com.checkmarx.dto.gitlab;
 
+import com.checkmarx.dto.IDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -18,7 +19,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public @Data class WebhookGitLabDto {
+public @Data class WebhookGitLabDto  {
     
     @JsonProperty("id")
     private String id;

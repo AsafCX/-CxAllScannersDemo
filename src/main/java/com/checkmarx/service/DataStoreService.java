@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 
 import javax.annotation.PostConstruct;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -284,5 +285,15 @@ public class DataStoreService implements DataService {
         }
 
         log.info("Update org settings: {} in DataStore passed successfully", orgPropertiesDto);
+    }
+
+    @Override
+    public void updateWebhook(@NonNull String repoId, ScmAccessTokenDto scmAccessTokenDto, String webhookId, Boolean isWebhook ) {
+        RepoDto repoDto = RepoDto.builder().repoIdentity(repoId).webhookId(webhookId).isWebhookConfigured(isWebhook).build();
+        updateScmOrgRepo(OrgReposDto.builder()
+                .orgIdentity(scmAccessTokenDto.getOrgIdentity())
+                .scmUrl(scmAccessTokenDto.getScmUrl())
+                .repoList(Collections.singletonList(repoDto))
+                .build());
     }
 }

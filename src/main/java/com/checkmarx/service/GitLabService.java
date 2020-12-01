@@ -1,9 +1,10 @@
 package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
+import com.checkmarx.dto.AccessTokenDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
-import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
+import com.checkmarx.dto.IRepoDto;
 import com.checkmarx.dto.gitlab.RepoGitlabDto;
 import com.checkmarx.dto.gitlab.WebhookGitLabDto;
 import com.checkmarx.dto.web.OrganizationWebDto;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service("gitlab")
-public class GitLabService implements ScmService  {
+public class GitLabService extends AbstractScmService implements ScmService  {
 
     private static final String URL_AUTH_TOKEN = "https://gitlab.com/oauth/token?client_id=%s&client_secret=%s&code=%s&grant_type=authorization_code&redirect_uri=%s";
 
@@ -52,16 +53,22 @@ public class GitLabService implements ScmService  {
 
     @Value("${redirect.url}")
     private String redirectUrl;
-
-    @Autowired
-    RestWrapper restWrapper;
-
-    @Autowired
-    DataService dataStoreService;
-
-    @Value("${cxflow.webhook.url}")
-    private String cxFlowWebHook;
     
+
+    @Override
+    protected Map<String, String> getHeaders() {
+        // If we don't specify any User-Agent, the request will fail with "403 Forbidden: [error code: 1010]".
+        // This issue may not exist in some execution environments.
+        return Collections.singletonMap(HttpHeaders.USER_AGENT, GitLabService.TOKEN_REQUEST_USER_AGENT);
+    }
+    
+    @Override
+    protected String getPath(String oAuthCode, ScmDto scmDto) {
+        return String.format(GitLabService.URL_AUTH_TOKEN, scmDto.getClientId(),
+                scmDto.getClientSecret(),
+                oAuthCode,
+                redirectUrl);
+    }
     
     @Override
     public String getScopes() {
@@ -74,7 +81,7 @@ public class GitLabService implements ScmService  {
 
     @Override
     public List<OrganizationWebDto> getOrganizations(@NonNull String authCode) {
-        AccessTokenGitlabDto accessToken = generateAccessToken(authCode);
+        AccessTokenDto accessToken = generateAccessToken(authCode);
         log.info("Access token generated successfully");
 
         ResponseEntity<OrganizationWebDto[]> response =
@@ -82,54 +89,12 @@ public class GitLabService implements ScmService  {
                         OrganizationWebDto[].class, accessToken.getAccessToken());
         List<OrganizationWebDto> organizationWebDtos = new ArrayList<>(Arrays.asList(Objects.requireNonNull(response.getBody())));
         List<ScmAccessTokenDto> scmAccessTokenDtos =
-                Converter.convertToListGitlabOrgAccessToken(accessToken, organizationWebDtos, getBaseUrl());
+                Converter.convertToListOrgAccessToken(accessToken, organizationWebDtos, getBaseUrl());
         dataStoreService.storeScmOrgsToken(scmAccessTokenDtos);
         return organizationWebDtos;
     }
 
-    /**
-     * generateAccessToken method using OAuth code, client id and client secret generates access
-     * token via GitHub api
-     *
-     * @param oAuthCode given from FE application after first-step OAuth implementation passed
-     *                  successfully, taken from request param "code", using it to create access token
-     * @return Access token given from GitHub
-     */
-    private AccessTokenGitlabDto generateAccessToken(String oAuthCode) {
-        ScmDto scmDto = dataStoreService.getScm(getBaseUrl());
-        String path = String.format(URL_AUTH_TOKEN, scmDto.getClientId(),
-                scmDto.getClientSecret(),
-                oAuthCode,
-                redirectUrl);
 
-        // If we don't specify any User-Agent, the request will fail with "403 Forbidden: [error code: 1010]".
-        // This issue may not exist in some execution environments.
-        Map<String, String> headers = Collections.singletonMap(HttpHeaders.USER_AGENT, TOKEN_REQUEST_USER_AGENT);
-
-        ResponseEntity<AccessTokenGitlabDto> response = restWrapper.sendRequest(path, HttpMethod.POST,
-                null, headers,
-                AccessTokenGitlabDto.class);
-
-        if(!verifyAccessToken(response.getBody())){
-            log.error(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
-            throw new ScmException(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
-        }
-        return response.getBody();
-    }
-
-    /**
-     * verifyAccessToken method used to verify access token creation, Currently checks if access
-     * token created(not null or empty) without GitHub validation
-     *
-     * @param accessToken access token generated before using GitHub api, Gives access to relevant
-     *                  GitHub data
-     * @return true if verification passed successfully
-     */
-    protected boolean verifyAccessToken(AccessTokenGitlabDto accessToken) {
-        return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
-    }
-    
-    
     @Override
     public List<RepoWebDto> getScmOrgRepos(@NonNull String orgId) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseUrl(), orgId);
@@ -140,8 +105,8 @@ public class GitLabService implements ScmService  {
                                        RepoGitlabDto[].class, scmAccessTokenDto.getAccessToken());
         ArrayList<RepoGitlabDto> repoGitlabDtos = new ArrayList<>(Arrays.asList(
                 Objects.requireNonNull(response.getBody())));
-        List<RepoGitlabDto> filteredRepos = repoGitlabDtos.stream().filter(repoGitlabDto -> repoGitlabDto.getNamespace().getId().equals(orgId)).collect(Collectors.toList());
-        for (RepoGitlabDto repoGitlabDto : filteredRepos) {
+        List<? extends IRepoDto> filteredRepos = repoGitlabDtos.stream().filter(repoGitlabDto -> repoGitlabDto.getNamespace().getId().equals(orgId)).collect(Collectors.toList());
+        for (IRepoDto repoGitlabDto : filteredRepos) {
             WebhookGitLabDto webhookGitlabDto = getRepositoryCxFlowWebhook(repoGitlabDto.getId(),
                     scmAccessTokenDto.getAccessToken());
             if(webhookGitlabDto != null) {
@@ -151,9 +116,9 @@ public class GitLabService implements ScmService  {
                 repoGitlabDto.setWebHookEnabled(false);
             }
         }
-        OrgReposDto orgReposDto = Converter.convertToOrgGitlabRepoDto(scmAccessTokenDto, filteredRepos);
+        OrgReposDto orgReposDto = Converter.convertToOrgRepoDto(scmAccessTokenDto, filteredRepos);
         dataStoreService.updateScmOrgRepo(orgReposDto);
-        return Converter.convertToListRepoGitlabWebDto(filteredRepos);
+        return Converter.convertToListRepoWebDto(filteredRepos);
     }
 
 
@@ -166,18 +131,16 @@ public class GitLabService implements ScmService  {
                  WebhookGitLabDto.class,
                 scmAccessTokenDto.getAccessToken());
         WebhookGitLabDto webhookGitLabDto = response.getBody();
+        validateResponse(webhookGitLabDto);
+        dataStoreService.updateWebhook(projectId, scmAccessTokenDto, webhookGitLabDto.getId(), true);
+        return webhookGitLabDto.getId();
+    }
+
+    private void validateResponse(WebhookGitLabDto webhookGitLabDto) {
         if(webhookGitLabDto == null || StringUtils.isEmpty(webhookGitLabDto.getId())){
             log.error(RestWrapper.WEBHOOK_CREATE_FAILURE);
             throw new ScmException(RestWrapper.WEBHOOK_CREATE_FAILURE);
         }
-        RepoDto repoDto = RepoDto.builder().repoIdentity(projectId).isWebhookConfigured(true).webhookId(
-                webhookGitLabDto.getId()).build();
-        dataStoreService.updateScmOrgRepo(OrgReposDto.builder()
-                .orgIdentity(scmAccessTokenDto.getOrgIdentity())
-                .scmUrl(scmAccessTokenDto.getScmUrl())
-                .repoList(Collections.singletonList(repoDto))
-                .build());
-        return webhookGitLabDto.getId();
     }
 
     @Override
@@ -197,13 +160,9 @@ public class GitLabService implements ScmService  {
             }
             throw new ScmException(RestWrapper.GENERAL_RUNTIME_EXCEPTION);
         }
-        RepoDto repoDto = RepoDto.builder().repoIdentity(repoId).webhookId(null).isWebhookConfigured(false).build();
-        dataStoreService.updateScmOrgRepo(OrgReposDto.builder()
-                .orgIdentity(scmAccessTokenDto.getOrgIdentity())
-                .scmUrl(scmAccessTokenDto.getScmUrl())
-                .repoList(Collections.singletonList(repoDto))
-                .build());
+        dataStoreService.updateWebhook(repoId, scmAccessTokenDto, null, false);
     }
+    
 
     @Override
     public CxFlowConfigDto validateCxFlowConfiguration(@NonNull CxFlowConfigDto cxFlowConfigDto) {
@@ -227,4 +186,6 @@ public class GitLabService implements ScmService  {
         }
         return null;
     }
+
+
 }
