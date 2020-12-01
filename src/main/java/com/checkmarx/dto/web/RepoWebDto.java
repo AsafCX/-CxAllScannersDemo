@@ -1,5 +1,6 @@
 package com.checkmarx.dto.web;
 
+import com.checkmarx.dto.IDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public @Data class RepoWebDto {
+public @Data class RepoWebDto implements IDto {
 
     private String id;
     private String name;

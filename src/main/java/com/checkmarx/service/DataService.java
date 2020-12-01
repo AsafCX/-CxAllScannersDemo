@@ -7,15 +7,18 @@ import java.util.List;
 
 public interface DataService {
 
-    public void storeScmOrgsToken(@NonNull List<ScmAccessTokenDto> scmAccessTokenDtos);
-    public ScmAccessTokenDto getSCMOrgToken(@NonNull String scmUrl, @NonNull String orgIdentity);
-    public void storeScm(@NonNull ScmDto scmDto);
-    public ScmDto getScm(@NonNull String scmUrl);
-    public void storeScmOrgRepos(@NonNull OrgReposDto orgReposDto);
-    public List<RepoDto> getScmOrgRepos(@NonNull String scmUrl, @NonNull String orgIdentity);
-    public RepoDto getScmOrgRepo(@NonNull String scmUrl, @NonNull String orgIdentity,
+    void storeScmOrgsToken(@NonNull List<ScmAccessTokenDto> scmAccessTokenDtos);
+    ScmAccessTokenDto getSCMOrgToken(@NonNull String scmUrl, @NonNull String orgIdentity);
+    void storeScm(@NonNull ScmDto scmDto);
+    ScmDto getScm(@NonNull String scmUrl);
+    void storeScmOrgRepos(@NonNull OrgReposDto orgReposDto);
+    List<RepoDto> getScmOrgRepos(@NonNull String scmUrl, @NonNull String orgIdentity);
+    RepoDto getScmOrgRepo(@NonNull String scmUrl, @NonNull String orgIdentity,
                                  @NonNull String repoIdentity);
-    public void updateScmOrgRepo(@NonNull OrgReposDto orgReposDto);
-    public OrgPropertiesDto getScmOrgSettings(@NonNull String scmUrl, @NonNull String orgIdentity);
-    public void storeScmOrgSettings(@NonNull OrgPropertiesDto orgPropertiesDto);
+    void updateScmOrgRepo(@NonNull OrgReposDto orgReposDto);
+    OrgPropertiesDto getScmOrgSettings(@NonNull String scmUrl, @NonNull String orgIdentity);
+    void storeScmOrgSettings(@NonNull OrgPropertiesDto orgPropertiesDto);
+
+
+    void updateWebhook(@NonNull String repoId, ScmAccessTokenDto scmAccessTokenDto, String webhookId, Boolean isWebhook);
 }

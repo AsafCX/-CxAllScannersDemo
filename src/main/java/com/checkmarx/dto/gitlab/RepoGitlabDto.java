@@ -1,5 +1,6 @@
 package com.checkmarx.dto.gitlab;
 
+import com.checkmarx.dto.IRepoDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
@@ -8,7 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class RepoGitlabDto  {
+public class RepoGitlabDto implements IRepoDto {
 
     @JsonProperty("id")
     private String id;
