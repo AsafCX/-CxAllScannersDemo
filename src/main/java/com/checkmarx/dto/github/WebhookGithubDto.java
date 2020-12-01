@@ -1,6 +1,7 @@
 package com.checkmarx.dto.github;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,8 +30,10 @@ public @Data class WebhookGithubDto {
     public static class Config {
 
         private String url;
+        @JsonProperty("content_type")
         private String contentType;
         private String secret;
+        @JsonProperty("insecure_ssl")
         private String insecureSsl;
 
     }
