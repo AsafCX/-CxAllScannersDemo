@@ -49,7 +49,7 @@ public class AzureService extends AbstractScmService implements ScmService  {
 
     private static final String BASE_DB_KEY = "azure.com";
 
-    private static final String SCOPES ="api";
+    private static final String SCOPES ="vso.code_full vso.project_manage";
 
     private static final String URL_GET_WEBHOOKS =  "/projects/%s/hooks";
 
