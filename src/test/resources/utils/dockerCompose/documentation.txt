@@ -1,0 +1,37 @@
+#pull new images
+docker-compose --env-file=env_file_populated pull  --include-deps
+
+#remove and stop services started before by the same docker-compose
+docker-compose --env-file=env_file down
+
+#start services
+docker-compose --env-file=env_file up
+
+#see which containers are running 
+docker ps -a
+
+#see env variables of each container
+#in general exec allows you running commands on container. Since our containers are under linux OS, we can run here linux commands
+docker exec use-docker_repomanager_1 env
+
+#see logs of running container
+docker container logs cxint_repomanager_1
+
+URLs when not changing the default values in env_file
+DB Url:
+http://<IP>:8082/
+user: cx_user
+pass: cx_password
+instance: cx_instance
+db: db
+
+DataStore swagger URL:
+http://<IP>:5436/Integrations-DataStore.html
+
+RepoManager swagger URL
+http://<IP>>:5438/Integrations-Repos-Manager.html
+
+
+
+
+docker-compose --env-file=env_file pull repomanager datastore

@@ -1,0 +1,50 @@
+version: '3.1'
+services :  
+  db:
+    image: postgres:latest
+    ports:
+      - ${DB_PORT_SERVER}:5432
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_VALUE}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_VALUE}
+      POSTGRES_DB: ${POSTGRES_DB_VALUE}
+      PGGSSENCMODE: disable
+  db_client:
+    image: adminer
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - ${DB_PORT_CLIENT}:8080     
+  datastore:
+    image: checkmarx/integrations-datastore:latest
+    ports:
+      - ${PORT_DATA_STORE}:8080
+    environment:
+      SPRING_DATASOURCE_URL: 'jdbc:postgresql://db:5432/${POSTGRES_DB_VALUE}'
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_VALUE}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_VALUE}
+    restart: always
+    depends_on:
+      - db   
+  repomanager:
+    image: checkmarx/integrations-repos-manager:latest
+    ports:
+      - ${PORT_PEPO_MANAGER}:8080
+    environment:
+      GITHUB_CLIENT_ID: ${SCM_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${SCM_CLIENT_SECRET}
+      DATA_STORE: 'http://datastore:8080'
+      logging_level_org_springframework_web: ${LOG_LEVEL}
+      cxflow_webhook_url: ${WEBHOOK_URL_VALUE}
+      REDIRECT_URL: ${REDIRECT_URL_VALUE}
+    restart: always
+    depends_on: 
+      - datastore
+  frontend:
+    image: checkmarx/integrations-frontend:latest
+    ports:
+      - ${PORT_FRONT_END}:80
+    restart: always
+    depends_on: 
+      - repomanager
