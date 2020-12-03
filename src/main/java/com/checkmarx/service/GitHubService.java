@@ -15,9 +15,7 @@ import com.checkmarx.utils.Converter;
 import com.checkmarx.utils.RestWrapper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,12 +48,7 @@ public class GitHubService extends AbstractScmService  implements ScmService {
     
 
     @Override
-    protected Map<String, String> getHeaders() {
-        return null;
-    }
-
-    @Override
-    protected String getPath(String oAuthCode, ScmDto scmDto) {
+    protected String buildPathAccessToken(String oAuthCode, ScmDto scmDto) {
         return String.format(URL_GENERATE_TOKEN, scmDto.getClientId(),
                 scmDto.getClientSecret(),
                 oAuthCode);
@@ -67,12 +60,12 @@ public class GitHubService extends AbstractScmService  implements ScmService {
         AccessTokenDto accessToken = generateAccessToken(authCode);
         log.info("Access token generated successfully");
 
-        ResponseEntity<OrganizationGithubDto[]> response =
+        ResponseEntity<? extends IDto[]> response =
                 restWrapper.sendBearerAuthRequest(URL_GET_ORGANIZATIONS, HttpMethod.GET, null, null,
                                                   OrganizationGithubDto[].class, accessToken.getAccessToken());
         List<? extends IDto> userOrgGithubDtos = new ArrayList<>(Arrays.asList(Objects.requireNonNull(response.getBody())));
         List<ScmAccessTokenDto> scmAccessTokenDtos =
-                Converter.convertToListOrgAccessToken(accessToken, userOrgGithubDtos, getBaseUrl());
+                Converter.convertToListOrgAccessToken(accessToken, userOrgGithubDtos, getBaseDbKey());
         dataStoreService.storeScmOrgsToken(scmAccessTokenDtos);
         return Converter.convertToListOrgWebDtos(userOrgGithubDtos);
     }
@@ -80,7 +73,7 @@ public class GitHubService extends AbstractScmService  implements ScmService {
     @Override
     public List<RepoWebDto> getScmOrgRepos(@NonNull String orgId) {
 
-        ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseUrl(), orgId);
+        ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
         String path = String.format(URL_GET_REPOS, orgId);
         ResponseEntity<RepoGithubDto[]> response =  restWrapper
                 .sendBearerAuthRequest(path, HttpMethod.GET,
@@ -206,7 +199,7 @@ public class GitHubService extends AbstractScmService  implements ScmService {
     }
 
     @Override
-    public String getBaseUrl() {
+    public String getBaseDbKey() {
         return GIT_HUB_URL;
     }
 

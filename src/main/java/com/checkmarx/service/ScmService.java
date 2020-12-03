@@ -22,7 +22,7 @@ public interface ScmService {
     void deleteWebhook(@NonNull String orgId, @NonNull String repoId,
                               @NonNull String webhookId);
     CxFlowConfigDto validateCxFlowConfiguration(@NonNull CxFlowConfigDto cxFlowConfigDto);
-    String getBaseUrl();
+    String getBaseDbKey();
     String getScopes();
 
 

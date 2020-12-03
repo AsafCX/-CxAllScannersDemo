@@ -7,11 +7,9 @@ import com.checkmarx.utils.RestWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Collections;
 import java.util.Map;
 
 @Slf4j
@@ -38,10 +36,8 @@ public abstract class AbstractScmService {
         return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
     }
 
-    public static ResponseEntity<AccessTokenDto> generateAccessToken(RestWrapper restWrapper, String path, Map<String, String> headers) {
-        ResponseEntity<AccessTokenDto> response = restWrapper.sendRequest(path, HttpMethod.POST,
-                null, headers,
-                AccessTokenDto.class);
+    public ResponseEntity<AccessTokenDto> generateAccessToken(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
+        ResponseEntity<AccessTokenDto> response = sendAccessTokenRequest(restWrapper, path, headers, body);
 
         if(!verifyAccessToken(response.getBody())){
             log.error(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
@@ -49,6 +45,16 @@ public abstract class AbstractScmService {
         }
         return response;
     }
+
+    protected ResponseEntity<AccessTokenDto> sendAccessTokenRequest(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
+        return (ResponseEntity<AccessTokenDto>) restWrapper.sendRequest(path, HttpMethod.POST,
+                    body, headers,
+                    AccessTokenDto.class);
+    }
+
+    protected Object getBodyAccessToken(String oAuthCode, ScmDto scmDto) { return null;}
+
+
 
     /**
      * generateAccessToken method using OAuth code, client id and client secret generates access
@@ -59,16 +65,15 @@ public abstract class AbstractScmService {
      * @return Access token given from GitHub
      */
     protected AccessTokenDto generateAccessToken(String oAuthCode) {
-        ScmDto scmDto = dataStoreService.getScm(getBaseUrl());
-        String path = getPath(oAuthCode, scmDto);
-        Map<String, String> headers = getHeaders();
-        ResponseEntity<AccessTokenDto> response = generateAccessToken(restWrapper, path, headers);
+        ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
+        String path = buildPathAccessToken(oAuthCode, scmDto);
+        ResponseEntity<AccessTokenDto> response = generateAccessToken(restWrapper, path, getHeadersAccessToken(), getBodyAccessToken(oAuthCode, scmDto));
         return response.getBody();
     }
 
-    public abstract String getBaseUrl() ;
+    public abstract String getBaseDbKey() ;
 
-    protected abstract Map<String, String> getHeaders() ;
+    protected Map<String, String> getHeadersAccessToken() {return null;}
 
-    protected abstract String getPath(String oAuthCode, ScmDto scmDto);
+    protected abstract String buildPathAccessToken(String oAuthCode, ScmDto scmDto);
 }

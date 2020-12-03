@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
@@ -68,6 +69,26 @@ public class RestWrapper {
         return restTemplate.exchange(path, method, request, responseType);
     }
 
+    /**
+     * sendRequest method used as rest request template, sends request via RestTemplate
+     *
+     * @param path         url path
+     * @param mapPostBody      request body in a form or a map
+     * @param headerMap      request headers as map
+     * @param responseType expected class structure as response
+     * @return ResponseEntity of any type
+     */
+    public ResponseEntity sendUrlEncodedPostRequest(String path, HttpMethod method,
+                                                    MultiValueMap<String, String> mapPostBody,
+                                                    Map<String, String> headerMap,
+                                                    Class responseType) {
+
+        HttpHeaders headers = createHeaders(headerMap);
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(mapPostBody, headers);
+        return restTemplate.postForEntity(path, request, responseType);
+    }
+    
     /**
      * createRequest method used as request creation template, Construct request from given
      * headers and body

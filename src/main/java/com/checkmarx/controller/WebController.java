@@ -38,7 +38,7 @@ public class WebController {
     @GetMapping(value = "/{scmType}/config")
     public ResponseEntity<ScmConfigWebDto> getConfiguration(@PathVariable String scmType) {
         log.trace("getConfiguration: scmType={}", scmType);
-        String baseUrl = getScmService(scmType).getBaseUrl();
+        String baseUrl = getScmService(scmType).getBaseDbKey();
         String scopes = getScmService(scmType).getScopes();
         ScmConfigWebDto scmConfigWebDto = genericScmService.getScmConfiguration(baseUrl,scopes);
         log.info("Return Scm: {} Configuration: {}", scmType, scmConfigWebDto);
@@ -128,7 +128,7 @@ public class WebController {
     public ResponseEntity<OrgSettingsWebDto> getOrgSettings(@PathVariable String scmType,
     @PathVariable String orgId) {
         log.trace("getOrgSettings: scmType={}, orgId={}", scmType, orgId);
-        String baseUrl = getScmService(scmType).getBaseUrl();
+        String baseUrl = getScmService(scmType).getBaseDbKey();
         OrgSettingsWebDto orgSettingsWebDto = genericScmService.getOrgSettings(orgId,baseUrl);
         log.info("Return organization settings: {} for scm: {}, org: {}", orgSettingsWebDto, scmType,
                  orgId);
@@ -146,7 +146,7 @@ public class WebController {
                                   @RequestBody OrgSettingsWebDto orgSettingsWebDto) {
         log.trace("setOrgSettings: scmType={}, orgId={}, OrgSettingsWebDto={}", scmType, orgId,
                   orgSettingsWebDto);
-        String baseUrl = getScmService(scmType).getBaseUrl();
+        String baseUrl = getScmService(scmType).getBaseDbKey();
         genericScmService.setOrgSettings(orgId, orgSettingsWebDto, baseUrl);
         log.info("{} organization settings saved successfully!", orgSettingsWebDto);
         return ResponseEntity.ok().build();
@@ -163,7 +163,7 @@ public class WebController {
     public ResponseEntity<CxFlowConfigDto> getCxFlowConfiguration(@PathVariable String scmType,
                                                   @PathVariable String orgId) {
         log.trace("getCxFlowConfiguration: scmType={}, orgId={}", scmType, orgId);
-        String baseUrl = getScmService(scmType).getBaseUrl();
+        String baseUrl = getScmService(scmType).getBaseDbKey();
         CxFlowConfigDto cxFlowConfigDto = genericScmService.getCxFlowConfiguration(orgId, baseUrl);
         cxFlowConfigDto = getScmService(scmType).validateCxFlowConfiguration(cxFlowConfigDto);
         log.info("Return CxFlow organization: {} settings: {}", orgId, cxFlowConfigDto);
