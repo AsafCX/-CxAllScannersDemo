@@ -35,7 +35,7 @@ public class AzureUserOrganizationsDto {
 
         @Override
         public String getId() {
-            return accountId;
+            return accountName;
         }
 
         @Override
