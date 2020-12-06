@@ -32,12 +32,11 @@ services :
     ports:
       - ${PORT_PEPO_MANAGER}:8080
     environment:
-      GITHUB_CLIENT_ID: ${SCM_CLIENT_ID}
-      GITHUB_CLIENT_SECRET: ${SCM_CLIENT_SECRET}
       DATA_STORE: 'http://datastore:8080'
       logging_level_org_springframework_web: ${LOG_LEVEL}
       cxflow_webhook_url: ${WEBHOOK_URL_VALUE}
-      REDIRECT_URL: ${REDIRECT_URL_VALUE}
+      AZURE_REDIRECT_URL: ${AZURE_REDIRECT_URL_VALUE}
+      GITLAB_REDIRECT_URL: ${GITLAB_REDIRECT_URL_VALUE}
     restart: always
     depends_on: 
       - datastore
