@@ -50,8 +50,8 @@ public class GitLabService extends AbstractScmService implements ScmService  {
 
     private static final String TOKEN_REQUEST_USER_AGENT = "CxIntegrations";
 
-    @Value("${redirect.url}")
-    private String redirectUrl;
+    @Value("${gitlab.redirect.url}")
+    private String gitlabRedirectUrl;
 
 
     @Override
@@ -66,7 +66,7 @@ public class GitLabService extends AbstractScmService implements ScmService  {
         return String.format(GitLabService.URL_AUTH_TOKEN, scmDto.getClientId(),
                 scmDto.getClientSecret(),
                 oAuthCode,
-                redirectUrl);
+                gitlabRedirectUrl);
     }
     
     @Override

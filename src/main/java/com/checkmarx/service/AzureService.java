@@ -64,8 +64,8 @@ public class AzureService extends AbstractScmService implements ScmService  {
     private static final String URL_CREATE_WEBHOOK =  "/projects/%s/hooks?url=%s&token=%s&merge_requests_events=true&push_events=true";
     
 
-    @Value("${redirect.url}")
-    private String redirectUrl;
+    @Value("${azure.redirect.url}")
+    private String azureRedirectUrl;
     
 
     @Override
@@ -84,7 +84,7 @@ public class AzureService extends AbstractScmService implements ScmService  {
         map.put("client_assertion",  Arrays.asList(scmDto.getClientSecret()));
         map.put("grant_type",  Arrays.asList("urn:ietf:params:oauth:grant-type:jwt-bearer"));
         map.put("assertion",  Arrays.asList(oAuthCode));
-        map.put("redirect_uri",  Arrays.asList(redirectUrl));
+        map.put("redirect_uri",  Arrays.asList(azureRedirectUrl));
         return map;
     }
 
