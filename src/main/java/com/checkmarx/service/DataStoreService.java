@@ -81,7 +81,7 @@ public class DataStoreService implements DataService {
         }  catch(HttpClientErrorException ex){
             log.error("HttpClientErrorException: {}", ex.getMessage());
             log.error(RestWrapper.SAVE_ACCESS_TOKEN_FAILURE);
-            throw new DataStoreException(RestWrapper.SAVE_ACCESS_TOKEN_FAILURE);
+            throw new DataStoreException(RestWrapper.SAVE_ACCESS_TOKEN_FAILURE, ex);
         }
         log.debug("Save orgs: {} token passed successfully!", scmAccessTokenDtos);
     }
@@ -100,7 +100,7 @@ public class DataStoreService implements DataService {
             log.error("HttpClientErrorException: {}", ex.getMessage());
             log.error(RestWrapper.SCM_ORG_TOKEN_MISSING + " Scm: {}, orgId: {}", scmUrl,
                       orgIdentity);
-            throw new DataStoreException(RestWrapper.SCM_ORG_TOKEN_MISSING);
+            throw new DataStoreException(RestWrapper.SCM_ORG_TOKEN_MISSING, ex);
         }
         log.debug("Get from DataStore token for Scm: {} Org: {} successfully!", scmUrl, orgIdentity);
         return response.getBody();
@@ -116,7 +116,7 @@ public class DataStoreService implements DataService {
         }  catch(HttpClientErrorException ex){
             log.error("HttpClientErrorException: {}", ex.getMessage());
             log.error(RestWrapper.STORE_SCM_FAILURE + " ScmDto={}", scmDto);
-            throw new DataStoreException(RestWrapper.STORE_SCM_FAILURE);
+            throw new DataStoreException(RestWrapper.STORE_SCM_FAILURE, ex);
         }
         log.debug("Save Scm: {} passed successfully", scmDto.getBaseUrl());
     }
@@ -134,7 +134,7 @@ public class DataStoreService implements DataService {
         }  catch(HttpClientErrorException ex){
             log.error("HttpClientErrorException: {}", ex.getMessage());
             log.error(RestWrapper.SCM_DETAILS_MISSING + " for requested Scm: {}", scmUrl);
-            throw new DataStoreException(RestWrapper.SCM_DETAILS_MISSING + " for requested Scm: " + scmUrl);
+            throw new DataStoreException(RestWrapper.SCM_DETAILS_MISSING + " for requested Scm: " + scmUrl, ex);
         }
         ScmDto scmDto = response.getBody();
         if (scmDto == null || StringUtils
@@ -158,7 +158,7 @@ public class DataStoreService implements DataService {
         }  catch(HttpClientErrorException ex){
             log.error("HttpClientErrorException: {}", ex.getMessage());
             log.error(RestWrapper.STORE_SCM_ORG_REPOS_FAILURE + " ScmRepoDto={}", orgReposDto);
-            throw new DataStoreException(RestWrapper.STORE_SCM_ORG_REPOS_FAILURE);
+            throw new DataStoreException(RestWrapper.STORE_SCM_ORG_REPOS_FAILURE, ex);
         }
         log.debug("Save Scm: {} Org: {} Repos:{} passed successfully", orgReposDto.getScmUrl(),
                   orgReposDto.getOrgIdentity(), orgReposDto.getRepoList());
@@ -177,7 +177,7 @@ public class DataStoreService implements DataService {
             log.error(RestWrapper.GET_ORG_REPOS_FAILURE + " scmUrl={}, orgIdentity={}", scmUrl,
                       orgIdentity);
             throw new DataStoreException(RestWrapper.GET_ORG_REPOS_FAILURE + " scmUrl="+ scmUrl +
-                                                 ", orgIdentity="+ orgIdentity);
+                                                 ", orgIdentity="+ orgIdentity, ex);
         }
         log.debug("Get from DataStore Scm: {} Org: {} Repos: {} passed successfully", scmUrl,
                   orgIdentity, response.getBody());
@@ -196,17 +196,19 @@ public class DataStoreService implements DataService {
         try {
             responseEntity = restWrapper.sendRequest(path, HttpMethod.GET, null, null, RepoDto.class);
         }  catch(HttpClientErrorException ex){
+            String exceptionMessage;
             if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 log.error(RestWrapper.MISSING_ORG_REPO + " orgIdentity={}, repoIdentity={}", orgIdentity,
                           repoIdentity);
-                throw new DataStoreException(RestWrapper.MISSING_ORG_REPO);
+                exceptionMessage = RestWrapper.MISSING_ORG_REPO;
             } else {
                 log.error("HttpClientErrorException: {}", ex.getMessage());
                 log.error(RestWrapper.GET_ORG_REPO_FAILURE + " orgIdentity={}, repoIdentity={}",
                           orgIdentity,
                           repoIdentity);
-                throw new DataStoreException(RestWrapper.GET_ORG_REPO_FAILURE);
+                exceptionMessage = RestWrapper.GET_ORG_REPO_FAILURE;
             }
+            throw new DataStoreException(exceptionMessage, ex);
         }
         log.debug("Get from DataStore Scm: {} Org: {} Repo: {} passed successfully", scmUrl,
                   orgIdentity, repoIdentity);
@@ -221,17 +223,19 @@ public class DataStoreService implements DataService {
             restWrapper.sendRequest(urlPatternDataSourceRepos, HttpMethod.PUT, orgReposDto,
                                     null, OrgReposDto.class);
         }  catch(HttpClientErrorException ex){
+            String exceptionMessage;
             if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 log.error(RestWrapper.MISSING_ORG_REPO + " orgIdentity={}, repoIdentity={}", orgReposDto.getOrgIdentity(),
                           orgReposDto.getRepoList());
-                throw new DataStoreException(RestWrapper.MISSING_ORG_REPO);
+                exceptionMessage = RestWrapper.MISSING_ORG_REPO;
             } else {
                 log.error("HttpClientErrorException: {}", ex.getMessage());
                 log.error(RestWrapper.UPDATE_ORG_REPO_FAILURE + " orgIdentity={}, repoIdentity={}", orgReposDto
                                   .getOrgIdentity(),
                           orgReposDto.getRepoList());
-                throw new DataStoreException(RestWrapper.GET_ORG_REPO_FAILURE);
+                exceptionMessage = RestWrapper.GET_ORG_REPO_FAILURE;
             }
+            throw new DataStoreException(exceptionMessage, ex);
         }
         log.debug("Update in DataStore Scm: {} Org: {} Repo: {} passed successfully",
                   orgReposDto.getScmUrl(), orgReposDto.getOrgIdentity(), orgReposDto.getRepoList());
@@ -247,16 +251,18 @@ public class DataStoreService implements DataService {
             responseEntity = restWrapper
                     .sendRequest(path, HttpMethod.GET, null, null, OrgPropertiesDto.class);
         }  catch(HttpClientErrorException ex){
+            String exceptionMessage ;
             if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 log.error(RestWrapper.MISSING_SCM_ORG + " scmUrl={}, orgIdentity={}", scmUrl,
                           orgIdentity);
-                throw new DataStoreException(RestWrapper.MISSING_SCM_ORG);
+                exceptionMessage = RestWrapper.MISSING_SCM_ORG;
             } else {
                 log.error("HttpClientErrorException: {}", ex.getMessage());
                 log.error(RestWrapper.GET_SCM_ORG_PROPERTIES_FAILURE + " scmUrl={}, orgIdentity={}",
                           scmUrl, orgIdentity);
-                throw new DataStoreException(RestWrapper.GET_SCM_ORG_PROPERTIES_FAILURE);
+                exceptionMessage = RestWrapper.GET_SCM_ORG_PROPERTIES_FAILURE;
             }
+            throw new DataStoreException(exceptionMessage, ex);
         }
         return responseEntity.getBody();
     }
@@ -274,13 +280,13 @@ public class DataStoreService implements DataService {
                 log.error(RestWrapper.MISSING_SCM_ORG + " scmType={}, orgIdentity={}",
                           orgPropertiesDto.getScmUrl(),
                           orgPropertiesDto.getOrgIdentity());
-                throw new DataStoreException(RestWrapper.MISSING_SCM_ORG);
+                throw new DataStoreException(RestWrapper.MISSING_SCM_ORG, ex);
             } else {
                 log.error("HttpClientErrorException: {}", ex.getMessage());
                 log.error(RestWrapper.STORE_SCM_ORG_PROPERTIES_FAILURE + " scmType={}, orgIdentity={}"
                         , orgPropertiesDto.getScmUrl(),
                           orgPropertiesDto.getOrgIdentity());
-                throw new DataStoreException(RestWrapper.STORE_SCM_ORG_PROPERTIES_FAILURE);
+                throw new DataStoreException(RestWrapper.STORE_SCM_ORG_PROPERTIES_FAILURE, ex);
             }
         }
 

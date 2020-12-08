@@ -7,20 +7,35 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
 import java.time.LocalDateTime;
 
 @Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(value = {DataStoreException.class, ScmException.class})
+    @ExceptionHandler(value = {ScmException.class})
     public ResponseEntity<Object> handleCustomException(RuntimeException e){
-            ExceptionDetails exceptionDetails = ExceptionDetails.builder()
-                    .message(e.getMessage())
-                    .localDateTime(LocalDateTime.now())
-                    .build();
-            return new ResponseEntity<>(exceptionDetails, HttpStatus.EXPECTATION_FAILED);
+        ExceptionDetails exceptionDetails = ExceptionDetails.builder()
+                .message(e.getMessage())
+                .localDateTime(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(exceptionDetails, HttpStatus.EXPECTATION_FAILED);
+    }
+
+    @ExceptionHandler(value = {DataStoreException.class})
+    public ResponseEntity<Object> handleCustomException(HttpClientErrorException e){
+        HttpStatus status = HttpStatus.EXPECTATION_FAILED;
+        if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+            status = e.getStatusCode();
+        }
+        ExceptionDetails exceptionDetails = ExceptionDetails.builder()
+                .message(e.getMessage())
+                .localDateTime(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(exceptionDetails, status);
     }
 
     @ExceptionHandler(value = {NoSuchBeanDefinitionException.class})
