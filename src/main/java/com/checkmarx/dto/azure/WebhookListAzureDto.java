@@ -64,6 +64,9 @@ public class WebhookListAzureDto {
             
             @JsonProperty("projectId")
             private String projectId;
+            @JsonProperty("repository")
+            private String repository;
+            
         }
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -94,6 +97,7 @@ public class WebhookListAzureDto {
         }
 
         public String getProjectId(){return publisherInputs.projectId;}
+        public String getRepositoryId(){return publisherInputs.repository;}
 
     }
 
