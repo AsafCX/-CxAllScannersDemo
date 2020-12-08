@@ -45,9 +45,41 @@ public class GitHubService extends AbstractScmService  implements ScmService {
     private String GIT_HUB_URL = "github.com";
     
     private String SCOPES = "repo,admin:repo_hook,read:org,read:user";
+
+
+    /**
+     * generateAccessToken method using OAuth code, client id and client secret generates access
+     * token via GitHub api
+     *
+     * @param oAuthCode given from FE application after first-step OAuth implementation passed
+     *                  successfully, taken from request param "code", using it to create access token
+     * @return Access token given from GitHub
+     */
+    protected AccessTokenDto generateAccessToken(String oAuthCode) {
+        ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
+        String path = buildPathAccessToken(oAuthCode, scmDto);
+        ResponseEntity<AccessTokenDto> response = generateAccessToken(restWrapper, path, null, null);
+        return response.getBody();
+    }
+
+    protected ResponseEntity<AccessTokenDto> sendAccessTokenRequest(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
+        return (ResponseEntity<AccessTokenDto>) restWrapper.sendRequest(path, HttpMethod.POST,
+                body, headers,
+                AccessTokenDto.class);
+    }
+
+
+    public ResponseEntity<AccessTokenDto> generateAccessToken(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
+        ResponseEntity<AccessTokenDto> response = sendAccessTokenRequest(restWrapper, path, headers, body);
+
+        if(!verifyAccessToken(response.getBody())){
+            log.error(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
+            throw new ScmException(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
+        }
+        return response;
+    }
     
 
-    @Override
     protected String buildPathAccessToken(String oAuthCode, ScmDto scmDto) {
         return String.format(URL_GENERATE_TOKEN, scmDto.getClientId(),
                 scmDto.getClientSecret(),

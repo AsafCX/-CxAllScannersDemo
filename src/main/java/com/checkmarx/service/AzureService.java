@@ -62,16 +62,40 @@ public class AzureService extends AbstractScmService implements ScmService  {
 
     @Value("${azure.redirect.url}")
     private String azureRedirectUrl;
-    
 
-    @Override
+    /**
+     * generateAccessToken method using OAuth code, client id and client secret generates access
+     * token via GitHub api
+     *
+     * @param oAuthCode given from FE application after first-step OAuth implementation passed
+     *                  successfully, taken from request param "code", using it to create access token
+     * @return Access token given from GitHub
+     */
+    protected AccessTokenDto generateAccessToken(String oAuthCode) {
+        ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
+        String path = AzureService.URL_AUTH_TOKEN;
+        ResponseEntity<AccessTokenDto> response = generateAccessToken(restWrapper, path, null, getBodyAccessToken(oAuthCode, scmDto));
+        return response.getBody();
+    }
+
+    
+    public ResponseEntity<AccessTokenDto> generateAccessToken(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
+        ResponseEntity<AccessTokenDto> response = sendAccessTokenRequest(restWrapper, path, headers, body);
+
+        if(!verifyAccessToken(response.getBody())){
+            log.error(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
+            throw new ScmException(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
+        }
+        return response;
+    }
+
     protected ResponseEntity<AccessTokenDto> sendAccessTokenRequest(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
         return (ResponseEntity<AccessTokenDto>) restWrapper.sendUrlEncodedPostRequest(path, HttpMethod.POST,
                 (MultiValueMap<String, String>)body, headers,
                 AccessTokenDto.class);
     }
 
-    @Override
+
     protected Object getBodyAccessToken(String oAuthCode, ScmDto scmDto) {
 
         MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
@@ -84,11 +108,13 @@ public class AzureService extends AbstractScmService implements ScmService  {
         return map;
     }
 
-    @Override
-    protected String buildPathAccessToken(String oAuthCode, ScmDto scmDto)
-    {
-        return AzureService.URL_AUTH_TOKEN;
-    }
+//    protected Map<String, String> getHeadersAccessToken() {return null;}
+
+
+//    protected String buildPathAccessToken(String oAuthCode, ScmDto scmDto)
+//    {
+//        return AzureService.URL_AUTH_TOKEN;
+//    }
     
     @Override
     public String getScopes() {

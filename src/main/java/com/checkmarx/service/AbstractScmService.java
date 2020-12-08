@@ -36,44 +36,6 @@ public abstract class AbstractScmService {
         return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
     }
 
-    public ResponseEntity<AccessTokenDto> generateAccessToken(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
-        ResponseEntity<AccessTokenDto> response = sendAccessTokenRequest(restWrapper, path, headers, body);
+    
 
-        if(!verifyAccessToken(response.getBody())){
-            log.error(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
-            throw new ScmException(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
-        }
-        return response;
-    }
-
-    protected ResponseEntity<AccessTokenDto> sendAccessTokenRequest(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
-        return (ResponseEntity<AccessTokenDto>) restWrapper.sendRequest(path, HttpMethod.POST,
-                    body, headers,
-                    AccessTokenDto.class);
-    }
-
-    protected Object getBodyAccessToken(String oAuthCode, ScmDto scmDto) { return null;}
-
-
-
-    /**
-     * generateAccessToken method using OAuth code, client id and client secret generates access
-     * token via GitHub api
-     *
-     * @param oAuthCode given from FE application after first-step OAuth implementation passed
-     *                  successfully, taken from request param "code", using it to create access token
-     * @return Access token given from GitHub
-     */
-    protected AccessTokenDto generateAccessToken(String oAuthCode) {
-        ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
-        String path = buildPathAccessToken(oAuthCode, scmDto);
-        ResponseEntity<AccessTokenDto> response = generateAccessToken(restWrapper, path, getHeadersAccessToken(), getBodyAccessToken(oAuthCode, scmDto));
-        return response.getBody();
-    }
-
-    public abstract String getBaseDbKey() ;
-
-    protected Map<String, String> getHeadersAccessToken() {return null;}
-
-    protected abstract String buildPathAccessToken(String oAuthCode, ScmDto scmDto);
 }

@@ -53,15 +53,44 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     @Value("${gitlab.redirect.url}")
     private String gitlabRedirectUrl;
 
+    /**
+     * generateAccessToken method using OAuth code, client id and client secret generates access
+     * token via GitHub api
+     *
+     * @param oAuthCode given from FE application after first-step OAuth implementation passed
+     *                  successfully, taken from request param "code", using it to create access token
+     * @return Access token given from GitHub
+     */
+    protected AccessTokenDto generateAccessToken(String oAuthCode) {
+        ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
+        String path = buildPathAccessToken(oAuthCode, scmDto);
+        ResponseEntity<AccessTokenDto> response = generateAccessToken(restWrapper, path, getHeadersAccessToken(), null);
+        return response.getBody();
+    }
+    
+    protected ResponseEntity<AccessTokenDto> sendAccessTokenRequest(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
+        return (ResponseEntity<AccessTokenDto>) restWrapper.sendRequest(path, HttpMethod.POST,
+                body, headers,
+                AccessTokenDto.class);
+    }
+    
+    public ResponseEntity<AccessTokenDto> generateAccessToken(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
+        ResponseEntity<AccessTokenDto> response = sendAccessTokenRequest(restWrapper, path, headers, body);
 
-    @Override
+        if(!verifyAccessToken(response.getBody())){
+            log.error(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
+            throw new ScmException(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
+        }
+        return response;
+    }
+    
     protected Map<String, String> getHeadersAccessToken() {
         // If we don't specify any User-Agent, the request will fail with "403 Forbidden: [error code: 1010]".
         // This issue may not exist in some execution environments.
         return Collections.singletonMap(HttpHeaders.USER_AGENT, GitLabService.TOKEN_REQUEST_USER_AGENT);
     }
     
-    @Override
+
     protected String buildPathAccessToken(String oAuthCode, ScmDto scmDto) {
         return String.format(GitLabService.URL_AUTH_TOKEN, scmDto.getClientId(),
                 scmDto.getClientSecret(),
