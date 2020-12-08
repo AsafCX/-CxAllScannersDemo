@@ -3,11 +3,7 @@ package com.checkmarx.service;
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.AccessTokenDto;
 import com.checkmarx.dto.BaseDto;
-import com.checkmarx.dto.IRepoDto;
-import com.checkmarx.dto.azure.AzureProjectsDto;
-import com.checkmarx.dto.azure.AzureUserOrganizationsDto;
-import com.checkmarx.dto.azure.RepoAzureDto;
-import com.checkmarx.dto.azure.RepoListAzureDto;
+import com.checkmarx.dto.azure.*;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.OrgReposDto;
 import com.checkmarx.dto.datastore.ScmAccessTokenDto;
@@ -55,9 +51,9 @@ public class AzureService extends AbstractScmService implements ScmService  {
 
     private static final String BASE_DB_KEY = "azure.com";
 
-    private static final String SCOPES ="vso.code_full vso.project_manage";
+    private static final String SCOPES ="vso.code_full vso.code_status vso.project_manage vso.threads_full vso.work_full";
 
-    private static final String URL_GET_WEBHOOKS =  "/projects/%s/hooks";
+    private static final String URL_GET_WEBHOOKS =    BASE_API_URL + "/%s/_apis/hooks/subscriptions?api-version=" + API_VERSION;
 
     private static final String URL_DELETE_WEBHOOK =  "/projects/%s/hooks/%s";
 
@@ -153,16 +149,20 @@ public class AzureService extends AbstractScmService implements ScmService  {
             if(repoAzureDtos.getCount()>0 && repoAzureDtos.getRepos()!=null) {
                 listAllRepos.addAll(repoAzureDtos.getRepos());
             }
-//             for (IRepoDto repoDto : repoAzureDtos) {
-//                WebhookGitLabDto webhookGitlabDto = getRepositoryCxFlowWebhook(repoDto.getId(),
-//                        scmAccessTokenDto.getAccessToken());
-//                if (webhookGitlabDto != null) {
-//                    repoDto.setWebHookEnabled(true);
-//                    repoDto.setWebhookId(webhookGitlabDto.getId());
-//                } else {
-//                    repoDto.setWebHookEnabled(false);
-//                }
-//            }
+
+            List<WebhookListAzureDto.AzureWebhookDto> webhookList = getRepositoryCxFlowWebhook(orgId, scmAccessTokenDto.getAccessToken());
+            Map<String, String> projectIdWithCxFlowHooks = new HashMap<>();
+            webhookList.stream().forEach(webhookDto ->projectIdWithCxFlowHooks.put(webhookDto.getProjectId(), webhookDto.getId()));
+            
+            for (RepoAzureDto repoAzureDto: listAllRepos) {
+                
+                if(projectIdWithCxFlowHooks.containsKey(repoAzureDto.getId())){
+                    repoAzureDto.setWebHookEnabled(true);
+                    repoAzureDto.setWebhookId(projectIdWithCxFlowHooks.get(repoAzureDto.getId()));
+                } else {
+                    repoAzureDto.setWebHookEnabled(false);
+                }
+            }
         }
         OrgReposDto orgReposDto = Converter.convertToOrgRepoDto(scmAccessTokenDto, listAllRepos);
         dataStoreService.updateScmOrgRepo(orgReposDto);
@@ -220,19 +220,24 @@ public class AzureService extends AbstractScmService implements ScmService  {
 
 
 
-    private WebhookGitLabDto getRepositoryCxFlowWebhook(@NonNull String repoId,
-                                                        @NonNull String accessToken){
-//        String path = String.format(URL_GET_WEBHOOKS, repoId);
-//        ResponseEntity<WebhookGitLabDto[]> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.GET,
-//                null, null,
-//                WebhookGitLabDto[].class, accessToken);
-//        ArrayList<WebhookGitLabDto> webhookGitLabDtos = new ArrayList<>(Arrays.asList(
-//                Objects.requireNonNull(response.getBody())));
-//        for (WebhookGitLabDto webhookGitLabDto : webhookGitLabDtos) {
-//            if (webhookGitLabDto != null  && webhookGitLabDto.getUrl().equals(cxFlowWebHook))
-//                return webhookGitLabDto;
-//        }
-        return null;
+    private List<WebhookListAzureDto.AzureWebhookDto> getRepositoryCxFlowWebhook(@NonNull String orgId,
+                                                                                 @NonNull String accessToken){
+        String path = String.format(URL_GET_WEBHOOKS, orgId);  
+        
+        ResponseEntity<WebhookListAzureDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.GET,
+                null, null,
+                WebhookListAzureDto.class, accessToken);
+        
+        WebhookListAzureDto allHooks =(response.getBody());
+
+        List<WebhookListAzureDto.AzureWebhookDto> cxFlowHooks = new LinkedList<>();
+        for (int i=0; i< allHooks.getCount() && allHooks.getWebhooks()!= null; i++) {
+
+            WebhookListAzureDto.AzureWebhookDto webhookDto = allHooks.getWebhooks().get(i);
+            if (webhookDto != null  &&  webhookDto.getConsumerInputs()!=null && webhookDto.getConsumerInputs().getUrl().contains(cxFlowWebHook) && webhookDto.isPushOrPull())
+                cxFlowHooks.add(webhookDto);
+        }
+        return cxFlowHooks;
     }
 
 

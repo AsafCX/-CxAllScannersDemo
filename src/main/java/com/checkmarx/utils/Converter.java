@@ -48,10 +48,10 @@ public class Converter {
                 .build();
     }
     
-    public static List<OrganizationWebDto> convertToListOrgWebDtos(List<? extends IDto> userOrgGithubDtos) {
+    public static List<OrganizationWebDto> convertToListOrgWebDtos(List<? extends IDto> dtos) {
         List<OrganizationWebDto> orgWebDtos = new ArrayList<>();
-        for (IDto orgGithubDto: userOrgGithubDtos) {
-            orgWebDtos.add(Converter.convertToOrgWebDto(orgGithubDto));
+        for (IDto dto: dtos) {
+            orgWebDtos.add(Converter.convertToOrgWebDto(dto));
         }
         return orgWebDtos;
     }
