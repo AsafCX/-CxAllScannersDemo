@@ -9,9 +9,7 @@ Feature: SCM configuration API
         Then response status is 200
         And response contains the clientId field set to <clientId>
         And response contains the scope field set to <scope>
-        And response does not have other fields rather than
-            | clientId |
-            | scope    |
+        And response does not have any other fields
         Examples:
             | scm    | clientId         | scope                                   |
             | github | github-client-id | repo,admin:repo_hook,read:org,read:user |

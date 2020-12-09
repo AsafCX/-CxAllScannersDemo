@@ -1,6 +1,7 @@
 work/
 out/
 *-secrets.properties
+*.log
 
 #Gradle
 .gradle/
