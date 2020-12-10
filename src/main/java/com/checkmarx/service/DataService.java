@@ -18,6 +18,8 @@ public interface DataService {
     public void updateScmOrgRepo(@NonNull OrgReposDto orgReposDto);
     public OrgPropertiesDto getScmOrgSettings(@NonNull String scmUrl, @NonNull String orgIdentity);
     public void storeScmOrgSettings(@NonNull OrgPropertiesDto orgPropertiesDto);
-
-    void updateWebhook(@NonNull String repoId, ScmAccessTokenDto scmAccessTokenDto, String webhookId, Boolean isWebhook);
+    public void updateWebhook(@NonNull String repoId, ScmAccessTokenDto scmAccessTokenDto,
+                              String webhookId, Boolean isWebhook);
+    public void storeOrgs(List<OrgDto> orgDtos);
+    public OrgDto getScmOrgByName(@NonNull String scmUrl, @NonNull String orgName);
 }

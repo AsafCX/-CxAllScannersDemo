@@ -5,6 +5,7 @@ import com.checkmarx.dto.AccessTokenDto;
 import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.azure.*;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
+import com.checkmarx.dto.datastore.OrgDto;
 import com.checkmarx.dto.datastore.OrgReposDto;
 import com.checkmarx.dto.datastore.ScmAccessTokenDto;
 import com.checkmarx.dto.datastore.ScmDto;
@@ -142,9 +143,9 @@ public class AzureService extends AbstractScmService implements ScmService  {
 
         AzureUserOrganizationsDto azureUserOrganizationsDto = Objects.requireNonNull(response.getBody());
         
-         List<ScmAccessTokenDto> scmAccessTokenDtos =
-                Converter.convertToListOrgAccessToken(accessToken, azureUserOrganizationsDto.getOrganizations(), getBaseDbKey());
-        dataStoreService.storeScmOrgsToken(scmAccessTokenDtos);
+         List<OrgDto> orgDtos = Converter.convertToListOrg(accessToken.getAccessToken(),
+                                                      azureUserOrganizationsDto.getOrganizations(), getBaseDbKey());
+        dataStoreService.storeOrgs(orgDtos);
         return Converter.convertToListOrgWebDtos(azureUserOrganizationsDto.getOrganizations());
     }
 
@@ -257,7 +258,7 @@ public class AzureService extends AbstractScmService implements ScmService  {
     
 
     @Override
-    public CxFlowConfigDto validateCxFlowConfiguration(@NonNull CxFlowConfigDto cxFlowConfigDto) {
+    public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId) {
         //TODO
         return null;
     }

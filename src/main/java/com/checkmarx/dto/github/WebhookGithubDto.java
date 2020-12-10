@@ -19,7 +19,7 @@ public @Data class WebhookGithubDto {
     private String id;
     private String name;
     private Boolean active;
-    public List<String> events;
+    private List<String> events;
     private Config config;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

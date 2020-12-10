@@ -17,6 +17,8 @@ public class RestWrapper {
             "Check logs";
     public static final String SAVE_ACCESS_TOKEN_FAILURE = "Save access token failure - Wasn't " +
             "able to save in database via DataStore service";
+    public static final String SAVE_SCM_ORG_FAILURE = "Save organization failure - Wasn't " +
+            "able to save in database via DataStore service";
     public static final String GENERATE_ACCESS_TOKEN_FAILURE = "Access token generation failure";
     public static final String ACCESS_TOKEN_MISSING = "Access token is missing from local map, " +
             "please reconnect";
@@ -28,6 +30,8 @@ public class RestWrapper {
             "database via DataStore service";
     public static final String STORE_SCM_ORG_REPOS_FAILURE = "Store scm org repositories failure " +
             "- Wasn't able to save in database via DataStore service";
+    public static final String GET_ORG_FAILURE = "Get org failure " +
+            "- Wasn't able to get from database via DataStore service";
     public static final String GET_ORG_REPOS_FAILURE = "Get org repositories failure " +
             "- Wasn't able to get from database via DataStore service";
     public static final String MISSING_ORG_REPO = "Org repository failure " +

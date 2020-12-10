@@ -1,6 +1,5 @@
 package com.checkmarx.dto.github;
 
-import com.checkmarx.dto.IDto;
 import com.checkmarx.dto.IRepoDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

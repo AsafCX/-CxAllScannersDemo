@@ -163,9 +163,7 @@ public class WebController {
     public ResponseEntity<CxFlowConfigDto> getCxFlowConfiguration(@PathVariable String scmType,
                                                   @PathVariable String orgId) {
         log.trace("getCxFlowConfiguration: scmType={}, orgId={}", scmType, orgId);
-        String baseUrl = getScmService(scmType).getBaseDbKey();
-        CxFlowConfigDto cxFlowConfigDto = genericScmService.getCxFlowConfiguration(orgId, baseUrl);
-        cxFlowConfigDto = getScmService(scmType).validateCxFlowConfiguration(cxFlowConfigDto);
+        CxFlowConfigDto cxFlowConfigDto = getScmService(scmType).getCxFlowConfiguration(orgId);
         log.info("Return CxFlow organization: {} settings: {}", orgId, cxFlowConfigDto);
         return ResponseEntity.ok(cxFlowConfigDto);
     }

@@ -15,7 +15,7 @@ public interface ScmService {
     String createWebhook(@NonNull String orgId, @NonNull String repoId);
     void deleteWebhook(@NonNull String orgId, @NonNull String repoId,
                               @NonNull String webhookId);
-    CxFlowConfigDto validateCxFlowConfiguration(@NonNull CxFlowConfigDto cxFlowConfigDto);
+    CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId);
     String getBaseDbKey();
     String getScopes();
 

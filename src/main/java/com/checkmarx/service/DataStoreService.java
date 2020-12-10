@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 
 import javax.annotation.PostConstruct;
@@ -35,6 +35,10 @@ public class DataStoreService implements DataService {
     private String urlPatternDataSourceGetScm;
 
     private String urlPatternDataSourceRepos;
+
+    private String urlPatternDataStoreOrg;
+
+    private String urlPatternDataSourceGetScmOrg;
 
     private String urlPatternDataSourceGetScmOrgRepos;
 
@@ -64,6 +68,10 @@ public class DataStoreService implements DataService {
         urlPatternDataSourceGetScmOrgRepos = dataStoreBase + "/repos?scmBaseUrl=%s&orgIdentity=%s";
 
         urlPatternDataSourceGetScmOrgRepo = dataStoreBase + "/repos/%s?scmBaseUrl=%s&orgIdentity=%s";
+
+        urlPatternDataStoreOrg = dataStoreBase + "/orgs";
+
+        urlPatternDataSourceGetScmOrg = dataStoreBase + "/orgs?scmBaseUrl=%s&orgName=%s";
 
         urlPatternDataSourceScmOrg = dataStoreBase + "/orgs/properties?scmBaseUrl=%s&orgIdentity=%s";
 
@@ -301,5 +309,38 @@ public class DataStoreService implements DataService {
                 .scmUrl(scmAccessTokenDto.getScmUrl())
                 .repoList(Collections.singletonList(repoDto))
                 .build());
+    }
+
+    @Override
+    public void storeOrgs(List<OrgDto> orgDtos) {
+        log.trace("storeOrgs: orgDtos={}", orgDtos);
+
+        try {
+            restWrapper.sendRequest(urlPatternDataStoreOrg, HttpMethod.PUT,
+                                    orgDtos, null, ResponseEntity.class);
+        } catch (HttpClientErrorException ex) {
+            log.error("HttpClientErrorException: {}", ex.getMessage());
+            log.error(RestWrapper.SAVE_SCM_ORG_FAILURE);
+            throw new DataStoreException(RestWrapper.SAVE_SCM_ORG_FAILURE, ex);
+        }
+        log.debug("Save orgs: {} passed successfully!", orgDtos);
+    }
+
+    @Override
+    public OrgDto getScmOrgByName(@NonNull String scmUrl, @NonNull String orgName) {
+        log.trace("getScmOrgByName: orgName={}", orgName);
+        String path = String.format(urlPatternDataSourceGetScmOrg, scmUrl, orgName);
+        ResponseEntity<OrgDto> response = null;
+        try {
+            response = restWrapper.sendRequest(path,
+                                                              HttpMethod.GET,
+                                    null, null, OrgDto.class);
+        } catch (HttpClientErrorException ex) {
+            log.error("HttpClientErrorException: {}", ex.getMessage());
+            log.error(RestWrapper.GET_ORG_FAILURE + " for requested Org: {}", orgName);
+            throw new DataStoreException(RestWrapper.GET_ORG_FAILURE + " for requested Org: " + orgName, ex);
+        }
+        log.debug("Get from DataStore org: {} passed successfully!", response.getBody());
+        return response.getBody();
     }
 }

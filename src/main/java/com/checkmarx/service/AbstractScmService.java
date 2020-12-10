@@ -1,16 +1,10 @@
 package com.checkmarx.service;
 
-import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.AccessTokenDto;
-import com.checkmarx.dto.datastore.ScmDto;
 import com.checkmarx.utils.RestWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-
-import java.util.Map;
 
 @Slf4j
 public abstract class AbstractScmService {

@@ -1,18 +1,15 @@
 package com.checkmarx.utils;
 
 
-import com.checkmarx.dto.AccessTokenDto;
+import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.IDto;
-import com.checkmarx.dto.datastore.OrgPropertiesDto;
-import com.checkmarx.dto.datastore.OrgReposDto;
-import com.checkmarx.dto.datastore.RepoDto;
-import com.checkmarx.dto.datastore.ScmAccessTokenDto;
-
-
 import com.checkmarx.dto.IRepoDto;
+import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.web.OrgSettingsWebDto;
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -106,16 +103,41 @@ public class Converter {
     }
     
 
-    public static List<ScmAccessTokenDto> convertToListOrgAccessToken(AccessTokenDto accessToken, List<? extends IDto> organizationWebDtos, String scmUrl) {
+    public static List<ScmAccessTokenDto> convertToListOrgAccessToken(String accessToken, List<?
+            extends IDto> organizationWebDtos, String scmUrl) {
         List<ScmAccessTokenDto> scmAccessTokenDtos = new ArrayList<>();
         for (IDto orgDto: organizationWebDtos) {
             scmAccessTokenDtos.add(ScmAccessTokenDto.builder()
                     .orgIdentity(orgDto.getId())
                     .scmUrl(scmUrl)
-                    .accessToken(accessToken.getAccessToken())
+                    .accessToken(accessToken)
                     .tokenType(TokenType.ACCESS.getType())
                     .build());
         }
         return scmAccessTokenDtos;
+    }
+
+    public static List<OrgDto> convertToListOrg(String accessToken, List<?
+            extends IDto> organizationDtos, String scmUrl) {
+        List<OrgDto> orgDtos = new ArrayList<>();
+        for (IDto orgDto: organizationDtos) {
+            orgDtos.add(OrgDto.builder()
+                                .orgIdentity(orgDto.getId())
+                                .orgName(orgDto.getName())
+                                .scmUrl(scmUrl)
+                                .accessToken(accessToken)
+                                .tokenType(TokenType.ACCESS.getType())
+                                .build());
+        }
+        return orgDtos;
+    }
+
+    public static String convertObjectToJson(Object obj) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (JsonProcessingException ex){
+            throw new ScmException("Unable to parse -> Json");
+        }
     }
 }
