@@ -3,7 +3,6 @@ package com.checkmarx.service;
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
-import com.checkmarx.dto.IRepoDto;
 import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
 import com.checkmarx.dto.gitlab.RepoGitlabDto;
 import com.checkmarx.dto.gitlab.WebhookGitLabDto;
@@ -23,11 +22,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -43,9 +40,10 @@ public class GitLabService implements ScmService  {
 
     private static final String BASE_API_URL = "https://gitlab.com/api/v4";
 
-    private static final String URL_GET_GROUPS = BASE_API_URL + "/groups";
+    private static final String URL_GET_GROUPS = BASE_API_URL + "/groups?top_level_only=true";
 
-    private static final String URL_GET_PROJECTS = BASE_API_URL + "/groups/%s/projects";
+    private static final String URL_GET_PROJECTS = BASE_API_URL + "/groups/%s/projects" +
+            "?include_subgroups=true";
 
     private static final String BASE_DB_KEY = "gitlab.com";
 
@@ -103,7 +101,7 @@ public class GitLabService implements ScmService  {
                                        RepoGitlabDto[].class, token.getAccessToken());
         ArrayList<RepoGitlabDto> repoGitlabDtos = new ArrayList<>(Arrays.asList(
                 Objects.requireNonNull(response.getBody())));
-        for (IRepoDto repoGitlabDto : repoGitlabDtos) {
+        for (RepoGitlabDto repoGitlabDto : repoGitlabDtos) {
             WebhookGitLabDto webhookGitlabDto = getRepositoryCxFlowWebhook(repoGitlabDto.getId(),
                                                                            token.getAccessToken());
             if(webhookGitlabDto != null) {
@@ -112,6 +110,7 @@ public class GitLabService implements ScmService  {
             } else {
                 repoGitlabDto.setWebHookEnabled(false);
             }
+            repoGitlabDto.setName(StringUtils.substringAfter(repoGitlabDto.getName(), "/"));
         }
         OrgReposDto orgReposDto = Converter.convertToOrgRepoDto(scmAccessTokenDto, repoGitlabDtos);
         dataStoreService.updateScmOrgRepo(orgReposDto);

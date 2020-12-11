@@ -14,9 +14,9 @@ public class RepoGitlabDto implements IRepoDto {
     @JsonProperty("id")
     private String id;
 
-    @JsonProperty("name")
+    @JsonProperty("name_with_namespace")
     private String name;
-    
+
     @JsonProperty("namespace")
     private Namespace namespace;
 
