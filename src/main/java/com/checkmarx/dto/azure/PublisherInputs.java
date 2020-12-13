@@ -1,27 +1,22 @@
 package com.checkmarx.dto.azure;
 
-import com.checkmarx.dto.BaseDto;
-import com.checkmarx.dto.IDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class AzureProjectsDto {
+@Builder
+public class PublisherInputs{
 
-    private int count;
-    private List<RepoAzureDto> value;
+    @JsonProperty("projectId")
+    private String projectId;
+    @JsonProperty("repository")
+    private String repository;
 
-    public List<RepoAzureDto> getProjectIds(){
-        return value;
-    }
-    
-    
 }

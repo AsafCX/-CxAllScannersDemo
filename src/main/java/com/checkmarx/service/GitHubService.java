@@ -40,7 +40,7 @@ public class GitHubService implements ScmService {
     private static final String URL_GET_REPOS = "https://api.github" +
             ".com/orgs/%s/repos?type=all&per_page=100";
     
-    private static final String URL_GET_WEBHOOK = "https://api.github.com/repos/%s/%s/hooks";
+    private static final String URL_CREATE_WEBHOOK = "https://api.github.com/repos/%s/%s/hooks";
     
     private static final String URL_DELETE_WEBHOOK = "https://api.github.com/repos/%s/%s/hooks/%s";
 
@@ -115,7 +115,7 @@ public class GitHubService implements ScmService {
     @Override
     public String createWebhook(@NonNull String orgId, @NonNull String repoId) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(GIT_HUB_URL, orgId);
-        String path = String.format(URL_GET_WEBHOOK, orgId, repoId);
+        String path = String.format(URL_CREATE_WEBHOOK, orgId, repoId);
         WebhookGithubDto webhookGithubDto = initWebhook();
         ResponseEntity<WebhookGithubDto> response =  restWrapper
                 .sendBearerAuthRequest(path, HttpMethod.POST,
@@ -199,7 +199,7 @@ public class GitHubService implements ScmService {
 
     private WebhookGithubDto getRepositoryCxFlowWebhook(@NonNull String orgName, @NonNull String repoName,
                                                         @NonNull String accessToken){
-        String path = String.format(URL_GET_WEBHOOK, orgName, repoName);
+        String path = String.format(URL_CREATE_WEBHOOK, orgName, repoName);
         ResponseEntity<WebhookGithubDto[]> response =  restWrapper
                 .sendBearerAuthRequest(path, HttpMethod.GET,
                                        null, null,
