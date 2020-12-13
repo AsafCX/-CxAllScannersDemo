@@ -224,18 +224,18 @@ public class GitHubService implements ScmService {
     private AccessTokenDto generateAccessToken(String oAuthCode) {
         ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
         String path = buildPathAccessToken(oAuthCode, scmDto);
-        ResponseEntity<AccessTokenDto> response = sendAccessTokenRequest(path);
-        return response.getBody();
+        return sendAccessTokenRequest(path);
     }
 
-    private ResponseEntity<AccessTokenDto> sendAccessTokenRequest(String path) {
+    private AccessTokenDto sendAccessTokenRequest(String path) {
         ResponseEntity<AccessTokenDto> response = restWrapper.sendRequest(path, HttpMethod.POST,
                                                                           null, null, AccessTokenDto.class);
-        if(!verifyAccessToken(response.getBody())){
+        AccessTokenDto accessTokenDto = response.getBody();
+        if(!verifyAccessToken(accessTokenDto)){
             log.error(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
             throw new ScmException(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
         }
-        return response;
+        return accessTokenDto;
     }
 
     private String buildPathAccessToken(String oAuthCode, ScmDto scmDto) {

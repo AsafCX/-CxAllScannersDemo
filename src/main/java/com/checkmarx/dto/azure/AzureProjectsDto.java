@@ -1,10 +1,7 @@
 package com.checkmarx.dto.azure;
 
-import com.checkmarx.dto.BaseDto;
-import com.checkmarx.dto.IDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

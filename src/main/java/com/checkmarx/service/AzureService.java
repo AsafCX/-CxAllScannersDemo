@@ -16,6 +16,8 @@ import com.checkmarx.utils.Converter;
 import com.checkmarx.utils.RestWrapper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -23,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
@@ -31,7 +32,7 @@ import java.util.*;
 
 @Slf4j
 @Service("azure")
-public class AzureService extends AbstractScmService implements ScmService  {
+public class AzureService implements ScmService  {
 
     private static final String API_VERSION = "6.0";
     
@@ -63,6 +64,15 @@ public class AzureService extends AbstractScmService implements ScmService  {
     @Value("${azure.redirect.url}")
     private String azureRedirectUrl;
 
+    @Value("${cxflow.webhook.url}")
+    private String cxFlowWebHook;
+
+    @Autowired
+    private RestWrapper restWrapper;
+
+    @Autowired
+    private DataService dataStoreService;
+
     /**
      * generateAccessToken method using OAuth code, client id and client secret generates access
      * token via GitHub api
@@ -71,32 +81,32 @@ public class AzureService extends AbstractScmService implements ScmService  {
      *                  successfully, taken from request param "code", using it to create access token
      * @return Access token given from GitHub
      */
-    protected AccessTokenDto generateAccessToken(String oAuthCode) {
+    private AccessTokenDto generateAccessToken(String oAuthCode) {
         ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
-        String path = AzureService.URL_AUTH_TOKEN;
-        ResponseEntity<AccessTokenDto> response = generateAccessToken(restWrapper, path, null, getBodyAccessToken(oAuthCode, scmDto));
-        return response.getBody();
+        return generateAccessToken(restWrapper, AzureService.URL_AUTH_TOKEN, null,
+                                               getBodyAccessToken(oAuthCode, scmDto));
     }
 
-    
-    public ResponseEntity<AccessTokenDto> generateAccessToken(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
+
+    private AccessTokenDto generateAccessToken(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
         ResponseEntity<AccessTokenDto> response = sendAccessTokenRequest(restWrapper, path, headers, body);
 
-        if(!verifyAccessToken(response.getBody())){
+        AccessTokenDto accessTokenDto = response.getBody();
+        if(!verifyAccessToken(accessTokenDto)){
             log.error(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
             throw new ScmException(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
         }
-        return response;
+        return accessTokenDto;
     }
 
-    protected ResponseEntity<AccessTokenDto> sendAccessTokenRequest(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
-        return (ResponseEntity<AccessTokenDto>) restWrapper.sendUrlEncodedPostRequest(path, HttpMethod.POST,
+    private ResponseEntity<AccessTokenDto> sendAccessTokenRequest(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
+        return  restWrapper.sendUrlEncodedPostRequest(path, HttpMethod.POST,
                 (MultiValueMap<String, String>)body, headers,
                 AccessTokenDto.class);
     }
 
 
-    protected Object getBodyAccessToken(String oAuthCode, ScmDto scmDto) {
+    private Object getBodyAccessToken(String oAuthCode, ScmDto scmDto) {
 
         MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
 
@@ -347,4 +357,17 @@ public class AzureService extends AbstractScmService implements ScmService  {
                 .scope(1)
                 .build();
     }
+
+    /**
+     * verifyAccessToken method used to verify access token creation, Currently checks if access
+     * token created(not null or empty) without GitHub validation
+     *
+     * @param accessToken access token generated before using GitHub api, Gives access to relevant
+     *                  GitHub data
+     * @return true if verification passed successfully
+     */
+    private boolean verifyAccessToken(AccessTokenDto accessToken) {
+        return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
+    }
+
 }

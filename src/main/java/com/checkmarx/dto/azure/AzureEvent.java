@@ -11,6 +11,7 @@ public enum AzureEvent {
     CREATE_PULL_REQEUST("git.pullrequest.created","%s/ado/pull"),
     PUSH( "git.push","%s/ado/push");
 
-    private String type, hookUrl;
+    private String type;
+    private String hookUrl;
     
 }
