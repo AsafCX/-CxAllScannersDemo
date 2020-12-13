@@ -45,9 +45,13 @@ public class AzureWebhookDto {
     @Builder
     public static class ConsumerInputs {
 
-        private String httpHeaders;
+        @JsonProperty("basicAuthUsername")
+        private String basicAuthUsername;
         @JsonProperty("url")
         private String url;
+        @JsonProperty("basicAuthPassword")
+        private String basicAuthPassword;
+        private String httpHeaders;
     }
 
 

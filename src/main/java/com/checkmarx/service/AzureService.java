@@ -59,7 +59,8 @@ public class AzureService implements ScmService  {
     private static final String URL_DELETE_WEBHOOK =  BASE_API_URL + "/%s/_apis/hooks/subscriptions/%s?api-version=" + API_VERSION;
 
     private static final String URL_CREATE_WEBHOOK =  BASE_API_URL + "/%s/_apis/hooks/subscriptions?api-version=" + API_VERSION;
-    
+    private static final String AZURE_CONSUMER_USERNAME = "cxflow";
+    private static final String AZURE_CONSUMER_PASSWORD = "1234";
 
     @Value("${azure.redirect.url}")
     private String azureRedirectUrl;
@@ -170,13 +171,12 @@ public class AzureService implements ScmService  {
 
         for (int i=0; i<azureProjectsIds.getCount() && azureProjectsIds.getProjectIds()!=null ; i++) {
 
-            String projectId = azureProjectsIds.getProjectIds().get(i).getId();
-
-            Map<String, String> repoHooks = getHooksOnRepoLevel(orgHooks, projectId);
-            RepoListAzureDto projectRepos = getProjectRepos(orgId, scmAccessTokenDto, projectId);
+            RepoAzureDto project = azureProjectsIds.getProjectIds().get(i);
+            Map<String, List<String>> repoHooks = getHooksOnRepoLevel(orgHooks, project.getId());
+            RepoListAzureDto projectRepos = getProjectRepos(orgId, scmAccessTokenDto, project.getId());
 
             if(projectRepos.getCount()>0 && projectRepos.getRepos()!=null) {
-                setWebhookFlag(repoHooks, projectRepos, projectId);
+                setAdditionalDetails(repoHooks, projectRepos, project);
                 projectsAndReposHooks.addAll(projectRepos.getRepos());
             }
             
@@ -187,16 +187,19 @@ public class AzureService implements ScmService  {
     }
     
 
-    private Map<String, String> getHooksOnRepoLevel(List<AzureWebhookDto> organizationHooks,
-                                                    String projectId) {
+    private Map<String, List<String>> getHooksOnRepoLevel(List<AzureWebhookDto> organizationHooks,
+                                                          String projectId) {
 
-        Map<String, String> repoHooks = new HashMap<>();
+        Map<String, List<String>> repoHooks = new HashMap<>();
         
         organizationHooks.stream().forEach(projectHook -> {
             if(projectHook.getProjectId().equals(projectId) && !StringUtils.isEmpty(projectHook.getRepositoryId())){
                 //hook on repo level
                 //project level hooks - will be skipped
-                repoHooks.put(projectHook.getRepositoryId(), projectHook.getHookId());
+                if(repoHooks.get(projectHook.getRepositoryId()) == null){
+                    repoHooks.put(projectHook.getRepositoryId(), new LinkedList<>());
+                }
+                repoHooks.get(projectHook.getRepositoryId()).add(projectHook.getHookId());
             }
         });
         
@@ -214,16 +217,22 @@ public class AzureService implements ScmService  {
         return Objects.requireNonNull(response.getBody());
     }
 
-    private void setWebhookFlag(Map<String, String> cxFlowHooks, RepoListAzureDto repoAzureDtos, String projectId) {
+    private void setAdditionalDetails(Map<String, List<String>> cxFlowHooks, RepoListAzureDto repoAzureDtos, RepoAzureDto project) {
         for (RepoAzureDto repository : repoAzureDtos.getRepos()) {
-            
-            if(cxFlowHooks.containsKey(repository.getId())){
+
+            if (cxFlowHooks.containsKey(repository.getId())) {
+                List<String> listHooks = cxFlowHooks.get(repository.getId());
+                BaseDto multipleHookId = new BaseDto();
+                listHooks.stream().forEach(id -> multipleHookId.merge(id));
                 repository.setWebHookEnabled(true);
-                repository.setWebhookId(cxFlowHooks.get(repository.getId()));
-            } else {
-                repository.setWebHookEnabled(false);
+                repository.setWebhookId(multipleHookId.getId());
             }
-            repository.setId(projectId + BaseDto.SEPARATOR + repository.getId());
+
+            repository.setId(project.getId() + BaseDto.SEPARATOR + repository.getId());
+            
+            if(!project.getName().trim().equals(repository.getName().trim())) {
+                repository.setName(project.getName() + " / " + repository.getName());
+            }
         }
     }
 
@@ -256,7 +265,7 @@ public class AzureService implements ScmService  {
     }
 
     private BaseDto createHook(@NonNull String projectId, @NonNull String repoId, ScmAccessTokenDto scmAccessTokenDto, String path, AzureEvent event)  {
-        AzureWebhookDto hookData = generateHookData(scmAccessTokenDto.getAccessToken(),repoId,projectId, event);
+        AzureWebhookDto hookData = generateHookData(repoId,projectId, event);
         ResponseEntity<BaseDto> response =  restWrapper
                 .sendBearerAuthRequest(path, HttpMethod.POST,
                         hookData, null,
@@ -279,7 +288,7 @@ public class AzureService implements ScmService  {
     public void deleteWebhook(@NonNull String orgId, @NonNull String repoId,
                               @NonNull String webhookId) {
 
-        ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
+       ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
         
         List<String> webhookIds = BaseDto.splitId(webhookId);
 
@@ -332,13 +341,13 @@ public class AzureService implements ScmService  {
         return cxFlowHooks;
     }
 
-    private AzureWebhookDto generateHookData(String token, String repoId, String projectId, AzureEvent event)  {
-        //String auth = Base64.getEncoder().encodeToString(token.getBytes());
+    private AzureWebhookDto generateHookData(String repoId, String projectId, AzureEvent event)  {
        
         String targetAppUrl =  String.format(cxFlowWebHook, event.getHookUrl());
                 
         AzureWebhookDto.ConsumerInputs consumerInputs = AzureWebhookDto.ConsumerInputs.builder()
-                //.httpHeaders("Authorization: Bearer ".concat(auth))
+                .basicAuthUsername(AZURE_CONSUMER_USERNAME)
+                .basicAuthPassword(AZURE_CONSUMER_PASSWORD)
                 .url(targetAppUrl)
                 .build();
         PublisherInputs publisherInput = PublisherInputs.builder()
