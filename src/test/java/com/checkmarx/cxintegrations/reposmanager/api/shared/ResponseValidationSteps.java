@@ -19,13 +19,15 @@ public class ResponseValidationSteps {
 
     @Then("response status is {int}")
     public void responseStatusIs(int expectedStatus) {
-        Assert.assertNotNull("Expected the response to be non-null at this point.", testState.getLastResponse());
-        Assert.assertEquals("Unexpected response status.", expectedStatus, testState.getLastResponse().getStatusCodeValue());
+        ResponseEntity<String> response = testState.getLastResponse();
+
+        Assert.assertNotNull("Expected the response to be non-null at this point.", response);
+        Assert.assertEquals("Unexpected response status.", expectedStatus, response.getStatusCodeValue());
     }
 
     @And("response contains the {word} field set to {word}")
     public void responseContainsTheFieldSetTo(String fieldName, String expectedFieldValue) {
-        JsonNode responseBody = getBody(testState.getLastResponse());
+        JsonNode responseBody = getBody(testState);
 
         String message = String.format("Unexpected value for the '%s' response field.", fieldName);
         JsonNode fieldToCheck = responseBody.get(fieldName);
@@ -38,7 +40,7 @@ public class ResponseValidationSteps {
 
     @And("response does not have any other fields")
     public void responseDoesNotHaveOtherFields() {
-        JsonNode responseBody = getBody(testState.getLastResponse());
+        JsonNode responseBody = getBody(testState);
         Set<String> actualFields = getFieldsFrom(responseBody);
 
         Set<String> expectedFields = new HashSet<>(testState.getExpectedFieldNames());
@@ -48,7 +50,7 @@ public class ResponseValidationSteps {
 
     @And("response contains the following fields, all non-empty:")
     public void responseContainsNonEmptyAndFields(List<String> fields) {
-        JsonNode responseBody = getBody(testState.getLastResponse());
+        JsonNode responseBody = getBody(testState);
         fields.forEach(fieldName -> checkIfFieldIsNotEmpty(fieldName, responseBody));
     }
 
@@ -58,10 +60,13 @@ public class ResponseValidationSteps {
                 .collect(Collectors.toSet());
     }
 
-    private static JsonNode getBody(ResponseEntity<JsonNode> response) {
-        JsonNode responseBody = response.getBody();
-        Assert.assertNotNull("Response body must not be null.", responseBody);
-        return responseBody;
+    private static JsonNode getBody(ApiTestState testState) {
+        ResponseEntity<JsonNode> response = testState.getLastResponseAsJson();
+        Assert.assertNotNull("JSON response entity must not be null", response);
+
+        JsonNode result = response.getBody();
+        Assert.assertNotNull("Response body must not be null.", result);
+        return result;
     }
 
     private void checkIfFieldIsNotEmpty(String field, JsonNode responseBody) {

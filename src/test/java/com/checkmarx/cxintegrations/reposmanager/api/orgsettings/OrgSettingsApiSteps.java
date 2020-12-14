@@ -5,7 +5,6 @@ import com.checkmarx.cxintegrations.reposmanager.dto.ApiTestState;
 import com.checkmarx.dto.datastore.OrgPropertiesDto;
 import com.checkmarx.dto.web.OrgSettingsWebDto;
 import com.checkmarx.service.GitHubService;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -21,8 +20,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-
-import java.io.IOException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
@@ -90,17 +87,17 @@ public class OrgSettingsApiSteps {
     }
 
     @When("API client calls the 'get organization settings' API for the {word} organization of {word} SCM")
-    public void apiClientCallsGetOrgSettingsApi(String orgId, String scmId) throws IOException {
+    public void apiClientCallsGetOrgSettingsApi(String orgId, String scmId) {
         callReposManagerApi(null, orgId, scmId);
     }
 
     @When("API client calls the 'save organization settings' API for the {word} organization of {word} SCM, using the request above")
-    public void apiClientCallsSaveOrgSettingsApi(String orgId, String scmId) throws IOException {
+    public void apiClientCallsSaveOrgSettingsApi(String orgId, String scmId) {
         callReposManagerApi(new HttpEntity<>(testState.getRequestForSending()), orgId, scmId);
     }
 
     @When("API client calls the 'save organization settings' API for the {word} SCM")
-    public void apiClientCallsSaveOrgSettingsApiForScm(String scmId) throws IOException {
+    public void apiClientCallsSaveOrgSettingsApiForScm(String scmId) {
         apiClientCallsGetOrgSettingsApi("any-org-id", scmId);
     }
 
@@ -126,10 +123,10 @@ public class OrgSettingsApiSteps {
         validateOrgIsPresent(orgId, org);
     }
 
-    private void callReposManagerApi(HttpEntity<?> requestBody, String orgId, String scmId) throws IOException {
+    private void callReposManagerApi(HttpEntity<?> requestBody, String orgId, String scmId) {
         testState.prepareForRequestSending();
         HttpMethod method = (requestBody == null ? HttpMethod.GET : HttpMethod.PUT);
-        ResponseEntity<JsonNode> response = requestSender.genericSend("{scmId}/orgs/{orgId}/settings",
+        ResponseEntity<String> response = requestSender.genericSend("{scmId}/orgs/{orgId}/settings",
                 apiPort,
                 method,
                 requestBody,

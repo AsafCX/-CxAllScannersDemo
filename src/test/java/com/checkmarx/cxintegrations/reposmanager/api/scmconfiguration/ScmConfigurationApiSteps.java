@@ -5,7 +5,6 @@ import com.checkmarx.cxintegrations.reposmanager.dto.ApiTestState;
 import com.checkmarx.dto.datastore.ScmDto;
 import com.checkmarx.service.GitHubService;
 import com.checkmarx.service.GitLabService;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
@@ -21,7 +20,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,9 +63,9 @@ public class ScmConfigurationApiSteps {
     }
 
     @When("API client calls the `get configuration` API for the {word} SCM")
-    public void apiClientCallsAPI(String scmId) throws IOException {
+    public void apiClientCallsAPI(String scmId) {
         testState.prepareForRequestSending();
-        ResponseEntity<JsonNode> response = requestSender.get("{scmId}/config", apiPort, scmId);
+        ResponseEntity<String> response = requestSender.get("{scmId}/config", apiPort, scmId);
         testState.setLastResponse(response);
     }
 
