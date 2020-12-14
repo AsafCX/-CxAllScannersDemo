@@ -343,7 +343,7 @@ public class AzureService implements ScmService  {
 
     private AzureWebhookDto generateHookData(String repoId, String projectId, AzureEvent event)  {
        
-        String targetAppUrl =  String.format(cxFlowWebHook, event.getHookUrl());
+        String targetAppUrl =  String.format(event.getHookUrl(), cxFlowWebHook.trim());
                 
         AzureWebhookDto.ConsumerInputs consumerInputs = AzureWebhookDto.ConsumerInputs.builder()
                 .basicAuthUsername(AZURE_CONSUMER_USERNAME)
