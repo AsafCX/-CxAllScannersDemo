@@ -116,7 +116,7 @@ public class AzureService implements ScmService  {
         map.put("client_assertion",  Collections.singletonList(scmDto.getClientSecret()));
         map.put("grant_type",  Collections.singletonList("urn:ietf:params:oauth:grant-type:jwt-bearer"));
         map.put("assertion", Collections.singletonList(oAuthCode));
-        map.put("redirect_uri", Collections.singletonList(azureRedirectUrl));
+        map.put("redirect_uri", Collections.singletonList(getAzureRedirectUrl()));
         return map;
     }
 
@@ -251,7 +251,7 @@ public class AzureService implements ScmService  {
     public String createWebhook(@NonNull String orgId, @NonNull String projectAndRepoIds ) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
         AccessTokenAzureDto token = getAzureOrgToken(scmAccessTokenDto.getAccessToken());
-        String path = String.format(URL_CREATE_WEBHOOK, orgId, cxFlowWebHook, token.getAccessToken()) ;
+        String path = String.format(URL_CREATE_WEBHOOK, orgId, getCxFlowWebHook(), token.getAccessToken()) ;
 
         List<String> listProjectAndRepo = getProjectAndRepoIds(projectAndRepoIds);
         
@@ -347,7 +347,7 @@ public class AzureService implements ScmService  {
         for (int i=0; i< allHooks.getCount() && allHooks.getWebhooks()!= null; i++) {
 
             AzureWebhookDto webhookDto = allHooks.getWebhooks().get(i);
-            if (webhookDto != null  &&  webhookDto.getConsumerInputs()!=null && webhookDto.getConsumerInputs().getUrl().contains(cxFlowWebHook) && webhookDto.isPushOrPull())
+            if (webhookDto != null  &&  webhookDto.getConsumerInputs()!=null && webhookDto.getConsumerInputs().getUrl().contains(getCxFlowWebHook()) && webhookDto.isPushOrPull())
                 cxFlowHooks.add(webhookDto);
         }
         return cxFlowHooks;
@@ -355,7 +355,7 @@ public class AzureService implements ScmService  {
 
     private AzureWebhookDto generateHookData(String repoId, String projectId, AzureEvent event)  {
        
-        String targetAppUrl =  String.format(event.getHookUrl(), cxFlowWebHook.trim());
+        String targetAppUrl =  String.format(event.getHookUrl(), getCxFlowWebHook());
                 
         AzureWebhookDto.ConsumerInputs consumerInputs = AzureWebhookDto.ConsumerInputs.builder()
                 .basicAuthUsername(AZURE_CONSUMER_USERNAME)
@@ -378,6 +378,7 @@ public class AzureService implements ScmService  {
                 .scope(1)
                 .build();
     }
+    
 
     /**
      * verifyAccessToken method used to verify access token creation, Currently checks if access
@@ -391,4 +392,12 @@ public class AzureService implements ScmService  {
         return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
     }
 
+    public String getAzureRedirectUrl() {
+        return Converter.trimNonEmptyString("Azure redirect URL", azureRedirectUrl);
+
+    }
+
+    private String getCxFlowWebHook() {
+        return Converter.trimNonEmptyString("Cxflow webhook URL", cxFlowWebHook );
+    }
 }

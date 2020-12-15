@@ -130,7 +130,7 @@ public class GitLabService implements ScmService  {
     public String createWebhook(@NonNull String orgId, @NonNull String projectId ) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
         AccessTokenGitlabDto token = getGitlabOrgToken(scmAccessTokenDto.getAccessToken());
-        String path = String.format(URL_CREATE_WEBHOOK, projectId, cxFlowWebHook, "1234") ;
+        String path = String.format(URL_CREATE_WEBHOOK, projectId, getCxFlowWebHook(), "1234") ;
          ResponseEntity<WebhookGitLabDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.POST,
                                                                                         new WebhookGitLabDto(), null,
                                                                                         WebhookGitLabDto.class,
@@ -240,7 +240,7 @@ public class GitLabService implements ScmService  {
         ArrayList<WebhookGitLabDto> webhookGitLabDtos = new ArrayList<>(Arrays.asList(
                 Objects.requireNonNull(response.getBody())));
         for (WebhookGitLabDto webhookGitLabDto : webhookGitLabDtos) {
-            if (webhookGitLabDto != null  && webhookGitLabDto.getUrl().equals(cxFlowWebHook))
+            if (webhookGitLabDto != null  && webhookGitLabDto.getUrl().equals(getCxFlowWebHook()))
                 return webhookGitLabDto;
         }
         return null;
@@ -287,7 +287,7 @@ public class GitLabService implements ScmService  {
         return String.format(GitLabService.URL_GENERATE_TOKEN, scmDto.getClientId(),
                              scmDto.getClientSecret(),
                              oAuthCode,
-                             gitlabRedirectUrl);
+                             getGitlabRedirectUrl());
     }
 
     /**
@@ -302,5 +302,12 @@ public class GitLabService implements ScmService  {
         return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
     }
 
+    private String getCxFlowWebHook() {
+        return Converter.trimNonEmptyString("Cxflow webhook URL", cxFlowWebHook);
 
+    }
+
+    public String getGitlabRedirectUrl() {
+        return Converter.trimNonEmptyString("Gitlab redirect URL", gitlabRedirectUrl );
+    }
 }

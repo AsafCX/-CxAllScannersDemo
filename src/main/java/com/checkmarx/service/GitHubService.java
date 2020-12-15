@@ -192,7 +192,7 @@ public class GitHubService implements ScmService {
     private WebhookGithubDto initWebhook() {
         return  WebhookGithubDto.builder()
                 .name("web")
-                .config(WebhookGithubDto.Config.builder().contentType("json").url(cxFlowWebHook).insecureSsl("0").secret("1234").build())
+                .config(WebhookGithubDto.Config.builder().contentType("json").url(getCxFlowWebHook()).insecureSsl("0").secret("1234").build())
                 .events(Arrays.asList("push", "pull_request"))
                 .build();
     }
@@ -207,7 +207,7 @@ public class GitHubService implements ScmService {
         ArrayList<WebhookGithubDto> webhookGithubDtos = new ArrayList<>(Arrays.asList(
                 Objects.requireNonNull(response.getBody())));
         for (WebhookGithubDto webHookGithubDto : webhookGithubDtos) {
-            if (webHookGithubDto != null && webHookGithubDto.getActive() && webHookGithubDto.getConfig().getUrl().equals(cxFlowWebHook))
+            if (webHookGithubDto != null && webHookGithubDto.getActive() && webHookGithubDto.getConfig().getUrl().equals(getCxFlowWebHook()))
                 return webHookGithubDto;
         }
         return null;
@@ -266,5 +266,8 @@ public class GitHubService implements ScmService {
         return GIT_HUB_URL;
     }
 
+    private String getCxFlowWebHook() {
+        return Converter.trimNonEmptyString("Cxflow webhook URL", cxFlowWebHook );
+    }
 
 }
