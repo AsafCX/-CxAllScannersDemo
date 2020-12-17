@@ -1,5 +1,6 @@
 package com.checkmarx.dto.azure;
 
+import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.IRepoDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,6 +22,13 @@ public class RepoAzureDto implements IRepoDto {
 
     private String webhookId;
     private boolean webHookEnabled;
+
+
+    public void setId(String id){
+        this.id = id;
+    }
     
- 
+    public void setId(BaseDto dto){
+        id = dto.getId();
+    }
 }

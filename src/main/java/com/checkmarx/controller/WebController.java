@@ -1,5 +1,6 @@
 package com.checkmarx.controller;
 
+import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.web.OrgSettingsWebDto;
 
@@ -89,11 +90,11 @@ public class WebController {
      */
     @Operation(summary = "Rest api used to create webhook for given scm organization repository")
     @PostMapping(value = "/{scmType}/orgs/{orgId}/repos/{repoId}/webhooks")
-    public ResponseEntity<String> createWebhook(@PathVariable String scmType,
+    public ResponseEntity<BaseDto> createWebhook(@PathVariable String scmType,
                                         @PathVariable String orgId,
                                         @PathVariable String repoId) {
         log.trace("createWebhook: scmType={}, orgId={}, repoName={}", scmType, orgId, repoId);
-        String webhookId = getScmService(scmType).createWebhook(orgId, repoId);
+        BaseDto webhookId = getScmService(scmType).createWebhook(orgId, repoId);
         log.info("{} CXFlow Webhook created successfully!",repoId);
         return ResponseEntity.ok(webhookId);
     }

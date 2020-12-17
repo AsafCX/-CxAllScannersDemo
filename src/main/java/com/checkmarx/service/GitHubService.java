@@ -2,6 +2,7 @@ package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.AccessTokenDto;
+import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.IRepoDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
@@ -113,7 +114,7 @@ public class GitHubService implements ScmService {
     }
     
     @Override
-    public String createWebhook(@NonNull String orgId, @NonNull String repoId) {
+    public BaseDto createWebhook(@NonNull String orgId, @NonNull String repoId) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(GIT_HUB_URL, orgId);
         String path = String.format(URL_CREATE_WEBHOOK, orgId, repoId);
         WebhookGithubDto webhookGithubDto = initWebhook();
@@ -130,7 +131,7 @@ public class GitHubService implements ScmService {
 
         dataStoreService.updateWebhook(repoId, scmAccessTokenDto,webhookGithubDto.getId(), true);
 
-        return webhookGithubDto.getId();
+        return new BaseDto(webhookGithubDto.getId());
     }
     
 

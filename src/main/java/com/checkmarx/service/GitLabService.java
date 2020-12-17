@@ -1,6 +1,7 @@
 package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
+import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
@@ -127,7 +128,7 @@ public class GitLabService implements ScmService  {
 
 
     @Override
-    public String createWebhook(@NonNull String orgId, @NonNull String projectId ) {
+    public BaseDto createWebhook(@NonNull String orgId, @NonNull String projectId ) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
         AccessTokenGitlabDto token = getGitlabOrgToken(scmAccessTokenDto.getAccessToken());
         String path = String.format(URL_CREATE_WEBHOOK, projectId, getCxFlowWebHook(), "1234") ;
@@ -138,7 +139,7 @@ public class GitLabService implements ScmService  {
         WebhookGitLabDto webhookGitLabDto = response.getBody();
         validateResponse(webhookGitLabDto);
         dataStoreService.updateWebhook(projectId, scmAccessTokenDto, webhookGitLabDto.getId(), true);
-        return webhookGitLabDto.getId();
+        return new BaseDto(webhookGitLabDto.getId());
     }
 
     @Override
