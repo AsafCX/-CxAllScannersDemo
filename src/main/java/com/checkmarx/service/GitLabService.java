@@ -95,8 +95,9 @@ public class GitLabService implements ScmService  {
     public List<RepoWebDto> getScmOrgRepos(@NonNull String orgId) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
         AccessTokenGitlabDto token = getGitlabOrgToken(scmAccessTokenDto.getAccessToken());
+        String path = String.format(URL_GET_PROJECTS, orgId);
         ResponseEntity<RepoGitlabDto[]> response =  restWrapper
-                .sendBearerAuthRequest(URL_GET_PROJECTS, HttpMethod.GET,
+                .sendBearerAuthRequest(path, HttpMethod.GET,
                                        null, null,
                                        RepoGitlabDto[].class, token.getAccessToken());
         ArrayList<RepoGitlabDto> repoGitlabDtos = new ArrayList<>(Arrays.asList(
