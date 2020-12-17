@@ -2,6 +2,7 @@ package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.AccessTokenDto;
+import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.IRepoDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
@@ -113,7 +114,7 @@ public class GitHubService implements ScmService {
     }
     
     @Override
-    public String createWebhook(@NonNull String orgId, @NonNull String repoId) {
+    public BaseDto createWebhook(@NonNull String orgId, @NonNull String repoId) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(GIT_HUB_URL, orgId);
         String path = String.format(URL_CREATE_WEBHOOK, orgId, repoId);
         WebhookGithubDto webhookGithubDto = initWebhook();
@@ -130,7 +131,7 @@ public class GitHubService implements ScmService {
 
         dataStoreService.updateWebhook(repoId, scmAccessTokenDto,webhookGithubDto.getId(), true);
 
-        return webhookGithubDto.getId();
+        return new BaseDto(webhookGithubDto.getId());
     }
     
 
@@ -192,7 +193,7 @@ public class GitHubService implements ScmService {
     private WebhookGithubDto initWebhook() {
         return  WebhookGithubDto.builder()
                 .name("web")
-                .config(WebhookGithubDto.Config.builder().contentType("json").url(cxFlowWebHook).insecureSsl("0").secret("1234").build())
+                .config(WebhookGithubDto.Config.builder().contentType("json").url(getCxFlowWebHook()).insecureSsl("0").secret("1234").build())
                 .events(Arrays.asList("push", "pull_request"))
                 .build();
     }
@@ -207,7 +208,7 @@ public class GitHubService implements ScmService {
         ArrayList<WebhookGithubDto> webhookGithubDtos = new ArrayList<>(Arrays.asList(
                 Objects.requireNonNull(response.getBody())));
         for (WebhookGithubDto webHookGithubDto : webhookGithubDtos) {
-            if (webHookGithubDto != null && webHookGithubDto.getActive() && webHookGithubDto.getConfig().getUrl().equals(cxFlowWebHook))
+            if (webHookGithubDto != null && webHookGithubDto.getActive() && webHookGithubDto.getConfig().getUrl().equals(getCxFlowWebHook()))
                 return webHookGithubDto;
         }
         return null;
@@ -266,5 +267,8 @@ public class GitHubService implements ScmService {
         return GIT_HUB_URL;
     }
 
+    private String getCxFlowWebHook() {
+        return Converter.trimNonEmptyString("Cxflow webhook URL", cxFlowWebHook );
+    }
 
 }

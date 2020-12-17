@@ -10,6 +10,7 @@ import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -139,5 +140,12 @@ public class Converter {
         } catch (JsonProcessingException ex){
             throw new ScmException("Unable to parse -> Json");
         }
+    }
+    
+    public static String trimNonEmptyString(String strName, String strValue){
+        if(StringUtils.isEmpty(strValue)){
+            throw new ScmException("Empty " + strName);
+        }
+        return strValue.trim();
     }
 }

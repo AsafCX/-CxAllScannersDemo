@@ -1,6 +1,7 @@
 package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
+import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
@@ -94,8 +95,9 @@ public class GitLabService implements ScmService  {
     public List<RepoWebDto> getScmOrgRepos(@NonNull String orgId) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
         AccessTokenGitlabDto token = getGitlabOrgToken(scmAccessTokenDto.getAccessToken());
+        String path = String.format(URL_GET_PROJECTS, orgId);
         ResponseEntity<RepoGitlabDto[]> response =  restWrapper
-                .sendBearerAuthRequest(URL_GET_PROJECTS, HttpMethod.GET,
+                .sendBearerAuthRequest(path, HttpMethod.GET,
                                        null, null,
                                        RepoGitlabDto[].class, token.getAccessToken());
         ArrayList<RepoGitlabDto> repoGitlabDtos = new ArrayList<>(Arrays.asList(
@@ -127,10 +129,10 @@ public class GitLabService implements ScmService  {
 
 
     @Override
-    public String createWebhook(@NonNull String orgId, @NonNull String projectId ) {
+    public BaseDto createWebhook(@NonNull String orgId, @NonNull String projectId ) {
         ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
         AccessTokenGitlabDto token = getGitlabOrgToken(scmAccessTokenDto.getAccessToken());
-        String path = String.format(URL_CREATE_WEBHOOK, projectId, cxFlowWebHook, "1234") ;
+        String path = String.format(URL_CREATE_WEBHOOK, projectId, getCxFlowWebHook(), "1234") ;
          ResponseEntity<WebhookGitLabDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.POST,
                                                                                         new WebhookGitLabDto(), null,
                                                                                         WebhookGitLabDto.class,
@@ -138,7 +140,7 @@ public class GitLabService implements ScmService  {
         WebhookGitLabDto webhookGitLabDto = response.getBody();
         validateResponse(webhookGitLabDto);
         dataStoreService.updateWebhook(projectId, scmAccessTokenDto, webhookGitLabDto.getId(), true);
-        return webhookGitLabDto.getId();
+        return new BaseDto(webhookGitLabDto.getId());
     }
 
     @Override
@@ -240,7 +242,7 @@ public class GitLabService implements ScmService  {
         ArrayList<WebhookGitLabDto> webhookGitLabDtos = new ArrayList<>(Arrays.asList(
                 Objects.requireNonNull(response.getBody())));
         for (WebhookGitLabDto webhookGitLabDto : webhookGitLabDtos) {
-            if (webhookGitLabDto != null  && webhookGitLabDto.getUrl().equals(cxFlowWebHook))
+            if (webhookGitLabDto != null  && webhookGitLabDto.getUrl().equals(getCxFlowWebHook()))
                 return webhookGitLabDto;
         }
         return null;
@@ -287,7 +289,7 @@ public class GitLabService implements ScmService  {
         return String.format(GitLabService.URL_GENERATE_TOKEN, scmDto.getClientId(),
                              scmDto.getClientSecret(),
                              oAuthCode,
-                             gitlabRedirectUrl);
+                             getGitlabRedirectUrl());
     }
 
     /**
@@ -302,5 +304,12 @@ public class GitLabService implements ScmService  {
         return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
     }
 
+    private String getCxFlowWebHook() {
+        return Converter.trimNonEmptyString("Cxflow webhook URL", cxFlowWebHook);
 
+    }
+
+    public String getGitlabRedirectUrl() {
+        return Converter.trimNonEmptyString("Gitlab redirect URL", gitlabRedirectUrl );
+    }
 }
