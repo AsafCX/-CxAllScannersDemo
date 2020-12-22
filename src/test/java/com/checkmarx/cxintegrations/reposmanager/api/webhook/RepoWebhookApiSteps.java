@@ -2,12 +2,14 @@ package com.checkmarx.cxintegrations.reposmanager.api.webhook;
 
 import com.checkmarx.cxintegrations.reposmanager.WebApiRequestSender;
 import com.checkmarx.cxintegrations.reposmanager.dto.ApiTestState;
+import com.checkmarx.dto.github.AccessTokenGithubDto;
 import com.checkmarx.dto.datastore.ScmAccessTokenDto;
 import com.checkmarx.dto.github.WebhookGithubDto;
 import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
 import com.checkmarx.dto.gitlab.WebhookGitLabDto;
 import com.checkmarx.service.DataStoreService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.*;
@@ -47,8 +49,9 @@ public class RepoWebhookApiSteps {
     private static final String CX_INTEGRATIONS_WEBHOOK_ID = "cxint-webhook-id";
     private static final String THIRD_PARTY_WEBHOOK_ID = "third-party-webhook-id";
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
+    private static final ObjectMapper objectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    
     @LocalServerPort
     private int apiPort;
 
@@ -201,7 +204,7 @@ public class RepoWebhookApiSteps {
             if (scmUrl.contains("gitlab")) {
                 token = getGitlabSpecificTokenStub();
             } else {
-                token = "anyValue";
+                token = getGithubSpecificTokenStub();
             }
             return ScmAccessTokenDto.builder()
                     .accessToken(token)
@@ -212,9 +215,19 @@ public class RepoWebhookApiSteps {
     private static String getGitlabSpecificTokenStub() throws JsonProcessingException {
         // GitLabService expects to get a token as a JSON string in a particular format.
         AccessTokenGitlabDto internalObject = AccessTokenGitlabDto.builder()
-                .accessToken("anyValue")
                 .build();
+        internalObject.setAccessToken("anyValue");
+        String result = objectMapper.writeValueAsString(internalObject);
+        log.info("Created a GitLab-specific fake access token: {}", result);
 
+        return result;
+    }
+
+    private static String getGithubSpecificTokenStub() throws JsonProcessingException {
+        // GitLabService expects to get a token as a JSON string in a particular format.
+        AccessTokenGithubDto internalObject = AccessTokenGithubDto.builder()
+                .build();
+        internalObject.setAccessToken("anyValue");
         String result = objectMapper.writeValueAsString(internalObject);
         log.info("Created a GitLab-specific fake access token: {}", result);
 

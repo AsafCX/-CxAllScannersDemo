@@ -78,17 +78,35 @@ public class RestWrapper {
      *
      * @param path         url path
      * @param mapPostBody      request body in a form or a map
-     * @param headerMap      request headers as map
+     * @param headerMap      request headers 
      * @param responseType expected class structure as response
      * @return ResponseEntity of any type
      */
-    public ResponseEntity sendUrlEncodedPostRequest(String path, HttpMethod method,
+    public ResponseEntity sendUrlEncodedPostRequest(String path, 
                                                     MultiValueMap<String, String> mapPostBody,
                                                     Map<String, String> headerMap,
                                                     Class responseType) {
 
         HttpHeaders headers = createHeaders(headerMap);
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(mapPostBody, headers);
+        return restTemplate.postForEntity(path, request, responseType);
+    }
+
+    /**
+     * sendRequest method used as rest request template, sends request via RestTemplate
+     *
+     * @param path         url path
+     * @param mapPostBody      request body in a form or a map
+     * @param headers      request headers as map
+     * @param responseType expected class structure as response
+     * @return ResponseEntity of any type
+     */
+    public ResponseEntity sendUrlEncodedPostRequest(String path, 
+                                                    MultiValueMap<String, String> mapPostBody,
+                                                    HttpHeaders headers,
+                                                    Class responseType) {
+
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(mapPostBody, headers);
         return restTemplate.postForEntity(path, request, responseType);
     }

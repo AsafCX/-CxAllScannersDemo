@@ -142,10 +142,5 @@ public class Converter {
         }
     }
     
-    public static String trimNonEmptyString(String strName, String strValue){
-        if(StringUtils.isEmpty(strValue)){
-            throw new ScmException("Empty " + strName);
-        }
-        return strValue.trim();
-    }
+
 }

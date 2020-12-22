@@ -11,29 +11,24 @@ import com.checkmarx.dto.datastore.ScmDto;
 import com.checkmarx.dto.gitlab.WebhookGitLabDto;
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
+import com.checkmarx.utils.AccessTokenManager;
 import com.checkmarx.utils.Converter;
 import com.checkmarx.utils.RestWrapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
 
 
 @Slf4j
 @Service("azure")
-public class AzureService implements ScmService  {
+public class AzureService extends AbstractScmService implements ScmService  {
 
     private static final String API_VERSION = "6.0";
     
@@ -62,18 +57,7 @@ public class AzureService implements ScmService  {
     private static final String URL_CREATE_WEBHOOK =  BASE_API_URL + "/%s/_apis/hooks/subscriptions?api-version=" + API_VERSION;
     private static final String AZURE_CONSUMER_USERNAME = "cxflow";
     private static final String AZURE_CONSUMER_PASSWORD = "1234";
-
-    @Value("${azure.redirect.url}")
-    private String azureRedirectUrl;
-
-    @Value("${cxflow.webhook.url}")
-    private String cxFlowWebHook;
-
-    @Autowired
-    private RestWrapper restWrapper;
-
-    @Autowired
-    private DataService dataStoreService;
+    
 
     /**
      * generateAccessToken method using OAuth code, client id and client secret generates access
@@ -90,7 +74,7 @@ public class AzureService implements ScmService  {
     }
 
 
-    private AccessTokenAzureDto generateAccessToken(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
+    private AccessTokenAzureDto generateAccessToken(RestWrapper restWrapper, String path, Map<String, String> headers, MultiValueMap<String, String> body) {
         ResponseEntity<AccessTokenAzureDto> response = sendAccessTokenRequest(restWrapper, path, headers, body);
 
         AccessTokenAzureDto accessTokenDto = response.getBody();
@@ -101,14 +85,13 @@ public class AzureService implements ScmService  {
         return accessTokenDto;
     }
 
-    private ResponseEntity<AccessTokenAzureDto> sendAccessTokenRequest(RestWrapper restWrapper, String path, Map<String, String> headers, Object body) {
-        return  restWrapper.sendUrlEncodedPostRequest(path, HttpMethod.POST,
-                (MultiValueMap<String, String>)body, headers,
-                                                      AccessTokenAzureDto.class);
+    private ResponseEntity<AccessTokenAzureDto> sendAccessTokenRequest(RestWrapper restWrapper, String path, Map<String, String> headers, MultiValueMap<String, String> body) {
+        return  restWrapper.sendUrlEncodedPostRequest(path, 
+                body, headers,AccessTokenAzureDto.class);
     }
 
 
-    private Object getBodyAccessToken(String oAuthCode, ScmDto scmDto) {
+    private MultiValueMap<String, String> getBodyAccessToken(String oAuthCode, ScmDto scmDto) {
 
         MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
 
@@ -116,7 +99,7 @@ public class AzureService implements ScmService  {
         map.put("client_assertion",  Collections.singletonList(scmDto.getClientSecret()));
         map.put("grant_type",  Collections.singletonList("urn:ietf:params:oauth:grant-type:jwt-bearer"));
         map.put("assertion", Collections.singletonList(oAuthCode));
-        map.put("redirect_uri", Collections.singletonList(getAzureRedirectUrl()));
+        map.put("redirect_uri", Collections.singletonList(getRedirectUrl()));
         return map;
     }
 
@@ -156,25 +139,24 @@ public class AzureService implements ScmService  {
     
     @Override
     public List<RepoWebDto> getScmOrgRepos(@NonNull String orgId) {
-        ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
-        AccessTokenAzureDto token = getAzureOrgToken(scmAccessTokenDto.getAccessToken());
+        AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
         String urlProjectsApi = String.format(URL_GET_ALL_PROJECTS, orgId);
         ResponseEntity<AzureProjectsDto> responseProjects =  restWrapper
                 .sendBearerAuthRequest(urlProjectsApi, HttpMethod.GET,
                         null, null,
-                        AzureProjectsDto.class, token.getAccessToken());
+                        AzureProjectsDto.class, accessTokenWrapper.getAccessTokenStr());
 
         AzureProjectsDto azureProjectsIds = Objects.requireNonNull(responseProjects.getBody());
 
         ArrayList<RepoAzureDto>  projectsAndReposHooks = new ArrayList<>();
 
-        List<AzureWebhookDto> orgHooks = getOrganizationCxFlowHooks(orgId, token.getAccessToken());
+        List<AzureWebhookDto> orgHooks = getOrganizationCxFlowHooks(orgId, accessTokenWrapper.getAccessTokenStr());
 
         for (int i=0; i<azureProjectsIds.getCount() && azureProjectsIds.getProjectIds()!=null ; i++) {
 
             RepoAzureDto project = azureProjectsIds.getProjectIds().get(i);
             Map<String, List<String>> repoHooks = getHooksOnRepoLevel(orgHooks, project.getId());
-            RepoListAzureDto projectRepos = getProjectRepos(orgId, token, project.getId());
+            RepoListAzureDto projectRepos = getProjectRepos(orgId, accessTokenWrapper.getAccessTokenStr(), project.getId());
 
             if(projectRepos.getCount()>0 && projectRepos.getRepos()!=null) {
                 setAdditionalDetails(repoHooks, projectRepos, project);
@@ -182,19 +164,12 @@ public class AzureService implements ScmService  {
             }
             
         }
-        OrgReposDto orgReposDto = Converter.convertToOrgRepoDto(scmAccessTokenDto, projectsAndReposHooks);
+        OrgReposDto orgReposDto = Converter.convertToOrgRepoDto(accessTokenWrapper.getDbDto(), projectsAndReposHooks);
         dataStoreService.updateScmOrgRepo(orgReposDto);
         return Converter.convertToListRepoWebDto(projectsAndReposHooks);
     }
 
-    private AccessTokenAzureDto getAzureOrgToken(String tokenObj) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            return objectMapper.readValue(tokenObj, AccessTokenAzureDto.class);
-        } catch (JsonProcessingException ex){
-            throw new ScmException("Unable to Json -> Object");
-        }
-    }
+
     
 
     private Map<String, List<String>> getHooksOnRepoLevel(List<AzureWebhookDto> organizationHooks,
@@ -217,13 +192,13 @@ public class AzureService implements ScmService  {
        
     }
 
-    private RepoListAzureDto getProjectRepos(@NonNull String orgId, AccessTokenAzureDto token, String projectId) {
+    private RepoListAzureDto getProjectRepos(@NonNull String orgId, String token, String projectId) {
         String urlReposApi = String.format(URL_GET_REPOS, orgId, projectId);
 
         ResponseEntity<RepoListAzureDto> response = restWrapper
                 .sendBearerAuthRequest(urlReposApi, HttpMethod.GET,
                         null, null,
-                        RepoListAzureDto.class, token.getAccessToken());
+                        RepoListAzureDto.class, token);
         return Objects.requireNonNull(response.getBody());
     }
 
@@ -249,20 +224,19 @@ public class AzureService implements ScmService  {
 
     @Override
     public BaseDto createWebhook(@NonNull String orgId, @NonNull String projectAndRepoIds ) {
-        ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
-        AccessTokenAzureDto token = getAzureOrgToken(scmAccessTokenDto.getAccessToken());
-        String path = String.format(URL_CREATE_WEBHOOK, orgId, getCxFlowWebHook(), token.getAccessToken()) ;
+        AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
+        String path = String.format(URL_CREATE_WEBHOOK, orgId, getCxFlowWebHook(), accessTokenWrapper.getAccessTokenStr()) ;
 
         List<String> listProjectAndRepo = getProjectAndRepoIds(projectAndRepoIds);
         
         String projectId = listProjectAndRepo.get(0);
         String repoId = listProjectAndRepo.get(1);
         
-        BaseDto hookDtoHook1 = createHook(projectId, repoId, token, path, AzureEvent.CREATE_PULL_REQEUST );
-        BaseDto hookDtoHook2 = createHook(projectId, repoId, token, path, AzureEvent.UPDATE_PULL_REQEUST);
-        BaseDto hookDtoHook3 = createHook(projectId, repoId, token, path, AzureEvent.PUSH);
+        BaseDto hookDtoHook1 = createHook(projectId, repoId, accessTokenWrapper.getAccessTokenStr(), path, AzureEvent.CREATE_PULL_REQEUST );
+        BaseDto hookDtoHook2 = createHook(projectId, repoId, accessTokenWrapper.getAccessTokenStr(), path, AzureEvent.UPDATE_PULL_REQEUST);
+        BaseDto hookDtoHook3 = createHook(projectId, repoId, accessTokenWrapper.getAccessTokenStr(), path, AzureEvent.PUSH);
         BaseDto hookDto = hookDtoHook1.join(hookDtoHook2).join(hookDtoHook3);
-        dataStoreService.updateWebhook(repoId, scmAccessTokenDto, hookDto.getId(), true);
+        dataStoreService.updateWebhook(repoId, accessTokenWrapper.getDbDto(), hookDto.getId(), true);
         return hookDto;
     }
 
@@ -276,12 +250,12 @@ public class AzureService implements ScmService  {
     }
 
     private BaseDto createHook(@NonNull String projectId, @NonNull String repoId,
-                               AccessTokenAzureDto token, String path, AzureEvent event)  {
+                               String token, String path, AzureEvent event)  {
         AzureWebhookDto hookData = generateHookData(repoId,projectId, event);
         ResponseEntity<BaseDto> response =  restWrapper
                 .sendBearerAuthRequest(path, HttpMethod.POST,
                         hookData, null,
-                        BaseDto.class, token.getAccessToken());
+                        BaseDto.class, token);
 
         BaseDto hookDto = Objects.requireNonNull(response.getBody());
         validateResponse(hookDto);
@@ -297,35 +271,20 @@ public class AzureService implements ScmService  {
 
     @Override
     public void deleteWebhook(@NonNull String orgId, @NonNull String repoId,
-                              @NonNull String webhookId) {
+                              @NonNull String deleteUrl) {
 
        ScmAccessTokenDto scmAccessTokenDto = dataStoreService.getSCMOrgToken(getBaseDbKey(), orgId);
-        AccessTokenAzureDto token = getAzureOrgToken(scmAccessTokenDto.getAccessToken());
-        
-        List<String> webhookIds = new BaseDto(webhookId).split();
+     
+        List<String> webhookIds = new BaseDto(deleteUrl).split();
 
         for (String currWebhookId:webhookIds) {
-            deleteWebhook(orgId, currWebhookId, token);
+            String path = String.format(URL_DELETE_WEBHOOK, orgId, currWebhookId);
+            super.deleteWebhook( orgId,  repoId, path, WebhookGitLabDto.class);
+
         }
         dataStoreService.updateWebhook(repoId, scmAccessTokenDto, null, false);
     }
-
-    private void deleteWebhook(@NonNull String orgId, @NonNull String webhookId,
-                               AccessTokenAzureDto token) {
-        String path = String.format(URL_DELETE_WEBHOOK, orgId, webhookId);
-
-        try {
-            restWrapper.sendBearerAuthRequest(path, HttpMethod.DELETE, null, null,
-                    WebhookGitLabDto.class, token.getAccessToken());
-        } catch (HttpClientErrorException ex) {
-            if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                log.error("Webhook not found: {}", ex.getMessage());
-                throw new ScmException(RestWrapper.WEBHOOK_DELETE_FAILURE);
-            }
-            throw new ScmException(RestWrapper.GENERAL_RUNTIME_EXCEPTION);
-        }
-    }
-
+    
 
     @Override
     public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId) {
@@ -380,24 +339,4 @@ public class AzureService implements ScmService  {
     }
     
 
-    /**
-     * verifyAccessToken method used to verify access token creation, Currently checks if access
-     * token created(not null or empty) without GitHub validation
-     *
-     * @param accessToken access token generated before using GitHub api, Gives access to relevant
-     *                  GitHub data
-     * @return true if verification passed successfully
-     */
-    private boolean verifyAccessToken(AccessTokenAzureDto accessToken) {
-        return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
-    }
-
-    public String getAzureRedirectUrl() {
-        return Converter.trimNonEmptyString("Azure redirect URL", azureRedirectUrl);
-
-    }
-
-    private String getCxFlowWebHook() {
-        return Converter.trimNonEmptyString("Cxflow webhook URL", cxFlowWebHook );
-    }
 }

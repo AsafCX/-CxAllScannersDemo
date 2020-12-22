@@ -1,6 +1,5 @@
-package com.checkmarx.dto.gitlab;
+package com.checkmarx.dto.bitbucket;
 
-import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.IDto;
 import com.checkmarx.dto.IWebhookDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,16 +13,21 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public @Data class WebhookGitLabDto  implements IWebhookDto {
+public @Data class WebhookBitbucketDto implements IWebhookDto {
 
-    private String id;
+    @JsonProperty("url")
     private String url;
-    @JsonProperty("project_id")
-    private Boolean projectId;
+    @JsonProperty("active")
+    private boolean active;
+    @JsonProperty("uuid")
+    private String uuid;
+    
+    public String getId() {
+        return uuid;
+    }
 
-    @Override
-    public boolean isActive() {
-        return true;
+    public String getName() {
+        return uuid;
     }
 }
 

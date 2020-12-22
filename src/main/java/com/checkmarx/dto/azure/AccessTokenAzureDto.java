@@ -1,5 +1,6 @@
 package com.checkmarx.dto.azure;
 
+import com.checkmarx.dto.AccessTokenDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -10,10 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class AccessTokenAzureDto {
-
-    @JsonProperty("access_token")
-    public String accessToken;
+public class AccessTokenAzureDto extends AccessTokenDto {
+    
     @JsonProperty("token_type")
     public String tokenType;
     @JsonProperty("refresh_token")
