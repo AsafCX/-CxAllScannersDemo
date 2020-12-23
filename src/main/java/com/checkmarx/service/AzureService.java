@@ -22,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.UnknownContentTypeException;
 
 import java.util.*;
 
@@ -93,16 +95,17 @@ public class AzureService extends AbstractScmService implements ScmService  {
 
     private MultiValueMap<String, String> getBodyAccessToken(String oAuthCode, ScmDto scmDto) {
 
-        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
 
-        map.put("client_assertion_type", Collections.singletonList("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
-        map.put("client_assertion",  Collections.singletonList(scmDto.getClientSecret()));
-        map.put("grant_type",  Collections.singletonList("urn:ietf:params:oauth:grant-type:jwt-bearer"));
+        map.put("client_assertion_type", Collections
+                .singletonList("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
+        map.put("client_assertion", Collections.singletonList(scmDto.getClientSecret()));
+        map.put("grant_type",
+                Collections.singletonList("urn:ietf:params:oauth:grant-type:jwt-bearer"));
         map.put("assertion", Collections.singletonList(oAuthCode));
         map.put("redirect_uri", Collections.singletonList(getRedirectUrl()));
         return map;
     }
-
     
     @Override
     public String getScopes() {
@@ -117,26 +120,29 @@ public class AzureService extends AbstractScmService implements ScmService  {
     public List<OrganizationWebDto> getOrganizations(@NonNull String authCode) {
         AccessTokenAzureDto accessToken = generateAccessToken(authCode);
         log.info("Access token generated successfully");
+        return getAndStoreOrganizations(accessToken);
+    }
 
+    private List<OrganizationWebDto> getAndStoreOrganizations(AccessTokenAzureDto accessToken) {
         ResponseEntity<BaseDto> responseId =
                 restWrapper.sendBearerAuthRequest(URL_GET_USER_ID, HttpMethod.GET, null, null,
-                        BaseDto.class, accessToken.getAccessToken());
+                                                  BaseDto.class, accessToken.getAccessToken());
         BaseDto userId = Objects.requireNonNull(responseId.getBody());
 
         String urlAccounts = String.format(URL_GET_USER_ACCOUNTS, userId.getId());
-        
+
         ResponseEntity<AzureUserOrganizationsDto> response =
                 restWrapper.sendBearerAuthRequest(urlAccounts, HttpMethod.GET, null, null,
-                        AzureUserOrganizationsDto.class, accessToken.getAccessToken());
+                                                  AzureUserOrganizationsDto.class, accessToken.getAccessToken());
 
         AzureUserOrganizationsDto azureUserOrganizationsDto = Objects.requireNonNull(response.getBody());
         String tokenJson = Converter.convertObjectToJson(accessToken);
-         List<OrgDto> orgDtos = Converter.convertToListOrg(tokenJson,
-                                                      azureUserOrganizationsDto.getOrganizations(), getBaseDbKey());
+        List<OrgDto> orgDtos = Converter.convertToListOrg(tokenJson,
+                                                     azureUserOrganizationsDto.getOrganizations(), getBaseDbKey());
         dataStoreService.storeOrgs(orgDtos);
         return Converter.convertToListOrgWebDtos(azureUserOrganizationsDto.getOrganizations());
     }
-    
+
     @Override
     public List<RepoWebDto> getScmOrgRepos(@NonNull String orgId) {
         AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
@@ -288,8 +294,55 @@ public class AzureService extends AbstractScmService implements ScmService  {
 
     @Override
     public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId) {
-        //TODO
-        return null;
+        AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
+        CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgId, accessTokenManager.getAccessTokenStr());
+        Object accessTokenAzureDto  = accessTokenManager.getFullAccessToken(AccessTokenAzureDto.class);
+        return validateCxFlowConfig(cxFlowConfigDto, (AccessTokenAzureDto)accessTokenAzureDto);
+
+    }
+
+    private CxFlowConfigDto validateCxFlowConfig(CxFlowConfigDto cxFlowConfigDto, AccessTokenAzureDto accessToken) {
+        if(StringUtils.isEmpty(cxFlowConfigDto.getScmAccessToken()) || StringUtils.isEmpty(cxFlowConfigDto.getTeam()) || StringUtils.isEmpty(cxFlowConfigDto.getCxgoSecret())) {
+            log.error("CxFlow configuration settings validation failure, missing data");
+            throw new ScmException("CxFlow configuration settings validation failure, missing data");
+        }
+        try {
+            restWrapper.sendBearerAuthRequest(URL_GET_USER_ID, HttpMethod.GET, null, null,
+                                              BaseDto.class,
+                                                      cxFlowConfigDto.getScmAccessToken());
+            log.info("Azure token validation passed successfully!");
+        } catch (HttpClientErrorException | UnknownContentTypeException ex){
+            accessToken = refreshToken(accessToken);
+            cxFlowConfigDto.setScmAccessToken(accessToken.getAccessToken());
+            log.info("Azure refresh token process passed successfully!");
+        }
+        return cxFlowConfigDto;
+    }
+
+    private AccessTokenAzureDto refreshToken(AccessTokenAzureDto token) {
+        token = sendRefreshTokenRequest(token.getRefreshToken());
+        getAndStoreOrganizations(token);
+        return token;
+    }
+
+
+    private AccessTokenAzureDto sendRefreshTokenRequest(String refreshToken) {
+        ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
+        return generateAccessToken(restWrapper, AzureService.URL_AUTH_TOKEN, null,
+                                   getBodyRefreshAccessToken(refreshToken, scmDto));
+    }
+
+    private MultiValueMap<String, String> getBodyRefreshAccessToken(String refreshAccessToken,
+                                                                    ScmDto scmDto) {
+
+        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+
+        map.put("client_assertion_type", Collections.singletonList("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
+        map.put("client_assertion",  Collections.singletonList(scmDto.getClientSecret()));
+        map.put("grant_type",  Collections.singletonList("refresh_token"));
+        map.put("assertion", Collections.singletonList(refreshAccessToken));
+        map.put("redirect_uri", Collections.singletonList(getRedirectUrl()));
+        return map;
     }
 
     private List<AzureWebhookDto> getOrganizationCxFlowHooks(@NonNull String orgId,
