@@ -104,20 +104,6 @@ public class Converter {
     }
     
 
-    public static List<ScmAccessTokenDto> convertToListOrgAccessToken(String accessToken, List<?
-            extends IDto> organizationWebDtos, String scmUrl) {
-        List<ScmAccessTokenDto> scmAccessTokenDtos = new ArrayList<>();
-        for (IDto orgDto: organizationWebDtos) {
-            scmAccessTokenDtos.add(ScmAccessTokenDto.builder()
-                    .orgIdentity(orgDto.getId())
-                    .scmUrl(scmUrl)
-                    .accessToken(accessToken)
-                    .tokenType(TokenType.ACCESS.getType())
-                    .build());
-        }
-        return scmAccessTokenDtos;
-    }
-
     public static List<OrgDto> convertToListOrg(String accessToken, List<?
             extends IDto> organizationDtos, String scmUrl) {
         List<OrgDto> orgDtos = new ArrayList<>();

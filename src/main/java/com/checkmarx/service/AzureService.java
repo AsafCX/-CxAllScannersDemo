@@ -225,7 +225,7 @@ public class AzureService extends AbstractScmService implements ScmService  {
     @Override
     public BaseDto createWebhook(@NonNull String orgId, @NonNull String projectAndRepoIds ) {
         AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
-        String path = String.format(URL_CREATE_WEBHOOK, orgId, getCxFlowWebHook(), accessTokenWrapper.getAccessTokenStr()) ;
+        String path = String.format(URL_CREATE_WEBHOOK, orgId, getCxFlowUrl(), accessTokenWrapper.getAccessTokenStr()) ;
 
         List<String> listProjectAndRepo = getProjectAndRepoIds(projectAndRepoIds);
         
@@ -306,7 +306,7 @@ public class AzureService extends AbstractScmService implements ScmService  {
         for (int i=0; i< allHooks.getCount() && allHooks.getWebhooks()!= null; i++) {
 
             AzureWebhookDto webhookDto = allHooks.getWebhooks().get(i);
-            if (webhookDto != null  &&  webhookDto.getConsumerInputs()!=null && webhookDto.getConsumerInputs().getUrl().contains(getCxFlowWebHook()) && webhookDto.isPushOrPull())
+            if (webhookDto != null  &&  webhookDto.getConsumerInputs()!=null && webhookDto.getConsumerInputs().getUrl().contains(getCxFlowUrl()) && webhookDto.isPushOrPull())
                 cxFlowHooks.add(webhookDto);
         }
         return cxFlowHooks;
@@ -314,7 +314,7 @@ public class AzureService extends AbstractScmService implements ScmService  {
 
     private AzureWebhookDto generateHookData(String repoId, String projectId, AzureEvent event)  {
        
-        String targetAppUrl =  String.format(event.getHookUrl(), getCxFlowWebHook());
+        String targetAppUrl =  String.format(event.getHookUrl(), getCxFlowUrl());
                 
         AzureWebhookDto.ConsumerInputs consumerInputs = AzureWebhookDto.ConsumerInputs.builder()
                 .basicAuthUsername(AZURE_CONSUMER_USERNAME)

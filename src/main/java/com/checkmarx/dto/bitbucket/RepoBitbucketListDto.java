@@ -7,13 +7,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class RepoBitbucketDto extends BitbucketBase implements IRepoDto {
+public class RepoBitbucketListDto  {
     
-    private String webhookId;
-    private boolean webHookEnabled;
-    
+    @JsonProperty("values")
+    private List<RepoBitbucketDto> elements;
+
+
 }

@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
-import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service("AbstractScmService")
@@ -35,7 +35,7 @@ public abstract class AbstractScmService {
     private String redirectUrl;
 
     @Value("${cxflow.webhook.url}")
-    protected String cxFlowWebHook;
+    protected String cxFlowUrl;
     
     /**
      * verifyAccessToken method used to verify access token creation, Currently checks if access
@@ -49,8 +49,8 @@ public abstract class AbstractScmService {
         return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
     }
 
-    protected String getCxFlowWebHook() {
-        return trimNonEmptyString("Cxflow webhook URL", cxFlowWebHook);
+    protected String getCxFlowUrl() {
+        return trimNonEmptyString("Cxflow URL", cxFlowUrl);
 
     }
 
@@ -74,14 +74,14 @@ public abstract class AbstractScmService {
         }
     }
 
-    protected void validateDto(IWebhookDto webhookGithubDto) {
+    protected void validateWebhookDto(IWebhookDto webhookGithubDto) {
         if(webhookGithubDto == null || StringUtils.isEmpty(webhookGithubDto.getId())){
             log.error(RestWrapper.WEBHOOK_CREATE_FAILURE);
             throw new ScmException(RestWrapper.WEBHOOK_CREATE_FAILURE);
         }
     }
 
-    protected CxFlowConfigDto buildCxFlowConfig(String organizationId, String token) {
+    protected CxFlowConfigDto getOrganizationSettings(String organizationId, String token) {
         OrgPropertiesDto orgPropertiesDto = dataStoreService.getScmOrgSettings(getBaseDbKey(),
                 organizationId);
         return CxFlowConfigDto.builder()
@@ -93,9 +93,9 @@ public abstract class AbstractScmService {
     
     public abstract String getBaseDbKey();
 
-    protected IWebhookDto getActiveHook(ArrayList<? extends IWebhookDto> webhookDtos) {
+    protected IWebhookDto getActiveHook(List<? extends IWebhookDto> webhookDtos) {
         for (IWebhookDto webhookDto : webhookDtos) {
-            if (webhookDto != null  && webhookDto.getUrl().equals(getCxFlowWebHook()) && webhookDto.isActive())
+            if (webhookDto != null  && webhookDto.getUrl().equals(getCxFlowUrl()) && webhookDto.isActive() && webhookDto.isPushOrPull())
                 return webhookDto;
         }
         return null;

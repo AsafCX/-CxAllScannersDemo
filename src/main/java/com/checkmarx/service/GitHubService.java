@@ -115,7 +115,7 @@ public class GitHubService extends AbstractScmService implements ScmService {
                                        WebhookGithubDto.class,
                                        accessTokenWrapper.getAccessTokenStr());
         webhookGithubDto = response.getBody();
-        validateDto(webhookGithubDto);
+        validateWebhookDto(webhookGithubDto);
         dataStoreService.updateWebhook(repoId, accessTokenWrapper.getDbDto(),webhookGithubDto.getId(), true);
 
         return new BaseDto(webhookGithubDto.getId());
@@ -132,7 +132,7 @@ public class GitHubService extends AbstractScmService implements ScmService {
     public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId) {
         AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
 
-        CxFlowConfigDto cxFlowConfigDto = buildCxFlowConfig(orgId, accessTokenWrapper.getAccessTokenStr());
+        CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgId, accessTokenWrapper.getAccessTokenStr());
         validateCxFlowConfig(cxFlowConfigDto);
         return cxFlowConfigDto;
     }
@@ -157,7 +157,7 @@ public class GitHubService extends AbstractScmService implements ScmService {
     private WebhookGithubDto initWebhook() {
         return  WebhookGithubDto.builder()
                 .name("web")
-                .config(WebhookGithubDto.Config.builder().contentType("json").url(getCxFlowWebHook()).insecureSsl("0").secret("1234").build())
+                .config(WebhookGithubDto.Config.builder().contentType("json").url(getCxFlowUrl()).insecureSsl("0").secret("1234").build())
                 .events(Arrays.asList("push", "pull_request"))
                 .build();
     }

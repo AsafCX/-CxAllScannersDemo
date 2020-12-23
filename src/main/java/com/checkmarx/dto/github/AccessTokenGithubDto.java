@@ -6,10 +6,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public @Data class AccessTokenGithubDto extends AccessTokenDto {
+@Data
+public class AccessTokenGithubDto extends AccessTokenDto {
 
     @JsonProperty("scope")
     private String scope;

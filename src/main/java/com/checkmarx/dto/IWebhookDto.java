@@ -7,4 +7,6 @@ public interface IWebhookDto {
     boolean isActive();
     
     String getId();
+
+    default boolean isPushOrPull(){ return true;}
 }

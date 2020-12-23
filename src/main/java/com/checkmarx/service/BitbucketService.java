@@ -3,10 +3,7 @@ package com.checkmarx.service;
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.BaseDto;
 
-import com.checkmarx.dto.bitbucket.AccessTokenBitbucketDto;
-import com.checkmarx.dto.bitbucket.BitbucketWorkspacesDto;
-import com.checkmarx.dto.bitbucket.RepoBitbucketDto;
-import com.checkmarx.dto.bitbucket.WebhookBitbucketDto;
+import com.checkmarx.dto.bitbucket.*;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
@@ -56,10 +53,8 @@ public class BitbucketService extends AbstractScmService implements ScmService  
 
     private static final String URL_GET_WEBHOOKS = BASE_API_URL + API_VERSION  + "/repositories/%s/%s/hooks";
 
-    private static final String URL_DELETE_WEBHOOK = BASE_API_URL + API_VERSION  +  "repositories/%s/%s/hooks/%s";
-
-    private static final String URL_CREATE_WEBHOOK = BASE_API_URL + "/projects/%s/hooks?url=%s&token=%s&merge_requests_events=true&push_events=true";
-
+    private static final String URL_WEBHOOK = BASE_API_URL + API_VERSION  +  "repositories/%s/%s/hooks/%s";
+    
     private static final String URL_VALIDATE_TOKEN = "https://gitlab.com/api/v4/user";
 
     
@@ -85,12 +80,12 @@ public class BitbucketService extends AbstractScmService implements ScmService  
     public List<RepoWebDto> getScmOrgRepos(@NonNull String workspaceId) {
         AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), workspaceId, dataStoreService);
         String path = String.format(URL_GET_REPOSITORIES, workspaceId);
-        ResponseEntity<RepoBitbucketDto[]> response =  restWrapper
+        ResponseEntity<RepoBitbucketListDto> response =  restWrapper
                 .sendBearerAuthRequest(path, HttpMethod.GET,
                                        null, null,
-                        RepoBitbucketDto[].class, accessTokenManager.getAccessTokenStr());
-        ArrayList<RepoBitbucketDto> repoDtos = new ArrayList<>(Arrays.asList(
-                Objects.requireNonNull(response.getBody())));
+                        RepoBitbucketListDto.class, accessTokenManager.getAccessTokenStr());
+        List<RepoBitbucketDto> repoDtos = 
+                Objects.requireNonNull(response.getBody()).getElements();
         for (RepoBitbucketDto repoDto : repoDtos) {
             WebhookBitbucketDto webhookDto = getRepositoryCxFlowWebhook(repoDto.getId(),workspaceId,
                     accessTokenManager.getAccessTokenStr());
@@ -104,23 +99,23 @@ public class BitbucketService extends AbstractScmService implements ScmService  
 
 
     @Override
-    public BaseDto createWebhook(@NonNull String orgId, @NonNull String projectId ) {
+    public BaseDto createWebhook(@NonNull String orgId, @NonNull String repoId ) {
         AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
-        String path = String.format(URL_CREATE_WEBHOOK, projectId, getCxFlowWebHook(), "1234") ;
-         ResponseEntity<WebhookGitLabDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.POST,
-                                                                                        new WebhookGitLabDto(), null,
-                                                                                        WebhookGitLabDto.class,
+        String path = String.format(URL_WEBHOOK, orgId, repoId, getCxFlowUrl()) ;
+         ResponseEntity<WebhookBitbucketDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.POST,
+                                                                                        new WebhookBitbucketDto(), null,
+                                                                                        WebhookBitbucketDto.class,
                                                                                         accessTokenManager.getAccessTokenStr());
-        WebhookGitLabDto webhookGitLabDto = response.getBody();
-        validateDto(webhookGitLabDto);
-        dataStoreService.updateWebhook(projectId, accessTokenManager.getDbDto(), webhookGitLabDto.getId(), true);
-        return new BaseDto(webhookGitLabDto.getId());
+        WebhookBitbucketDto webhookDto = response.getBody();
+        validateWebhookDto(webhookDto);
+        dataStoreService.updateWebhook(repoId, accessTokenManager.getDbDto(), webhookDto.getId(), true);
+        return new BaseDto(webhookDto.getId());
     }
 
     @Override
     public void deleteWebhook(@NonNull String orgId, @NonNull String repoId,
-                              @NonNull String deleteUrl) {
-        String path = String.format(URL_DELETE_WEBHOOK, orgId, repoId, deleteUrl);
+                              @NonNull String webhookId) {
+        String path = String.format(URL_WEBHOOK, orgId, repoId, webhookId);
         super.deleteWebhook( orgId,  repoId, path, WebhookBitbucketDto.class);
     }
 
@@ -128,17 +123,17 @@ public class BitbucketService extends AbstractScmService implements ScmService  
     public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId) {
         //CxFlow send org name, Using DataStore to get org id
         AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
-        CxFlowConfigDto cxFlowConfigDto = buildCxFlowConfig(orgId,accessTokenManager.getAccessTokenJson());
+        CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgId,accessTokenManager.getAccessTokenJson());
         Object accessTokenGitlabDto  = accessTokenManager.getFullAccessToken(AccessTokenGitlabDto.class);
         return validateCxFlowConfig(cxFlowConfigDto, (AccessTokenGitlabDto)accessTokenGitlabDto);
 
     }
     
     private List<OrganizationWebDto> getAndStoreOrganizations(AccessTokenBitbucketDto token) {
-        ResponseEntity<BitbucketWorkspacesDto> response =
+        ResponseEntity<BitbucketBaseListDto> response =
                 restWrapper.sendBearerAuthRequest(URL_GET_WORKSPACES, HttpMethod.GET, null, null,
-                        BitbucketWorkspacesDto.class, token.getAccessToken());
-        List<BitbucketWorkspacesDto.Workspace> organizationWebDtos = response.getBody().getWorkspaces();
+                        BitbucketBaseListDto.class, token.getAccessToken());
+        List<BitbucketBase> organizationWebDtos = response.getBody().getElements();
         String tokenJson = Converter.convertObjectToJson(token);
         List<OrgDto> orgDtos =
                 Converter.convertToListOrg(tokenJson, organizationWebDtos, getBaseDbKey());
@@ -188,13 +183,12 @@ public class BitbucketService extends AbstractScmService implements ScmService  
     private WebhookBitbucketDto getRepositoryCxFlowWebhook(@NonNull String repoId, @NonNull String workspaceId,
                                                            @NonNull String accessToken){
         String path = String.format(URL_GET_WEBHOOKS, workspaceId, repoId);
-        ResponseEntity<WebhookBitbucketDto[]> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.GET,
+        ResponseEntity<WebhookBitbucketListDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.GET,
                 null, null,
-                WebhookBitbucketDto[].class, accessToken);
-        ArrayList<WebhookBitbucketDto> webhookDtos = new ArrayList<>(Arrays.asList(
-                Objects.requireNonNull(response.getBody())));
+                WebhookBitbucketListDto.class, accessToken);
+        WebhookBitbucketListDto webhookDtos = Objects.requireNonNull(response.getBody());
 
-        return (WebhookBitbucketDto)getActiveHook(webhookDtos);
+        return (WebhookBitbucketDto)getActiveHook(webhookDtos.getElements());
     }
 
 

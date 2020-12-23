@@ -101,13 +101,13 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     public BaseDto createWebhook(@NonNull String orgId, @NonNull String projectId ) {
         AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
         
-        String path = String.format(URL_WEBHOOK, projectId, getCxFlowWebHook(), "1234") ;
+        String path = String.format(URL_WEBHOOK, projectId, getCxFlowUrl(), "1234") ;
          ResponseEntity<WebhookGitLabDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.POST,
                                                                                         new WebhookGitLabDto(), null,
                                                                                         WebhookGitLabDto.class,
                                                                                         accessTokenManager.getAccessTokenStr());
         WebhookGitLabDto webhookGitLabDto = response.getBody();
-        validateDto(webhookGitLabDto);
+        validateWebhookDto(webhookGitLabDto);
         dataStoreService.updateWebhook(projectId, accessTokenManager.getDbDto(), webhookGitLabDto.getId(), true);
         return new BaseDto(webhookGitLabDto.getId());
     }
@@ -122,8 +122,9 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     @Override
     public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId) {
         //CxFlow send org name, Using DataStore to get org id
-        AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
-        CxFlowConfigDto cxFlowConfigDto = buildCxFlowConfig(orgId,accessTokenManager.getAccessTokenJson());
+        OrgDto orgDto = dataStoreService.getScmOrgByName(getBaseDbKey(), orgId);
+        AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgDto.getOrgIdentity(), dataStoreService);
+        CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgDto.getOrgIdentity(),accessTokenManager.getAccessTokenJson());
         Object accessTokenGitlabDto  = accessTokenManager.getFullAccessToken(AccessTokenGitlabDto.class);
         return validateCxFlowConfig(cxFlowConfigDto, (AccessTokenGitlabDto)accessTokenGitlabDto);
     }

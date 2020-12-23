@@ -13,12 +13,14 @@ import lombok.Getter;
 public class AccessTokenManager {
     
     ScmAccessTokenDto dbDto;
+    AccessTokenDto tokenDto;
     
     public AccessTokenManager(String dbKey, String orgId, DataService dataStoreService){
         dbDto = dataStoreService.getSCMOrgToken(dbKey, orgId);
+        tokenDto = parse(getAccessTokenJson());
     }
 
-    private AccessTokenDto getAccessToken(String tokenJson) {
+    private AccessTokenDto parse(String tokenJson) {
         ObjectMapper objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         try {
@@ -27,9 +29,12 @@ public class AccessTokenManager {
             throw new ScmException("Unable to Json -> Object");
         }
     }
+
+    public AccessTokenDto getAccessToken(){
+        return tokenDto;
+    }
     
     public String getAccessTokenStr(){
-        AccessTokenDto tokenDto = getAccessToken(getAccessTokenJson());
         return tokenDto.getAccessToken();
     }
 
