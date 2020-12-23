@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @RequiredArgsConstructor
-public class ResponseValidationSteps {
+public class ResponseValidationSharedSteps {
     private final ApiTestState testState;
 
     @Then("response status is {int}")
@@ -29,13 +29,19 @@ public class ResponseValidationSteps {
     public void responseContainsTheFieldSetTo(String fieldName, String expectedFieldValue) {
         JsonNode responseBody = getBody(testState);
 
-        String message = String.format("Unexpected value for the '%s' response field.", fieldName);
-        JsonNode fieldToCheck = responseBody.get(fieldName);
-        Assert.assertNotNull(String.format("The %s response field is missing.", fieldName), fieldToCheck);
+        JsonNode fieldToCheck = getNonNullField(responseBody, fieldName);
 
+        String message = String.format("Unexpected value for the '%s' response field.", fieldName);
         Assert.assertEquals(message, expectedFieldValue, fieldToCheck.textValue());
 
         testState.getExpectedFieldNames().add(fieldName);
+    }
+
+    @And("response has the {word} field containing the text: {string}")
+    public void responseHasTheMessageFieldContainingTheText(String fieldName, String expectedText) {
+        JsonNode responseBody = getBody(testState);
+        JsonNode fieldToCheck = getNonNullField(responseBody, fieldName);
+        Assert.assertTrue(String.format("The '%s' response field doesn't contain the expected value: '%s'\n%s", fieldName, expectedText, responseBody), StringUtils.containsIgnoreCase(fieldToCheck.textValue(), expectedText));
     }
 
     @And("response does not have any other fields")
@@ -48,10 +54,11 @@ public class ResponseValidationSteps {
         Assert.assertEquals("Actual response fields don't match the expected ones.", expectedFields, actualFields);
     }
 
-    @And("response contains the following fields, all non-empty:")
-    public void responseContainsNonEmptyAndFields(List<String> fields) {
+    @And("response contains a standard error message")
+    public void responseContainsNonEmptyAndFields() {
         JsonNode responseBody = getBody(testState);
-        fields.forEach(fieldName -> checkIfFieldIsNotEmpty(fieldName, responseBody));
+        checkIfFieldIsNotEmpty("message", responseBody);
+        checkIfFieldIsNotEmpty("localDateTime", responseBody);
     }
 
     private Set<String> getFieldsFrom(JsonNode responseBody) {
@@ -69,10 +76,14 @@ public class ResponseValidationSteps {
         return result;
     }
 
-    private void checkIfFieldIsNotEmpty(String field, JsonNode responseBody) {
-        JsonNode responseField = responseBody.get(field);
-        String fieldIsMissing = String.format("The '%s' field is missing in the response.", field);
-        Assert.assertNotNull(fieldIsMissing, responseField);
+    private static JsonNode getNonNullField(JsonNode json, String fieldName) {
+        JsonNode result = json.get(fieldName);
+        Assert.assertNotNull(String.format("The '%s' response field is null.", fieldName), fieldName);
+        return result;
+    }
+
+    private static void checkIfFieldIsNotEmpty(String field, JsonNode responseBody) {
+        JsonNode responseField = getNonNullField(responseBody, field);
 
         String actualFieldValue = responseField.textValue();
         String valueIsEmpty = String.format("The '%s' response field is empty.", field);

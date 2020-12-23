@@ -1,5 +1,7 @@
 package com.checkmarx.cxintegrations.reposmanager.api.orgsettings;
 
+import com.checkmarx.cxintegrations.reposmanager.QueryStringInterceptor;
+import com.checkmarx.cxintegrations.reposmanager.OrgRequestInterceptor;
 import com.checkmarx.cxintegrations.reposmanager.WebApiRequestSender;
 import com.checkmarx.cxintegrations.reposmanager.dto.ApiTestState;
 import com.checkmarx.dto.datastore.OrgPropertiesDto;
@@ -35,6 +37,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrgSettingsApiSteps {
     private MiniOrgStore miniOrgStore;
+    private final QueryStringInterceptor queryStringInterceptor;
 
     @LocalServerPort
     private int apiPort;
@@ -51,7 +54,7 @@ public class OrgSettingsApiSteps {
         testState.clear();
         miniOrgStore = new MiniOrgStore();
 
-        RequestInterceptor usingFakeResponses = new RequestInterceptor(miniOrgStore);
+        OrgRequestInterceptor usingFakeResponses = new OrgRequestInterceptor(miniOrgStore, queryStringInterceptor);
         when(reposManagerCallsDataStoreApi()).thenAnswer(usingFakeResponses);
     }
 

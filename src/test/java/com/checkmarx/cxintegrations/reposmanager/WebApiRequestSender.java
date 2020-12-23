@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * Sends HTTP requests to a local ReposManager service.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor

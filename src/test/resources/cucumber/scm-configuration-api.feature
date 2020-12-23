@@ -19,7 +19,5 @@ Feature: SCM configuration API
         Given data store does not contain the i-dont-exist SCM
         When API client calls the `get configuration` API for the i-dont-exist SCM
         Then response status is 404
-        And response contains the following fields, all non-empty:
-            | message       |
-            | localDateTime |
+        And response contains a standard error message
 

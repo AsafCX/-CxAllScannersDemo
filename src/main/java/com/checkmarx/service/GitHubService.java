@@ -52,6 +52,8 @@ public class GitHubService extends AbstractScmService implements ScmService {
     
     private static final String SCOPES = "repo,admin:repo_hook,read:org,read:user";
 
+    private static final String INVALID_TOKEN = "Github token validation failure";
+
 
     @Override
     public List<OrganizationWebDto> getOrganizations(@NonNull String authCode) {
@@ -136,7 +138,7 @@ public class GitHubService extends AbstractScmService implements ScmService {
         validateCxFlowConfig(cxFlowConfigDto);
         return cxFlowConfigDto;
     }
-    
+
     private void validateCxFlowConfig(CxFlowConfigDto cxFlowConfigDto) {
         if(StringUtils.isEmpty(cxFlowConfigDto.getScmAccessToken()) || StringUtils.isEmpty(
                 cxFlowConfigDto.getTeam()) || StringUtils.isEmpty(cxFlowConfigDto.getCxgoSecret())) {
@@ -147,9 +149,9 @@ public class GitHubService extends AbstractScmService implements ScmService {
             restWrapper.sendBearerAuthRequest(URL_VALIDATE_TOKEN, HttpMethod.GET, null, null,
                                               CxFlowConfigDto.class,
                                               cxFlowConfigDto.getScmAccessToken());
-        } catch (HttpClientErrorException ex){
-            log.error("Github Token validation failure: {}", ex.getMessage());
-            throw new ScmException("Github Token authorization failure");
+        } catch (HttpClientErrorException ex) {
+            log.error("{}: {}", INVALID_TOKEN, ex.getMessage());
+            throw new ScmException(INVALID_TOKEN);
         }
         log.info("Github token validation passed successfully!");
     }
@@ -171,7 +173,7 @@ public class GitHubService extends AbstractScmService implements ScmService {
                                        WebhookGithubDto[].class, accessToken);
         ArrayList<WebhookGithubDto> webhookDtos = new ArrayList<>(Arrays.asList(
                 Objects.requireNonNull(response.getBody())));
-        
+
         return (WebhookGithubDto)getActiveHook(webhookDtos);
     }
 
@@ -206,7 +208,7 @@ public class GitHubService extends AbstractScmService implements ScmService {
                              oAuthCode);
     }
 
- 
+
     @Override
     public String getScopes() {
         return SCOPES;
@@ -217,5 +219,5 @@ public class GitHubService extends AbstractScmService implements ScmService {
         return GIT_HUB_URL;
     }
 
- 
+
 }

@@ -1,19 +1,23 @@
-package com.checkmarx.cxintegrations.reposmanager.api.orgsettings;
+package com.checkmarx.cxintegrations.reposmanager;
 
+import com.checkmarx.cxintegrations.reposmanager.api.orgsettings.MiniOrgStore;
 import com.checkmarx.dto.datastore.OrgPropertiesDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.http.*;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.util.UriComponentsBuilder;
 
+/**
+ * Intercepts organization-related DataStore requests.
+ * Returns mock responses based on in-memory storage.
+ */
 @Slf4j
 @RequiredArgsConstructor
-public class RequestInterceptor implements Answer<Object> {
+public class OrgRequestInterceptor implements Answer<Object> {
     private final MiniOrgStore miniOrgStore;
+    private final QueryStringInterceptor queryStringInterceptor;
 
     @Override
     public Object answer(InvocationOnMock invocation) {
@@ -55,9 +59,13 @@ public class RequestInterceptor implements Answer<Object> {
 
     private ResponseEntity<?> tryFindOrgInStore(InvocationOnMock invocation) {
         log.info("Trying to find the organization in store.");
-        MultiValueMap<String, String> urlQuery = extractUrlQuery(invocation);
-        String scmId = getQueryParamValue(urlQuery, "scmBaseUrl");
-        String orgId = getQueryParamValue(urlQuery, "orgIdentity");
+
+        // Expecting a value like http://example.com/orgs/properties?scmBaseUrl=github.com&orgIdentity=myOrgId
+        // or /orgs/properties?scmBaseUrl=github.com&orgIdentity=myOrgId
+        // (depending on app properties)
+        String scmId = queryStringInterceptor.getParamValue(invocation, "scmBaseUrl");
+        String orgId = queryStringInterceptor.getParamValue(invocation, "orgIdentity");
+
         OrgPropertiesDto foundOrg = miniOrgStore.findOrg(orgId, scmId);
 
         ResponseEntity<?> fakeResponse;
@@ -69,24 +77,5 @@ public class RequestInterceptor implements Answer<Object> {
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
         }
         return fakeResponse;
-    }
-
-    private static MultiValueMap<String, String> extractUrlQuery(InvocationOnMock invocation) {
-        // Expecting a value like http://example.com/orgs/properties?scmBaseUrl=github.com&orgIdentity=myOrgId
-        // or /orgs/properties?scmBaseUrl=github.com&orgIdentity=myOrgId
-        // (depending on app properties)
-        String url = invocation.getArgument(0);
-
-        return UriComponentsBuilder.fromUriString(url)
-                .build()
-                .getQueryParams();
-    }
-
-    private static String getQueryParamValue(MultiValueMap<String, String> urlQuery, String paramName) {
-        String result = urlQuery.getFirst(paramName);
-        if (result == null) {
-            throw new RuntimeException(String.format("The '%s' parameter is missing in query string.", paramName));
-        }
-        return result;
     }
 }

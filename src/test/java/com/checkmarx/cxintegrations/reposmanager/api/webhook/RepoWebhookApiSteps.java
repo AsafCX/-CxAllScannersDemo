@@ -1,16 +1,12 @@
 package com.checkmarx.cxintegrations.reposmanager.api.webhook;
 
+import com.checkmarx.cxintegrations.reposmanager.FakeAccessTokenGenerator;
 import com.checkmarx.cxintegrations.reposmanager.WebApiRequestSender;
 import com.checkmarx.cxintegrations.reposmanager.dto.ApiTestState;
-import com.checkmarx.dto.github.AccessTokenGithubDto;
 import com.checkmarx.dto.datastore.ScmAccessTokenDto;
 import com.checkmarx.dto.github.WebhookGithubDto;
-import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
 import com.checkmarx.dto.gitlab.WebhookGitLabDto;
 import com.checkmarx.service.DataStoreService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.*;
 import io.cucumber.spring.CucumberContextConfiguration;
@@ -19,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,9 +32,9 @@ import static org.mockito.Mockito.when;
 
 /**
  * The following happens here:
- *      Test invokes ReposManager webhook APIs via HTTP calls.
- *      SCM APIs are mocked but mimic response statuses of actual SCMs.
- *      DataStore is mocked. The mock is used to return dummy SCM access tokens.
+ * - Test invokes ReposManager webhook APIs via HTTP calls.
+ * - SCM APIs are mocked but mimic response statuses of actual SCMs.
+ * - DataStore is mocked. The mock is used to return dummy SCM access tokens.
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -49,9 +46,6 @@ public class RepoWebhookApiSteps {
     private static final String CX_INTEGRATIONS_WEBHOOK_ID = "cxint-webhook-id";
     private static final String THIRD_PARTY_WEBHOOK_ID = "third-party-webhook-id";
 
-    private static final ObjectMapper objectMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    
     @LocalServerPort
     private int apiPort;
 
@@ -63,6 +57,7 @@ public class RepoWebhookApiSteps {
 
     private final ApiTestState testState;
     private final WebApiRequestSender requestSender;
+    private final FakeAccessTokenGenerator fakeAccessTokenGenerator;
 
     private String currentScmId;
 
@@ -72,6 +67,7 @@ public class RepoWebhookApiSteps {
     public void beforeEachScenario() {
         testState.clear();
         existingWebhookIds.clear();
+        resetMocks();
         initMocks();
     }
 
@@ -131,6 +127,14 @@ public class RepoWebhookApiSteps {
     @But("the third-party webhook still exists in the repo")
     public void theThirdPartyWebhookStillExistsInTheRepo() {
         verifyWebhookExistence(THIRD_PARTY_WEBHOOK_ID, true);
+    }
+
+    private void resetMocks() {
+        // Prevent undesired effects when the same mock instance is initialized several times:
+        // e.g. answerer may be triggered unexpectedly.
+        log.info("Resetting mocks.");
+        Mockito.reset(dataStoreServiceMock);
+        Mockito.reset(restTemplateMock);
     }
 
     private void initMocks() {
@@ -196,42 +200,12 @@ public class RepoWebhookApiSteps {
         return (String arg) -> arg != null && arg.contains(scmApiBaseUrl) && arg.contains("/hooks");
     }
 
-    private static Answer<ScmAccessTokenDto> withFakeToken() {
+    private Answer<ScmAccessTokenDto> withFakeToken() {
         return invocation -> {
             log.info("Creating a fake SCM access token.");
-            String token;
             String scmUrl = invocation.getArgument(0);
-            if (scmUrl.contains("gitlab")) {
-                token = getGitlabSpecificTokenStub();
-            } else {
-                token = getGithubSpecificTokenStub();
-            }
-            return ScmAccessTokenDto.builder()
-                    .accessToken(token)
-                    .build();
+            return fakeAccessTokenGenerator.generate(scmUrl, "fake-token");
         };
-    }
-
-    private static String getGitlabSpecificTokenStub() throws JsonProcessingException {
-        // GitLabService expects to get a token as a JSON string in a particular format.
-        AccessTokenGitlabDto internalObject = AccessTokenGitlabDto.builder()
-                .build();
-        internalObject.setAccessToken("anyValue");
-        String result = objectMapper.writeValueAsString(internalObject);
-        log.info("Created a GitLab-specific fake access token: {}", result);
-
-        return result;
-    }
-
-    private static String getGithubSpecificTokenStub() throws JsonProcessingException {
-        // GitLabService expects to get a token as a JSON string in a particular format.
-        AccessTokenGithubDto internalObject = AccessTokenGithubDto.builder()
-                .build();
-        internalObject.setAccessToken("anyValue");
-        String result = objectMapper.writeValueAsString(internalObject);
-        log.info("Created a GitLab-specific fake access token: {}", result);
-
-        return result;
     }
 
     private ScmAccessTokenDto reposManagerAsksForScmToken() {

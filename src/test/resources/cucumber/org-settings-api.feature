@@ -17,9 +17,8 @@ Feature: Organization settings API
         And my-lab-org is the only organization belonging to the gitlab SCM
         When API client calls the 'get organization settings' API for the <org> organization of <scm> SCM
         Then response status is 404
-        And response contains the following fields, all non-empty:
-            | message       |
-            | localDateTime |
+        And response contains a standard error message
+
         Examples:
             | scm             | org             |
             | github          | nonexistent-org |
@@ -49,6 +48,4 @@ Feature: Organization settings API
         Given myAmazingScm SCM does not exist in data store
         When API client calls the 'save organization settings' API for the myAmazingScm SCM
         Then response status is 404
-        And response contains the following fields, all non-empty:
-            | message       |
-            | localDateTime |
+        And response contains a standard error message
