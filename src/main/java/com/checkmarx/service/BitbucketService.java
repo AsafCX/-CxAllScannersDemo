@@ -8,7 +8,6 @@ import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
 
-import com.checkmarx.dto.gitlab.WebhookGitLabDto;
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.utils.AccessTokenManager;
@@ -24,9 +23,10 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-
+import java.net.URLEncoder;
 
 @Slf4j
 @Service("bitbucket")
@@ -53,8 +53,10 @@ public class BitbucketService extends AbstractScmService implements ScmService  
 
     private static final String URL_GET_WEBHOOKS = BASE_API_URL + API_VERSION  + "/repositories/%s/%s/hooks";
 
-    private static final String URL_WEBHOOK = BASE_API_URL + API_VERSION  +  "repositories/%s/%s/hooks/%s";
-    
+     private static final String URL_CREATE_WEBHOOK = BASE_API_URL + API_VERSION  +  "/repositories/%s/%s/hooks";
+
+    private static final String URL_DELETE_WEBHOOK = BASE_API_URL + API_VERSION  +  "/repositories/%s/%s/hooks/%s";
+
     private static final String URL_VALIDATE_TOKEN = "https://gitlab.com/api/v4/user";
 
     
@@ -97,26 +99,37 @@ public class BitbucketService extends AbstractScmService implements ScmService  
     }
     
 
-
     @Override
     public BaseDto createWebhook(@NonNull String orgId, @NonNull String repoId ) {
         AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
-        String path = String.format(URL_WEBHOOK, orgId, repoId, getCxFlowUrl()) ;
+        String path = String.format(URL_CREATE_WEBHOOK, orgId, repoId) ;
          ResponseEntity<WebhookBitbucketDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.POST,
-                                                                                        new WebhookBitbucketDto(), null,
-                                                                                        WebhookBitbucketDto.class,
-                                                                                        accessTokenManager.getAccessTokenStr());
+                 getHookDto(repoId), null, WebhookBitbucketDto.class, accessTokenManager.getAccessTokenStr());
         WebhookBitbucketDto webhookDto = response.getBody();
         validateWebhookDto(webhookDto);
         dataStoreService.updateWebhook(repoId, accessTokenManager.getDbDto(), webhookDto.getId(), true);
         return new BaseDto(webhookDto.getId());
     }
 
+    private WebhookBitbucketDto getHookDto(String repoId) {
+
+        WebhookBitbucketDto hookdto = new WebhookBitbucketDto();
+
+        hookdto.setDescription("CxFlow webhook");
+        hookdto.setActive(true);
+        hookdto.setUrl(getCxFlowUrl());
+        hookdto.setEvents(BitBucketEvent.getAllEventsList());
+        hookdto.setType("webhook_subscription");
+
+        return hookdto;
+
+    }
+    
     @Override
     public void deleteWebhook(@NonNull String orgId, @NonNull String repoId,
                               @NonNull String webhookId) {
-        String path = String.format(URL_WEBHOOK, orgId, repoId, webhookId);
-        super.deleteWebhook( orgId,  repoId, path, WebhookBitbucketDto.class);
+        String path = String.format(URL_DELETE_WEBHOOK, orgId, repoId, webhookId);
+        deleteWebhook(orgId, repoId, path, null);
     }
 
     @Override

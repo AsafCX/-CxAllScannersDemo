@@ -12,12 +12,12 @@ import lombok.Getter;
 @Getter
 public class AccessTokenManager {
     
-    ScmAccessTokenDto dbDto;
-    AccessTokenDto tokenDto;
+    private ScmAccessTokenDto dbDto;
+    private AccessTokenDto tokenDto = null;
+    private Object fullAccessToken = null;
     
     public AccessTokenManager(String dbKey, String orgId, DataService dataStoreService){
         dbDto = dataStoreService.getSCMOrgToken(dbKey, orgId);
-        tokenDto = parse(getAccessTokenJson());
     }
 
     private AccessTokenDto parse(String tokenJson) {
@@ -30,12 +30,15 @@ public class AccessTokenManager {
         }
     }
 
-    public AccessTokenDto getAccessToken(){
+    public AccessTokenDto getAccessTokenDto(){
+        if(tokenDto == null){
+            tokenDto = parse(getAccessTokenJson());
+        }
         return tokenDto;
     }
     
     public String getAccessTokenStr(){
-        return tokenDto.getAccessToken();
+        return getAccessTokenDto().getAccessToken();
     }
 
     public String getAccessTokenJson(){
@@ -43,6 +46,13 @@ public class AccessTokenManager {
     }
 
     public Object getFullAccessToken(Class responseType) {
+        if(fullAccessToken == null) {
+            fullAccessToken = parse(responseType);
+        }
+        return fullAccessToken;
+    }
+
+    private Object parse(Class responseType) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             return objectMapper.readValue(getAccessTokenJson(), responseType);
@@ -50,6 +60,6 @@ public class AccessTokenManager {
             throw new ScmException("Unable to Json -> Object");
         }
     }
-    
-    
+
+
 }
