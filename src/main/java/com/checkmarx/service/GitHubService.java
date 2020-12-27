@@ -42,7 +42,7 @@ public class GitHubService extends AbstractScmService implements ScmService {
     private static final String URL_GET_REPOS = "https://api.github" +
             ".com/orgs/%s/repos?type=all&per_page=100";
     
-    private static final String URL_CREATE_WEBHOOK = "https://api.github.com/repos/%s/%s/hooks";
+    private static final String URL_WEBHOOK_OPERATION = "https://api.github.com/repos/%s/%s/hooks";
     
     private static final String URL_DELETE_WEBHOOK = "https://api.github.com/repos/%s/%s/hooks/%s";
 
@@ -109,7 +109,7 @@ public class GitHubService extends AbstractScmService implements ScmService {
     public BaseDto createWebhook(@NonNull String orgId, @NonNull String repoId) {
         AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
 
-        String path = String.format(URL_CREATE_WEBHOOK, orgId, repoId);
+        String path = String.format(URL_WEBHOOK_OPERATION, orgId, repoId);
         WebhookGithubDto webhookGithubDto = initWebhook();
         ResponseEntity<WebhookGithubDto> response =  restWrapper
                 .sendBearerAuthRequest(path, HttpMethod.POST,
@@ -161,12 +161,13 @@ public class GitHubService extends AbstractScmService implements ScmService {
                 .name("web")
                 .config(WebhookGithubDto.Config.builder().contentType("json").url(getCxFlowUrl()).insecureSsl("0").secret("1234").build())
                 .events(Arrays.asList("push", "pull_request"))
+                .active(true)
                 .build();
     }
 
     private WebhookGithubDto getRepositoryCxFlowWebhook(@NonNull String orgName, @NonNull String repoName,
                                                         @NonNull String accessToken){
-        String path = String.format(URL_CREATE_WEBHOOK, orgName, repoName);
+        String path = String.format(URL_WEBHOOK_OPERATION, orgName, repoName);
         ResponseEntity<WebhookGithubDto[]> response =  restWrapper
                 .sendBearerAuthRequest(path, HttpMethod.GET,
                                        null, null,
