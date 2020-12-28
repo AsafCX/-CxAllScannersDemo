@@ -30,14 +30,15 @@ public class RestWrapper {
             "database via DataStore service";
     public static final String STORE_SCM_ORG_REPOS_FAILURE = "Store scm org repositories failure " +
             "- Wasn't able to save in database via DataStore service";
+    private static final String CANNOT_GET_FROM_DATASTORE = "- Wasn't able to get from database via DataStore service";
     public static final String GET_ORG_FAILURE = "Get org failure " +
-            "- Wasn't able to get from database via DataStore service";
+            CANNOT_GET_FROM_DATASTORE;
     public static final String GET_ORG_REPOS_FAILURE = "Get org repositories failure " +
-            "- Wasn't able to get from database via DataStore service";
+            CANNOT_GET_FROM_DATASTORE;
     public static final String MISSING_ORG_REPO = "Org repository failure " +
             "- Missing org repository in database";
     public static final String GET_ORG_REPO_FAILURE = "Get org repository failure " +
-            "- Wasn't able to get from database via DataStore service";
+            CANNOT_GET_FROM_DATASTORE;
     public static final String WEBHOOK_CREATE_FAILURE = "Failed to create repo webhook";
     public static final String WEBHOOK_DELETE_FAILURE = "Failed to delete repo webhook";
     public static final String SCM_NOT_SUPPORTED = "Given Scm isn't supported";
@@ -49,7 +50,7 @@ public class RestWrapper {
             "failure " +
             "- Wasn't able to save in database via DataStore service";
     public static final String GET_SCM_ORG_PROPERTIES_FAILURE = "Get org settings failure " +
-            "- Wasn't able to get from database via DataStore service";
+            CANNOT_GET_FROM_DATASTORE;
 
     @Autowired
     RestTemplate restTemplate;
@@ -82,10 +83,10 @@ public class RestWrapper {
      * @param responseType expected class structure as response
      * @return ResponseEntity of any type
      */
-    public ResponseEntity sendUrlEncodedPostRequest(String path, 
+    public <T> ResponseEntity<T> sendUrlEncodedPostRequest(String path,
                                                     MultiValueMap<String, String> mapPostBody,
                                                     Map<String, String> headerMap,
-                                                    Class responseType) {
+                                                    Class<T> responseType) {
 
         HttpHeaders headers = createHeaders(headerMap);
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -102,10 +103,10 @@ public class RestWrapper {
      * @param responseType expected class structure as response
      * @return ResponseEntity of any type
      */
-    public ResponseEntity sendUrlEncodedPostRequest(String path, 
+    public <T> ResponseEntity<T> sendUrlEncodedPostRequest(String path,
                                                     MultiValueMap<String, String> mapPostBody,
                                                     HttpHeaders headers,
-                                                    Class responseType) {
+                                                    Class<T> responseType) {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(mapPostBody, headers);
         return restTemplate.postForEntity(path, request, responseType);
@@ -153,8 +154,8 @@ public class RestWrapper {
      * @param token access token
      * @return ResponseEntity of any type
      */
-    public ResponseEntity sendBearerAuthRequest(String path, HttpMethod method, Object body,
-                                      Map<String, String> headerMap , Class responseType,
+    public <T> ResponseEntity<T> sendBearerAuthRequest(String path, HttpMethod method, Object body,
+                                      Map<String, String> headerMap , Class<T> responseType,
                                       String token) {
         HttpHeaders headers = createHeaders(headerMap);
         headers.setBearerAuth(token);
