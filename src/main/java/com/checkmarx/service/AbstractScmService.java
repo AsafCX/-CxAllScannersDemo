@@ -58,7 +58,7 @@ public abstract class AbstractScmService {
         return trimNonEmptyString("Redirect URL", redirectUrl);
     }
 
-    public static String trimNonEmptyString(String strName, String strValue){
+    protected static String trimNonEmptyString(String strName, String strValue){
         if(StringUtils.isEmpty(strValue)){
             throw new ScmException("Empty " + strName);
         }
@@ -102,7 +102,7 @@ public abstract class AbstractScmService {
     }
 
 
-    protected void deleteWebhook(@NonNull String orgId, @NonNull String repoId, String deleteUrl, Class type) {
+    protected void deleteWebhook(@NonNull String orgId, @NonNull String repoId, String deleteUrl, Class<?> type) {
         
         AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
         

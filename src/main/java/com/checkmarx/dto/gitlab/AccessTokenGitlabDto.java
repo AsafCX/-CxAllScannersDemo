@@ -15,11 +15,13 @@ public class AccessTokenGitlabDto extends AccessTokenDto {
     
     @JsonProperty("token_type")
     public String tokenType;
+
     @JsonProperty("refresh_token")
     public String refreshToken;
+
     @JsonProperty("scope")
     public String scope;
+
     @JsonProperty("created_at")
     public Integer createdAt;
-
 }

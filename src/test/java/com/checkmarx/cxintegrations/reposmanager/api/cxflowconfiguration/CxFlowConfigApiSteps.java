@@ -36,7 +36,6 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class CxFlowConfigApiSteps {
     private static final String SAMPLE_ORGANIZATION = "arbitrary-org-id";
-    private static final String EMPTY_VALUE_INDICATOR = "<n/a>";
 
     private MiniOrgStore miniStore;
 
@@ -70,18 +69,18 @@ public class CxFlowConfigApiSteps {
         when(reposManagerValidatesGitHubToken()).thenAnswer(withFakeValidationResult());
     }
 
-    @Given("data store contains {word}, {word} and {word} for a specific organization in {word}")
+    @Given("data store contains {string}, {string} and {string} for a specific organization in {word}")
     public void dataStoreContains(String team, String cxgoSecret, String scmAccessToken, String scmId) throws JsonProcessingException {
         String scmUrl = toScmUrl(scmId);
 
         OrgPropertiesDto orgProperties = OrgPropertiesDto.builder()
                 .orgIdentity(SAMPLE_ORGANIZATION)
                 .scmUrl(scmUrl)
-                .cxTeam(normalizeField(team))
-                .cxGoToken(normalizeField(cxgoSecret))
+                .cxTeam(team)
+                .cxGoToken(cxgoSecret)
                 .build();
 
-        ScmAccessTokenDto tokenDto = fakeAccessTokenGenerator.generate(scmUrl, normalizeField(scmAccessToken));
+        ScmAccessTokenDto tokenDto = fakeAccessTokenGenerator.generate(scmUrl, scmAccessToken);
         tokenDto.setOrgIdentity(SAMPLE_ORGANIZATION);
 
         miniStore.updateOrCreateOrg(orgProperties);
@@ -114,14 +113,6 @@ public class CxFlowConfigApiSteps {
         miniStore.addOrg(orgId, scmId);
     }
 
-    private static String normalizeField(String value) {
-        String result = value;
-        if (value.equals(EMPTY_VALUE_INDICATOR)) {
-            result = "";
-        }
-        return result;
-    }
-
     private String toScmUrl(String scmId) {
         ScmService targetService = (scmId.equals("github") ? gitHubService : gitLabService);
         return targetService.getBaseDbKey();
@@ -129,7 +120,8 @@ public class CxFlowConfigApiSteps {
 
     private void callCxFlowConfigurationApi(String scmId, String orgId) {
         testState.prepareForRequestSending();
-        ResponseEntity<String> response = requestSender.get("{scmId}/orgs/{orgId}/tenantConfig", apiPort, scmId, orgId);
+        ResponseEntity<String> response = requestSender.get("{scmId}/orgs/{orgId}/tenantConfig",
+                apiPort, scmId, orgId);
         testState.setLastResponse(response);
     }
 

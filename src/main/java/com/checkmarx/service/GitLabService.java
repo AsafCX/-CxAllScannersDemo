@@ -4,14 +4,10 @@ import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
-import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
-import com.checkmarx.dto.gitlab.RepoGitlabDto;
-import com.checkmarx.dto.gitlab.WebhookGitLabDto;
+import com.checkmarx.dto.gitlab.*;
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
-import com.checkmarx.utils.AccessTokenManager;
-import com.checkmarx.utils.Converter;
-import com.checkmarx.utils.RestWrapper;
+import com.checkmarx.utils.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -57,8 +54,8 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     private static final String URL_VALIDATE_TOKEN = "https://gitlab.com/api/v4/user";
 
     private static final String TOKEN_REQUEST_USER_AGENT = "CxIntegrations";
-    
-    
+
+
     @Override
     public String getScopes() {
         return SCOPES;
@@ -100,13 +97,15 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     @Override
     public BaseDto createWebhook(@NonNull String orgId, @NonNull String projectId ) {
         AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
-        
+
         String path = String.format(URL_WEBHOOK, projectId, getCxFlowUrl(), "1234") ;
          ResponseEntity<WebhookGitLabDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.POST,
                                                                                         new WebhookGitLabDto(), null,
                                                                                         WebhookGitLabDto.class,
                                                                                         accessTokenManager.getAccessTokenStr());
-        WebhookGitLabDto webhookGitLabDto = response.getBody();
+        WebhookGitLabDto webhookGitLabDto = Objects.requireNonNull(
+                response.getBody(), "Missing webhook creation response.") ;
+
         validateWebhookDto(webhookGitLabDto);
         dataStoreService.updateWebhook(projectId, accessTokenManager.getDbDto(), webhookGitLabDto.getId(), true);
         return new BaseDto(webhookGitLabDto.getId());
@@ -121,44 +120,80 @@ public class GitLabService extends AbstractScmService implements ScmService  {
 
     @Override
     public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId) {
-        //CxFlow send org name, Using DataStore to get org id
-        OrgDto orgDto = dataStoreService.getScmOrgByName(getBaseDbKey(), orgId);
-        AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgDto.getOrgIdentity(), dataStoreService);
-        CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgDto.getOrgIdentity(),
-                                                                  accessTokenManager.getAccessTokenStr());
-        Object accessTokenGitlabDto  = accessTokenManager.getFullAccessToken(AccessTokenGitlabDto.class);
-        return validateCxFlowConfig(cxFlowConfigDto, (AccessTokenGitlabDto)accessTokenGitlabDto);
+        AccessTokenManager tokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
+        CxFlowConfigDto result = getOrganizationSettings(orgId, tokenManager.getAccessTokenStr());
+        Object tokenDto  = tokenManager.getFullAccessToken(AccessTokenGitlabDto.class);
+        validateCxFlowConfig(result, (AccessTokenGitlabDto)tokenDto);
+        return result;
     }
 
-    private List<OrganizationWebDto> getAndStoreOrganizations(AccessTokenGitlabDto token) {
-        ResponseEntity<OrganizationWebDto[]> response =
+    private List<OrganizationWebDto> getAndStoreOrganizations(AccessTokenGitlabDto tokenResponse) {
+        List<GroupGitlabDto> groups = getUserGroups(tokenResponse.getAccessToken());
+
+        String tokenResponseJson = Converter.convertObjectToJson(tokenResponse);
+
+        List<OrgDto> dataStoreOrgs = toDataStoreOrganizations(groups, tokenResponseJson);
+        dataStoreService.storeOrgs(dataStoreOrgs);
+
+        return toOrganizationsForWebClient(groups);
+    }
+
+    private List<GroupGitlabDto> getUserGroups(String accessToken) {
+        ResponseEntity<GroupGitlabDto[]> response =
                 restWrapper.sendBearerAuthRequest(URL_GET_GROUPS, HttpMethod.GET, null, null,
-                                                  OrganizationWebDto[].class, token.getAccessToken());
-        List<OrganizationWebDto> organizationWebDtos = new ArrayList<>(Arrays.asList(Objects.requireNonNull(response.getBody())));
-        String tokenJson = Converter.convertObjectToJson(token);
-        List<OrgDto> orgDtos =
-                Converter.convertToListOrg(tokenJson, organizationWebDtos, getBaseDbKey());
-        dataStoreService.storeOrgs(orgDtos);
+                                                  GroupGitlabDto[].class, accessToken);
 
-        return organizationWebDtos;
+        return Arrays.asList(Objects.requireNonNull(response.getBody()));
     }
 
-    private CxFlowConfigDto validateCxFlowConfig(CxFlowConfigDto cxFlowConfigDto, AccessTokenGitlabDto token) {
+    private List<OrganizationWebDto> toOrganizationsForWebClient(List<GroupGitlabDto> gitlabOrgs) {
+        return gitlabOrgs.stream()
+                .map(gitlabOrg -> OrganizationWebDto.builder()
+                        .id(gitlabOrg.getPath())
+                        .name(gitlabOrg.getName())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private List<OrgDto> toDataStoreOrganizations(List<GroupGitlabDto> gitlabOrgs, String tokenJson) {
+        return gitlabOrgs.stream()
+                .map(gitlabOrg -> OrgDto.builder()
+                        .accessToken(tokenJson)
+                        .orgIdentity(gitlabOrg.getPath())
+                        .scmUrl(getBaseDbKey())
+                        .tokenType(TokenType.ACCESS.getType())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private void validateCxFlowConfig(CxFlowConfigDto cxFlowConfig, AccessTokenGitlabDto tokenDto) {
+        validateFieldsArePresent(cxFlowConfig);
+
+        if (!accessTokenIsValid(cxFlowConfig.getScmAccessToken())) {
+            AccessTokenGitlabDto newTokenDto = refreshToken(tokenDto);
+            cxFlowConfig.setScmAccessToken(newTokenDto.getAccessToken());
+        }
+    }
+
+    private boolean accessTokenIsValid(String token) {
+        boolean result = false;
+        try {
+            restWrapper.sendBearerAuthRequest(URL_VALIDATE_TOKEN, HttpMethod.GET, null, null,
+                    CxFlowConfigDto.class,
+                    token);
+            result =true;
+            log.info("Gitlab token validation passed successfully!");
+        } catch (HttpClientErrorException ex){
+            log.info("Current token is not valid.");
+        }
+        return result;
+    }
+
+    private void validateFieldsArePresent(CxFlowConfigDto cxFlowConfigDto) {
         if(StringUtils.isEmpty(cxFlowConfigDto.getScmAccessToken()) || StringUtils.isEmpty(cxFlowConfigDto.getTeam()) || StringUtils.isEmpty(cxFlowConfigDto.getCxgoSecret())) {
             log.error("CxFlow configuration settings validation failure, missing data");
             throw new ScmException("CxFlow configuration settings validation failure, missing data");
         }
-        try {
-            restWrapper.sendBearerAuthRequest(URL_VALIDATE_TOKEN, HttpMethod.GET, null, null,
-                                              CxFlowConfigDto.class,
-                                              cxFlowConfigDto.getScmAccessToken());
-            log.info("Gitlab token validation passed successfully!");
-        } catch (HttpClientErrorException ex){
-            token = refreshToken(token);
-            cxFlowConfigDto.setScmAccessToken(token.getAccessToken());
-            log.info("Gitlab refresh token process passed successfully!");
-        }
-        return cxFlowConfigDto;
     }
 
     private AccessTokenGitlabDto refreshToken(AccessTokenGitlabDto token) {
@@ -166,7 +201,7 @@ public class GitLabService extends AbstractScmService implements ScmService  {
         getAndStoreOrganizations(token);
         return token;
     }
-    
+
 
     private AccessTokenGitlabDto sendRefreshTokenRequest(String refreshToken) {
         String path = buildRefreshTokenPath(refreshToken);
@@ -187,18 +222,18 @@ public class GitLabService extends AbstractScmService implements ScmService  {
                 WebhookGitLabDto[].class, accessToken);
         ArrayList<WebhookGitLabDto> webhookDtos = new ArrayList<>(Arrays.asList(
                 Objects.requireNonNull(response.getBody())));
-        
+
         return (WebhookGitLabDto) getActiveHook(webhookDtos);
     }
-    
+
 
     /**
      * generateAccessToken method using OAuth code, client id and client secret generates access
-     * token via GitHub api
+     * token via GitLab api
      *
      * @param oAuthCode given from FE application after first-step OAuth implementation passed
      *                  successfully, taken from request param "code", using it to create access token
-     * @return Access token given from GitHub
+     * @return Access token given from GitLab
      */
     private AccessTokenGitlabDto generateAccessToken(String oAuthCode) {
         ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
@@ -208,7 +243,10 @@ public class GitLabService extends AbstractScmService implements ScmService  {
 
     private AccessTokenGitlabDto sendAccessTokenRequest(String path, Map<String, String> headers) {
         ResponseEntity<AccessTokenGitlabDto> response = restWrapper.sendRequest(path, HttpMethod.POST, null, headers, AccessTokenGitlabDto.class);
-        AccessTokenGitlabDto tokenGitlabDto = response.getBody();
+
+        AccessTokenGitlabDto tokenGitlabDto = Objects.requireNonNull(
+                response.getBody(), "Missing access token generation response.");
+
         if(!verifyAccessToken(tokenGitlabDto)){
             log.error(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
             throw new ScmException(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
@@ -229,5 +267,5 @@ public class GitLabService extends AbstractScmService implements ScmService  {
                              getRedirectUrl());
     }
 
-  
+
 }

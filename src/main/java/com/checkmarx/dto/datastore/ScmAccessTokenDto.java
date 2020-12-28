@@ -11,12 +11,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public @Data class ScmAccessTokenDto {
+@Data
+public class ScmAccessTokenDto {
     @JsonProperty("scm_url")
     private String scmUrl;
+
     @JsonProperty("org_identity")
     private String orgIdentity;
-    private String accessToken;
-    private String tokenType;
 
+    private String accessToken;
+
+    private String tokenType;
 }
