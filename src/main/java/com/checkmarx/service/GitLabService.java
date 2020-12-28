@@ -124,7 +124,8 @@ public class GitLabService extends AbstractScmService implements ScmService  {
         //CxFlow send org name, Using DataStore to get org id
         OrgDto orgDto = dataStoreService.getScmOrgByName(getBaseDbKey(), orgId);
         AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgDto.getOrgIdentity(), dataStoreService);
-        CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgDto.getOrgIdentity(),accessTokenManager.getAccessTokenJson());
+        CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgDto.getOrgIdentity(),
+                                                                  accessTokenManager.getAccessTokenStr());
         Object accessTokenGitlabDto  = accessTokenManager.getFullAccessToken(AccessTokenGitlabDto.class);
         return validateCxFlowConfig(cxFlowConfigDto, (AccessTokenGitlabDto)accessTokenGitlabDto);
     }

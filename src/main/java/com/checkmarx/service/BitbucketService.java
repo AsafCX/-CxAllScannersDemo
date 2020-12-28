@@ -2,12 +2,11 @@ package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.BaseDto;
-
 import com.checkmarx.dto.bitbucket.*;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
-import com.checkmarx.dto.datastore.*;
-import com.checkmarx.dto.gitlab.AccessTokenGitlabDto;
-
+import com.checkmarx.dto.datastore.OrgDto;
+import com.checkmarx.dto.datastore.OrgReposDto;
+import com.checkmarx.dto.datastore.ScmDto;
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.utils.AccessTokenManager;
@@ -16,17 +15,19 @@ import com.checkmarx.utils.RestWrapper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 
-
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.net.URLEncoder;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service("bitbucket")
@@ -35,9 +36,6 @@ public class BitbucketService extends AbstractScmService implements ScmService  
     private static final String API_VERSION = "/2.0";
     
     private static final String URL_AUTH_TOKEN = "https://bitbucket.org/site/oauth2/access_token";
-
-    private static final String URL_REFRESH_TOKEN = URL_AUTH_TOKEN + "?grant_type=%s" +
-            "&refresh_token=%s&client_id=%s&client_secret=%s";
 
     private static final String BASE_API_URL = "https://api.bitbucket.org";
 
@@ -53,11 +51,11 @@ public class BitbucketService extends AbstractScmService implements ScmService  
 
     private static final String URL_GET_WEBHOOKS = BASE_API_URL + API_VERSION  + "/repositories/%s/%s/hooks";
 
-     private static final String URL_CREATE_WEBHOOK = BASE_API_URL + API_VERSION  +  "/repositories/%s/%s/hooks";
+     private static final String URL_CREATE_WEBHOOK = BASE_API_URL + API_VERSION  + "/repositories/%s/%s/hooks";
 
     private static final String URL_DELETE_WEBHOOK = BASE_API_URL + API_VERSION  +  "/repositories/%s/%s/hooks/%s";
 
-    private static final String URL_VALIDATE_TOKEN = "https://gitlab.com/api/v4/user";
+    private static final String URL_VALIDATE_TOKEN = BASE_API_URL + API_VERSION + "/user";
 
     
     
@@ -134,11 +132,11 @@ public class BitbucketService extends AbstractScmService implements ScmService  
 
     @Override
     public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId) {
-        //CxFlow send org name, Using DataStore to get org id
         AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
-        CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgId,accessTokenManager.getAccessTokenJson());
-        Object accessTokenGitlabDto  = accessTokenManager.getFullAccessToken(AccessTokenGitlabDto.class);
-        return validateCxFlowConfig(cxFlowConfigDto, (AccessTokenGitlabDto)accessTokenGitlabDto);
+        CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgId, accessTokenManager.getAccessTokenStr());
+        Object accessTokenBitbucketDto  =
+                accessTokenManager.getFullAccessToken(AccessTokenBitbucketDto.class);
+        return validateCxFlowConfig(cxFlowConfigDto, (AccessTokenBitbucketDto)accessTokenBitbucketDto);
 
     }
     
@@ -155,7 +153,7 @@ public class BitbucketService extends AbstractScmService implements ScmService  
         return Converter.convertToListOrgWebDtos(organizationWebDtos);
     }
 
-    private CxFlowConfigDto validateCxFlowConfig(CxFlowConfigDto cxFlowConfigDto, AccessTokenGitlabDto token) {
+    private CxFlowConfigDto validateCxFlowConfig(CxFlowConfigDto cxFlowConfigDto, AccessTokenBitbucketDto token) {
         if(StringUtils.isEmpty(cxFlowConfigDto.getScmAccessToken()) || StringUtils.isEmpty(cxFlowConfigDto.getTeam()) || StringUtils.isEmpty(cxFlowConfigDto.getCxgoSecret())) {
             log.error("CxFlow configuration settings validation failure, missing data");
             throw new ScmException("CxFlow configuration settings validation failure, missing data");
@@ -164,34 +162,27 @@ public class BitbucketService extends AbstractScmService implements ScmService  
             restWrapper.sendBearerAuthRequest(URL_VALIDATE_TOKEN, HttpMethod.GET, null, null,
                                               CxFlowConfigDto.class,
                                               cxFlowConfigDto.getScmAccessToken());
-            log.info("Gitlab token validation passed successfully!");
+            log.info("Bitbucket token validation passed successfully!");
         } catch (HttpClientErrorException ex){
             token = refreshToken(token);
             cxFlowConfigDto.setScmAccessToken(token.getAccessToken());
-            log.info("Gitlab refresh token process passed successfully!");
+            log.info("Bitbucket refresh token process passed successfully!");
         }
         return cxFlowConfigDto;
     }
 
-    private AccessTokenGitlabDto refreshToken(AccessTokenGitlabDto token) {
-        //TODO 
-//        token = sendRefreshTokenRequest(token.getRefreshToken());
-//        getAndStoreOrganizations(token);
+    private AccessTokenBitbucketDto refreshToken(AccessTokenBitbucketDto token) {
+        token = sendRefreshTokenRequest(token.getRefreshToken());
+        getAndStoreOrganizations(token);
         return token;
     }
 
 
 
-//    private AccessTokenGitlabDto sendRefreshTokenRequest(String refreshToken) {
-//        String path = buildRefreshTokenPath(refreshToken);
-//        return sendAccessTokenRequest(path, getHeadersAccessToken());
-//    }
-
-//    private String buildRefreshTokenPath(String refreshToken) {
-//        ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
-//        return String.format(URL_REFRESH_TOKEN, GRANT_TYPE, refreshToken,
-//                             scmDto.getClientId(), scmDto.getClientSecret());
-//    }
+    private AccessTokenBitbucketDto sendRefreshTokenRequest(String refreshToken) {
+        return sendGenerateAccessTokenRequest(URL_AUTH_TOKEN, getAccessTokenHeaders(),
+                                              getBodyRefreshAccessToken(refreshToken));
+    }
 
     private WebhookBitbucketDto getRepositoryCxFlowWebhook(@NonNull String repoId, @NonNull String workspaceId,
                                                            @NonNull String accessToken){
@@ -202,6 +193,12 @@ public class BitbucketService extends AbstractScmService implements ScmService  
         WebhookBitbucketListDto webhookDtos = Objects.requireNonNull(response.getBody());
 
         return (WebhookBitbucketDto)getActiveHook(webhookDtos.getElements());
+    }
+
+    @Override
+    protected String getCxFlowUrl() {
+        return trimNonEmptyString("Cxflow URL", cxFlowUrl + "?token=1234");
+
     }
 
 
@@ -216,17 +213,21 @@ public class BitbucketService extends AbstractScmService implements ScmService  
      * @return Access token given from GitHub
      */
     private AccessTokenBitbucketDto generateAccessToken(String oAuthCode) {
+        HttpHeaders headers = getAccessTokenHeaders();
+        return sendGenerateAccessTokenRequest(URL_AUTH_TOKEN, headers, getBodyAccessToken(oAuthCode));
+    }
+
+    private HttpHeaders getAccessTokenHeaders() {
         ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
         HttpHeaders headers = new HttpHeaders();
         headers.setBasicAuth(scmDto.getClientId(), scmDto.getClientSecret(), StandardCharsets.UTF_8);
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        return generateAccessToken(restWrapper, URL_AUTH_TOKEN, headers,
-                getBodyAccessToken(oAuthCode));
+        return headers;
     }
 
 
-    private AccessTokenBitbucketDto generateAccessToken(RestWrapper restWrapper, String path, HttpHeaders headers, MultiValueMap<String, String> body) {
-        ResponseEntity<AccessTokenBitbucketDto> response = sendAccessTokenRequest(restWrapper, path, headers, body);
+    private AccessTokenBitbucketDto sendGenerateAccessTokenRequest(String path, HttpHeaders headers, MultiValueMap<String, String> body) {
+        ResponseEntity<AccessTokenBitbucketDto> response = restWrapper.sendUrlEncodedPostRequest(path,body, headers, AccessTokenBitbucketDto.class);
 
         AccessTokenBitbucketDto accessTokenDto = response.getBody();
         if(!verifyAccessToken(accessTokenDto)){
@@ -236,17 +237,22 @@ public class BitbucketService extends AbstractScmService implements ScmService  
         return accessTokenDto;
     }
 
-    private ResponseEntity<AccessTokenBitbucketDto> sendAccessTokenRequest(RestWrapper restWrapper, String path, HttpHeaders headers, MultiValueMap<String, String> body) {
-        return  restWrapper.sendUrlEncodedPostRequest(path,body, headers, AccessTokenBitbucketDto.class);
-    }
-
-
     private MultiValueMap<String, String> getBodyAccessToken(String oAuthCode) {
 
         MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
 
         map.put("grant_type",  Collections.singletonList("authorization_code"));
         map.put("code", Collections.singletonList(oAuthCode));
+
+        return map;
+    }
+
+    private MultiValueMap<String, String> getBodyRefreshAccessToken(String refreshToken) {
+
+        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+
+        map.put("grant_type",  Collections.singletonList("refresh_token"));
+        map.put("refresh_token", Collections.singletonList(refreshToken));
 
         return map;
     }
