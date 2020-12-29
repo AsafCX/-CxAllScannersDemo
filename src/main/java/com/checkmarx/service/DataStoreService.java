@@ -320,7 +320,7 @@ public class DataStoreService implements DataService {
 
     @Override
     public ScmAccessTokenDto2 getTokenInfo(String scmUrl, String orgId) {
-        String url = String.format("%s/tokens2?scmUrl=%s&orgIdentity=%s",
+        String url = String.format("%s/tokens?scmUrl=%s&orgIdentity=%s",
                 dataStoreBase,
                 UriUtils.encodeQueryParam(scmUrl, StandardCharsets.UTF_8),
                 UriUtils.encodeQueryParam(orgId, StandardCharsets.UTF_8));

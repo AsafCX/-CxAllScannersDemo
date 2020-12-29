@@ -1,6 +1,5 @@
 package com.checkmarx.dto.datastore;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 // TODO: replace the existing ScmAccessTokenDto with this class when it becomes possible.
@@ -10,8 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ScmAccessTokenDto2 {
-    Long id;
+    long id;
 
-    @JsonProperty("access_token")
     String accessToken;
 }

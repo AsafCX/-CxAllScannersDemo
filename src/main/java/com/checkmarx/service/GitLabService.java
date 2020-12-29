@@ -57,7 +57,7 @@ public class GitLabService extends AbstractScmService implements ScmService  {
 
     private static final String TOKEN_REQUEST_USER_AGENT = "CxIntegrations";
 
-    private static final String MISSING_DATA = "CxFlow configuration settings validation failure, missing data";
+    private static final String MISSING_DATA = "CxFlow configuration settings validation failure: missing data.";
 
     private final AccessTokenService tokenService;
 
@@ -149,7 +149,9 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     private TokenInfoDto getRefreshedToken(TokenInfoDto tokenInfo) {
         String refreshApiPath = buildRefreshTokenApiPath(tokenInfo.getRefreshToken());
         AccessTokenGitlabDto apiResponse = sendAccessTokenRequest(refreshApiPath, getHeadersAccessToken());
-        return toStandardDto(apiResponse);
+        TokenInfoDto result = toStandardDto(apiResponse);
+        result.setId(tokenInfo.getId());
+        return result;
     }
 
     private static TokenInfoDto toStandardDto(AccessTokenGitlabDto gitLabSpecificDto) {
