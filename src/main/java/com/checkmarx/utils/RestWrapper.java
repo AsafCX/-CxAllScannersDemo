@@ -65,12 +65,12 @@ public class RestWrapper {
      * @param responseType expected class structure as response
      * @return ResponseEntity of any type
      */
-    public ResponseEntity sendRequest(String path, HttpMethod method,
+    public <T> ResponseEntity<T> sendRequest(String path, HttpMethod method,
                                       Object body,
                                       Map<String, String> headerMap,
-                                      Class responseType) {
+                                      Class<T> responseType) {
         HttpHeaders headers = createHeaders(headerMap);
-        final HttpEntity<String> request = createRequest(body, headers);
+        HttpEntity<Object> request = createRequest(body, headers);
         return restTemplate.exchange(path, method, request, responseType);
     }
 
@@ -120,8 +120,8 @@ public class RestWrapper {
      * @param headers http headers
      * @return HttpEntity including headers and body sent as input
      */
-    public HttpEntity<String> createRequest(Object body, HttpHeaders headers) {
-        return new HttpEntity( body, headers);
+    private HttpEntity<Object> createRequest(Object body, HttpHeaders headers) {
+        return new HttpEntity<>(body, headers);
     }
 
     /**
@@ -159,7 +159,7 @@ public class RestWrapper {
                                       String token) {
         HttpHeaders headers = createHeaders(headerMap);
         headers.setBearerAuth(token);
-        final HttpEntity<String> request = createRequest(body, headers);
+        HttpEntity<Object> request = createRequest(body, headers);
         return restTemplate.exchange(path, method, request, responseType);
 
     }

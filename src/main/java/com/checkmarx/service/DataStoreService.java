@@ -13,10 +13,11 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.util.UriUtils;
 
 import javax.annotation.PostConstruct;
-import java.util.Collections;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -172,9 +173,9 @@ public class DataStoreService implements DataService {
         log.trace("getScmOrgRepos: scmUrl={}, orgIdentity={}", scmUrl, orgIdentity);
 
         String path = String.format(urlPatternDataSourceGetScmOrgRepos, scmUrl, orgIdentity);
-        ResponseEntity<List<RepoDto>> response;
+        ResponseEntity<RepoDto[]> response;
         try {
-            response = restWrapper.sendRequest(path, HttpMethod.GET, null, null, List.class);
+            response = restWrapper.sendRequest(path, HttpMethod.GET, null, null, RepoDto[].class);
         }  catch(HttpClientErrorException ex){
             logHttpException(ex);
             logOrgError(RestWrapper.GET_ORG_REPOS_FAILURE, scmUrl, orgIdentity);
@@ -182,9 +183,13 @@ public class DataStoreService implements DataService {
             throw new DataStoreException(RestWrapper.GET_ORG_REPOS_FAILURE + " scmUrl="+ scmUrl +
                                                  ", orgIdentity="+ orgIdentity, ex);
         }
-        log.debug("Get from DataStore Scm: {} Org: {} Repos: {} passed successfully", scmUrl,
-                  orgIdentity, response.getBody());
-        return response.getBody();
+
+        RepoDto[] repos = Objects.requireNonNull(response.getBody(), "Repo list in response is null.");
+
+        log.debug("Get from DataStore Scm: {} Org: {} Repos: {} passed successfully",
+                scmUrl, orgIdentity, response.getBody());
+
+        return Arrays.asList(repos);
     }
 
     @Override
@@ -311,6 +316,23 @@ public class DataStoreService implements DataService {
             throw new DataStoreException(RestWrapper.SAVE_SCM_ORG_FAILURE, ex);
         }
         log.debug("Save orgs: {} passed successfully!", orgDtos);
+    }
+
+    @Override
+    public ScmAccessTokenDto2 getTokenInfo(String scmUrl, String orgId) {
+        String url = String.format("%s/tokens2?scmUrl=%s&orgIdentity=%s",
+                dataStoreBase,
+                UriUtils.encodeQueryParam(scmUrl, StandardCharsets.UTF_8),
+                UriUtils.encodeQueryParam(orgId, StandardCharsets.UTF_8));
+        ResponseEntity<ScmAccessTokenDto2> responseEntity = restWrapper.sendRequest(url, HttpMethod.GET, null,
+                null, ScmAccessTokenDto2.class);
+        return responseEntity.getBody();
+    }
+
+    @Override
+    public void updateTokenInfo(ScmAccessTokenDto2 tokenInfoForDataStore) {
+        String url = String.format("%s/tokens2/%d", dataStoreBase, tokenInfoForDataStore.getId());
+        restWrapper.sendRequest(url, HttpMethod.PUT, tokenInfoForDataStore, null, ScmAccessTokenDto2.class);
     }
 
     private static void logRepoError(String message, String orgIdentity, Object repoIdentity) {

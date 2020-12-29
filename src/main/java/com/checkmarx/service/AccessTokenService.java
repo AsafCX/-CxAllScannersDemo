@@ -1,8 +1,8 @@
 package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.DataStoreException;
-import com.checkmarx.dto.datastore.ScmAccessTokenDto;
-import com.checkmarx.dto.internal.TokenInfoDto;
+import com.checkmarx.dto.datastore.ScmAccessTokenDto2;
+import com.checkmarx.dto.datastore.TokenInfoDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -25,24 +27,26 @@ public class AccessTokenService {
 
     public TokenInfoDto getTokenInfo(String scmUrl, String orgId) {
         TokenInfoDto result;
-        ScmAccessTokenDto tokenInfoFromDataStore = dataService.getSCMOrgToken(scmUrl, orgId);
+        ScmAccessTokenDto2 tokenInfoFromDataStore = dataService.getTokenInfo(scmUrl, orgId);
         String rawToken = tokenInfoFromDataStore.getAccessToken();
         try {
-            result = convertToDto(rawToken);
+            result = convertToDto(tokenInfoFromDataStore);
         } catch (JsonProcessingException e) {
             throw getWrapperException(e, rawToken);
         }
         return result;
     }
 
-    private static TokenInfoDto convertToDto(String rawToken) throws JsonProcessingException {
-        JsonNode tokenJson = objectMapper.readTree(rawToken);
+    private static TokenInfoDto convertToDto(ScmAccessTokenDto2 tokenInfoFromDataStore) throws JsonProcessingException {
+        JsonNode tokenJson = objectMapper.readTree(tokenInfoFromDataStore.getAccessToken());
 
         // Initialize well-known result properties from the token JSON...
         TokenInfoDto result = objectMapper.treeToValue(tokenJson, TokenInfoDto.class);
 
         // ...and put the rest of the JSON into additional data.
         result.setAdditionalData(getAdditionalData(tokenJson));
+
+        result.setId(tokenInfoFromDataStore.getId());
 
         return result;
     }
@@ -71,7 +75,19 @@ public class AccessTokenService {
         return new DataStoreException(BAD_FORMAT, cause);
     }
 
-    public void storeTokenInfo(TokenInfoDto tokenInfo) {
-        // TODO: implement
+    public void updateTokenInfo(TokenInfoDto tokenInfo) {
+        ObjectNode additionalData = Optional.ofNullable(tokenInfo.getAdditionalData())
+                .orElseGet(objectMapper::createObjectNode);
+
+        additionalData
+                .put(TokenInfoDto.FIELD_ACCESS_TOKEN, tokenInfo.getAccessToken())
+                .put(TokenInfoDto.FIELD_REFRESH_TOKEN, tokenInfo.getRefreshToken());
+
+        ScmAccessTokenDto2 tokenInfoForDataStore = ScmAccessTokenDto2.builder()
+                .id(tokenInfo.getId())
+                .accessToken(additionalData.toString())
+                .build();
+
+        dataService.updateTokenInfo(tokenInfoForDataStore);
     }
 }

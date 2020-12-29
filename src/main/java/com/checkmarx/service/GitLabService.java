@@ -5,7 +5,7 @@ import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.gitlab.*;
-import com.checkmarx.dto.internal.TokenInfoDto;
+import com.checkmarx.dto.datastore.TokenInfoDto;
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.utils.*;
@@ -140,12 +140,16 @@ public class GitLabService extends AbstractScmService implements ScmService  {
 
     private void ensureTokenIsValid(TokenInfoDto tokenInfo, CxFlowConfigDto targetConfig) {
         if (!isTokenValid(tokenInfo.getAccessToken())) {
-            String refreshApiPath = buildRefreshTokenApiPath(tokenInfo.getRefreshToken());
-            AccessTokenGitlabDto refreshApiResponse = sendAccessTokenRequest(refreshApiPath, getHeadersAccessToken());
-            TokenInfoDto newTokenInfo = toStandardDto(refreshApiResponse);
-            tokenService.storeTokenInfo(newTokenInfo);
+            TokenInfoDto newTokenInfo = getRefreshedToken(tokenInfo);
+            tokenService.updateTokenInfo(newTokenInfo);
             targetConfig.setScmAccessToken(newTokenInfo.getAccessToken());
         }
+    }
+
+    private TokenInfoDto getRefreshedToken(TokenInfoDto tokenInfo) {
+        String refreshApiPath = buildRefreshTokenApiPath(tokenInfo.getRefreshToken());
+        AccessTokenGitlabDto apiResponse = sendAccessTokenRequest(refreshApiPath, getHeadersAccessToken());
+        return toStandardDto(apiResponse);
     }
 
     private static TokenInfoDto toStandardDto(AccessTokenGitlabDto gitLabSpecificDto) {

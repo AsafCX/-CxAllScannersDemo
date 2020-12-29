@@ -1,4 +1,4 @@
-package com.checkmarx.dto.internal;
+package com.checkmarx.dto.datastore;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,6 +13,8 @@ import lombok.*;
 public class TokenInfoDto {
     public static final String FIELD_ACCESS_TOKEN = "access_token";
     public static final String FIELD_REFRESH_TOKEN = "refresh_token";
+
+    private long id;
 
     @JsonProperty(FIELD_ACCESS_TOKEN)
     private String accessToken;
