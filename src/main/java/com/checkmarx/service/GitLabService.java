@@ -155,11 +155,14 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     }
 
     private static TokenInfoDto toStandardDto(AccessTokenGitlabDto gitLabSpecificDto) {
-        return TokenInfoDto.builder()
+        TokenInfoDto result = TokenInfoDto.builder()
                 .accessToken(gitLabSpecificDto.getAccessToken())
                 .refreshToken(gitLabSpecificDto.getRefreshToken())
-                // additionalData may be also initialized here, but it's currently not used for GitLab.
                 .build();
+
+        // Currently not used in code, but may be useful for diagnostics.
+        result.getAdditionalData().put("created_at", gitLabSpecificDto.getCreatedAt().toString());
+        return result;
     }
 
     private List<OrganizationWebDto> getAndStoreOrganizations(AccessTokenGitlabDto tokenResponse) {

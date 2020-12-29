@@ -12,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 
 @Service
 @Slf4j
@@ -37,6 +39,32 @@ public class AccessTokenService {
         return result;
     }
 
+    public void updateTokenInfo(TokenInfoDto tokenInfo) {
+        Map<String, String> dataForSaving = new HashMap<>(tokenInfo.getAdditionalData());
+        dataForSaving.put(TokenInfoDto.FIELD_ACCESS_TOKEN, tokenInfo.getAccessToken());
+        dataForSaving.put(TokenInfoDto.FIELD_REFRESH_TOKEN, tokenInfo.getRefreshToken());
+
+        String rawToken = mapToJsonString(dataForSaving);
+
+        ScmAccessTokenDto2 tokenInfoForDataStore = ScmAccessTokenDto2.builder()
+                .id(tokenInfo.getId())
+                .accessToken(rawToken)
+                .build();
+
+        dataService.updateTokenInfo(tokenInfoForDataStore);
+    }
+
+    private static String mapToJsonString(Map<String, String> source) {
+        String rawToken;
+        try {
+            rawToken = objectMapper.writeValueAsString(source);
+        } catch (JsonProcessingException e) {
+            log.error("Error serializing token additional data into JSON.", e);
+            throw new DataStoreException(BAD_FORMAT, e);
+        }
+        return rawToken;
+    }
+
     private static TokenInfoDto convertToDto(ScmAccessTokenDto2 tokenInfoFromDataStore) throws JsonProcessingException {
         JsonNode tokenJson = objectMapper.readTree(tokenInfoFromDataStore.getAccessToken());
 
@@ -44,19 +72,17 @@ public class AccessTokenService {
         TokenInfoDto result = objectMapper.treeToValue(tokenJson, TokenInfoDto.class);
 
         // ...and put the rest of the JSON into additional data.
-        result.setAdditionalData(getAdditionalData(tokenJson));
+        result.getAdditionalData().putAll(getAdditionalData(tokenJson));
 
         result.setId(tokenInfoFromDataStore.getId());
 
         return result;
     }
 
-    private static ObjectNode getAdditionalData(JsonNode tokenJson) {
+    private static Map<String, String> getAdditionalData(JsonNode tokenJson) {
+        Map<String, String> result;
         if (tokenJson instanceof ObjectNode) {
-            ObjectNode tokenJsonObj = (ObjectNode) tokenJson;
-            tokenJsonObj.remove(TokenInfoDto.FIELD_ACCESS_TOKEN);
-            tokenJsonObj.remove(TokenInfoDto.FIELD_REFRESH_TOKEN);
-            return tokenJsonObj;
+            result = fieldsToMap((ObjectNode) tokenJson);
         } else {
             log.error("Expected token JSON to be a {}, but it is actually a {}",
                     ObjectNode.class.getSimpleName(),
@@ -64,6 +90,26 @@ public class AccessTokenService {
 
             throw new DataStoreException(BAD_FORMAT);
         }
+        return result;
+    }
+
+    private static Map<String, String> fieldsToMap(ObjectNode source) {
+        Map<String, String> result = new HashMap<>();
+
+        // Prevent any side effects.
+        ObjectNode sourceClone = source.deepCopy();
+
+        sourceClone.remove(TokenInfoDto.FIELD_ACCESS_TOKEN);
+        sourceClone.remove(TokenInfoDto.FIELD_REFRESH_TOKEN);
+
+        // Assuming the JSON object is flat (no inner objects).
+        sourceClone.fields().forEachRemaining(addToMap(result));
+
+        return result;
+    }
+
+    private static Consumer<Map.Entry<String, JsonNode>> addToMap(Map<String, String> target) {
+        return field -> target.put(field.getKey(), field.getValue().asText());
     }
 
     private static RuntimeException getWrapperException(Exception cause, String rawTokenFromDataStore) {
@@ -73,21 +119,5 @@ public class AccessTokenService {
         log.error(message, cause);
 
         return new DataStoreException(BAD_FORMAT, cause);
-    }
-
-    public void updateTokenInfo(TokenInfoDto tokenInfo) {
-        ObjectNode additionalData = Optional.ofNullable(tokenInfo.getAdditionalData())
-                .orElseGet(objectMapper::createObjectNode);
-
-        additionalData
-                .put(TokenInfoDto.FIELD_ACCESS_TOKEN, tokenInfo.getAccessToken())
-                .put(TokenInfoDto.FIELD_REFRESH_TOKEN, tokenInfo.getRefreshToken());
-
-        ScmAccessTokenDto2 tokenInfoForDataStore = ScmAccessTokenDto2.builder()
-                .id(tokenInfo.getId())
-                .accessToken(additionalData.toString())
-                .build();
-
-        dataService.updateTokenInfo(tokenInfoForDataStore);
     }
 }

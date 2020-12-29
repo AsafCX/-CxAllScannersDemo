@@ -2,8 +2,10 @@ package com.checkmarx.dto.datastore;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -23,5 +25,5 @@ public class TokenInfoDto {
     private String refreshToken;
 
     @JsonIgnore
-    private ObjectNode additionalData;
+    private final Map<String, String> additionalData = new HashMap<>();
 }
