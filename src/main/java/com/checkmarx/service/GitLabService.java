@@ -169,7 +169,7 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     private List<OrganizationWebDto> getAndStoreOrganizations(String accessToken, long tokenId) {
         List<GroupGitlabDto> groups = getUserGroups(accessToken);
         List<OrgDto2> dataStoreOrgs = toDataStoreOrganizations(groups, tokenId);
-        dataStoreService.storeOrgs2(dataStoreOrgs);
+        dataStoreService.storeOrgs2(getBaseDbKey(), dataStoreOrgs);
 
         return toOrganizationsForWebClient(groups);
     }
@@ -195,7 +195,6 @@ public class GitLabService extends AbstractScmService implements ScmService  {
         return gitlabOrgs.stream()
                 .map(gitlabOrg -> OrgDto2.builder()
                         .orgIdentity(gitlabOrg.getPath())
-                        .scmUrl(getBaseDbKey())
                         .tokenId(tokenId)
                         .build())
                 .collect(Collectors.toList());

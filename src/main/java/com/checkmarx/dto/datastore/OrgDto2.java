@@ -9,6 +9,5 @@ import lombok.*;
 @NoArgsConstructor
 public class OrgDto2 {
     private String orgIdentity;
-    private String scmUrl;
     private long tokenId;
 }

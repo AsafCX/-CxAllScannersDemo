@@ -319,8 +319,11 @@ public class DataStoreService implements DataService {
     }
 
     @Override
-    public void storeOrgs2(List<OrgDto2> orgs) {
-        // TODO
+    public void storeOrgs2(String scmUrl, List<OrgDto2> orgs) {
+        String url = String.format("%s/scms/%s/orgs",
+                dataStoreBase,
+                UriUtils.encodePathSegment(scmUrl, StandardCharsets.UTF_8));
+        restWrapper.sendRequest(url, HttpMethod.PUT, orgs, null, ResponseEntity.class);
     }
 
     @Override
@@ -335,9 +338,20 @@ public class DataStoreService implements DataService {
     }
 
     @Override
-    public void updateTokenInfo(ScmAccessTokenDto2 tokenInfoForDataStore) {
-        String url = String.format("%s/tokens2/%d", dataStoreBase, tokenInfoForDataStore.getId());
-        restWrapper.sendRequest(url, HttpMethod.PUT, tokenInfoForDataStore, null, ScmAccessTokenDto2.class);
+    public void updateTokenInfo(ScmAccessTokenDto2 tokenInfo) {
+        String url = String.format("%s/tokens2/%d", dataStoreBase, tokenInfo.getId());
+        restWrapper.sendRequest(url, HttpMethod.PUT, tokenInfo, null, ScmAccessTokenDto2.class);
+    }
+
+    @Override
+    public long createTokenInfo(ScmAccessTokenDto2 tokenInfo) {
+        String url = String.format("%s/tokens2", dataStoreBase);
+
+        ResponseEntity<Long> response = restWrapper.sendRequest(
+                url, HttpMethod.POST, tokenInfo, null, Long.class);
+
+        return Optional.ofNullable(response.getBody())
+                .orElseThrow(() -> new DataStoreException("Unable to get the created token ID."));
     }
 
     private static void logRepoError(String message, String orgIdentity, Object repoIdentity) {

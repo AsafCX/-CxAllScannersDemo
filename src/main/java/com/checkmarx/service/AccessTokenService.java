@@ -40,26 +40,29 @@ public class AccessTokenService {
     }
 
     public long createTokenInfo(TokenInfoDto tokenInfo) {
-        // TODO
-        return 0;
+        ScmAccessTokenDto2 dsTokenInfo = getTokenInfoForDataStore(tokenInfo);
+        return dataService.createTokenInfo(dsTokenInfo);
     }
 
     public void updateTokenInfo(TokenInfoDto tokenInfo) {
+        ScmAccessTokenDto2 dsTokenInfo = getTokenInfoForDataStore(tokenInfo);
+        dataService.updateTokenInfo(dsTokenInfo);
+    }
+
+    private ScmAccessTokenDto2 getTokenInfoForDataStore(TokenInfoDto tokenInfo) {
         Map<String, String> dataForSaving = new HashMap<>(tokenInfo.getAdditionalData());
         dataForSaving.put(TokenInfoDto.FIELD_ACCESS_TOKEN, tokenInfo.getAccessToken());
         dataForSaving.put(TokenInfoDto.FIELD_REFRESH_TOKEN, tokenInfo.getRefreshToken());
 
-        String rawToken = mapToJsonString(dataForSaving);
+        String rawToken = convertMapToJsonString(dataForSaving);
 
-        ScmAccessTokenDto2 tokenInfoForDataStore = ScmAccessTokenDto2.builder()
+        return ScmAccessTokenDto2.builder()
                 .id(tokenInfo.getId())
                 .accessToken(rawToken)
                 .build();
-
-        dataService.updateTokenInfo(tokenInfoForDataStore);
     }
 
-    private static String mapToJsonString(Map<String, String> source) {
+    private static String convertMapToJsonString(Map<String, String> source) {
         String rawToken;
         try {
             rawToken = objectMapper.writeValueAsString(source);
