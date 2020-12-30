@@ -2,33 +2,30 @@ package com.checkmarx.controller;
 
 import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
-import com.checkmarx.dto.web.OrgSettingsWebDto;
-import com.checkmarx.dto.web.OrganizationWebDto;
-import com.checkmarx.dto.web.RepoWebDto;
-import com.checkmarx.dto.web.ScmConfigWebDto;
+import com.checkmarx.dto.web.*;
 import com.checkmarx.service.ConfigurationService;
 import com.checkmarx.service.ScmService;
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 import javax.validation.constraints.Pattern;
 import java.util.List;
 
 @Slf4j
 @RestController
 @RequestMapping
+@RequiredArgsConstructor
 @Validated
 public class WebController {
 
-    @Autowired
-    ApplicationContext applicationContext;
+    private final ApplicationContext applicationContext;
     
-    @Autowired
-    ConfigurationService genericScmService;
+    private final ConfigurationService genericScmService;
 
     //no special character regex validation
     private static final String VALIDATION_REGEX = "^[^`~!@#$%^&*+={}:;<>?๐฿]*$";
@@ -53,16 +50,16 @@ public class WebController {
     /**
      * Rest api used to first create OAuth access token and retrieve all user organizations from given scm
      *
-     * @param scmType Given Scm to handle
+     * @param scmType  Given Scm to handle
      * @param authCode given from FE application after first-step OAuth implementation passed
-     *                  successfully, taken from request param "code", using it to create access token
+     *                 successfully, taken from request param "code", using it to create access token
      * @return ResponseEntity with status:200, Body: list of all user organizations
      */
     @Operation(summary = "Rest api used to create OAuth access token and retrieve all user " +
             "organizations from given scm")
     @PostMapping(value = "/{scmType}/user/orgs")
     public ResponseEntity<List<OrganizationWebDto>> getOrganizations(@PathVariable String scmType,
-                                           @RequestParam String authCode) {
+                                                                     @RequestParam String authCode) {
         log.trace("getOrganizations: scmType={}, authCode={}", scmType, authCode);
         List<OrganizationWebDto> organizationWebDtos = getScmService(scmType).getOrganizations(authCode);
         log.info("Return Scm: {} Organizations: {}", scmType, organizationWebDtos);
@@ -107,7 +104,7 @@ public class WebController {
      * @param scmType Given Scm to handle
      * @param orgId organization name
      * @param repoId repository name
-     * @param webhookId webhook id
+     * @param webhookId webhook id to delete
      * @return ResponseEntity with http status:200
      */
     @Operation(summary = "Rest api used to delete webhook from given scm organization repository")
@@ -147,7 +144,7 @@ public class WebController {
      */
     @Operation(summary = "Rest api used to create/update scm organization settings")
     @PutMapping(value = "/{scmType}/orgs/{orgId}/settings")
-    public ResponseEntity setOrgSettings(@PathVariable String scmType, @PathVariable @Pattern(regexp = VALIDATION_REGEX) String orgId,
+    public ResponseEntity<Object> setOrgSettings(@PathVariable String scmType, @PathVariable @Pattern(regexp = VALIDATION_REGEX) String orgId,
                                   @RequestBody OrgSettingsWebDto orgSettingsWebDto) {
         log.trace("setOrgSettings: scmType={}, orgId={}, OrgSettingsWebDto={}", scmType, orgId,
                   orgSettingsWebDto);

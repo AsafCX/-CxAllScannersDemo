@@ -47,7 +47,7 @@ public abstract class AbstractScmService {
      * @return true if verification passed successfully
      */
     protected boolean verifyAccessToken(AccessTokenDto accessToken) {
-        return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
+        return accessToken != null && StringUtils.isNotEmpty(accessToken.getAccessToken());
     }
 
     public String getCxFlowUrl() {

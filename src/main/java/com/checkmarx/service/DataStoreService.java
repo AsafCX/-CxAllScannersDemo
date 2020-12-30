@@ -319,6 +319,11 @@ public class DataStoreService implements DataService {
     }
 
     @Override
+    public void storeOrgs2(List<OrgDto2> orgs) {
+        // TODO
+    }
+
+    @Override
     public ScmAccessTokenDto2 getTokenInfo(String scmUrl, String orgId) {
         String url = String.format("%s/tokens?scmUrl=%s&orgIdentity=%s",
                 dataStoreBase,

@@ -20,7 +20,9 @@ public interface DataService {
     void updateWebhook(@NonNull String repoId, ScmAccessTokenDto scmAccessTokenDto,
                        String webhookId, Boolean isWebhook);
     void storeOrgs(List<OrgDto> orgDtos);
+    void storeOrgs2(List<OrgDto2> orgs);
 
     ScmAccessTokenDto2 getTokenInfo(String scmUrl, String orgId);
+
     void updateTokenInfo(ScmAccessTokenDto2 tokenInfoForDataStore);
 }

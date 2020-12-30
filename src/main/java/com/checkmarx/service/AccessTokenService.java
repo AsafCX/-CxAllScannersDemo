@@ -39,6 +39,11 @@ public class AccessTokenService {
         return result;
     }
 
+    public long createTokenInfo(TokenInfoDto tokenInfo) {
+        // TODO
+        return 0;
+    }
+
     public void updateTokenInfo(TokenInfoDto tokenInfo) {
         Map<String, String> dataForSaving = new HashMap<>(tokenInfo.getAdditionalData());
         dataForSaving.put(TokenInfoDto.FIELD_ACCESS_TOKEN, tokenInfo.getAccessToken());

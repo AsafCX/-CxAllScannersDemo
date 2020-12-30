@@ -77,9 +77,10 @@ public class GitLabService extends AbstractScmService implements ScmService  {
 
     @Override
     public List<OrganizationWebDto> getOrganizations(@NonNull String authCode) {
-        AccessTokenGitlabDto accessToken = generateAccessToken(authCode);
-        log.info("Access token generated successfully");
-        return getAndStoreOrganizations(accessToken);
+        AccessTokenGitlabDto tokenFromGitlabApi = generateAccessToken(authCode);
+        TokenInfoDto tokenForSaving = toStandardTokenDto(tokenFromGitlabApi);
+        long tokenId = tokenService.createTokenInfo(tokenForSaving);
+        return getAndStoreOrganizations(tokenForSaving.getAccessToken(), tokenId);
     }
 
     @Override
@@ -149,12 +150,12 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     private TokenInfoDto getRefreshedToken(TokenInfoDto tokenInfo) {
         String refreshApiPath = buildRefreshTokenApiPath(tokenInfo.getRefreshToken());
         AccessTokenGitlabDto apiResponse = sendAccessTokenRequest(refreshApiPath, getHeadersAccessToken());
-        TokenInfoDto result = toStandardDto(apiResponse);
+        TokenInfoDto result = toStandardTokenDto(apiResponse);
         result.setId(tokenInfo.getId());
         return result;
     }
 
-    private static TokenInfoDto toStandardDto(AccessTokenGitlabDto gitLabSpecificDto) {
+    private static TokenInfoDto toStandardTokenDto(AccessTokenGitlabDto gitLabSpecificDto) {
         TokenInfoDto result = TokenInfoDto.builder()
                 .accessToken(gitLabSpecificDto.getAccessToken())
                 .refreshToken(gitLabSpecificDto.getRefreshToken())
@@ -165,13 +166,10 @@ public class GitLabService extends AbstractScmService implements ScmService  {
         return result;
     }
 
-    private List<OrganizationWebDto> getAndStoreOrganizations(AccessTokenGitlabDto tokenResponse) {
-        List<GroupGitlabDto> groups = getUserGroups(tokenResponse.getAccessToken());
-
-        String tokenResponseJson = AccessTokenManager.convertObjectToJson(tokenResponse);
-
-        List<OrgDto> dataStoreOrgs = toDataStoreOrganizations(groups, tokenResponseJson);
-        dataStoreService.storeOrgs(dataStoreOrgs);
+    private List<OrganizationWebDto> getAndStoreOrganizations(String accessToken, long tokenId) {
+        List<GroupGitlabDto> groups = getUserGroups(accessToken);
+        List<OrgDto2> dataStoreOrgs = toDataStoreOrganizations(groups, tokenId);
+        dataStoreService.storeOrgs2(dataStoreOrgs);
 
         return toOrganizationsForWebClient(groups);
     }
@@ -193,13 +191,12 @@ public class GitLabService extends AbstractScmService implements ScmService  {
                 .collect(Collectors.toList());
     }
 
-    private List<OrgDto> toDataStoreOrganizations(List<GroupGitlabDto> gitlabOrgs, String tokenJson) {
+    private List<OrgDto2> toDataStoreOrganizations(List<GroupGitlabDto> gitlabOrgs, long tokenId) {
         return gitlabOrgs.stream()
-                .map(gitlabOrg -> OrgDto.builder()
-                        .accessToken(tokenJson)
+                .map(gitlabOrg -> OrgDto2.builder()
                         .orgIdentity(gitlabOrg.getPath())
                         .scmUrl(getBaseDbKey())
-                        .tokenType(TokenType.ACCESS.getType())
+                        .tokenId(tokenId)
                         .build())
                 .collect(Collectors.toList());
     }
@@ -250,23 +247,31 @@ public class GitLabService extends AbstractScmService implements ScmService  {
      * generateAccessToken method using OAuth code, client id and client secret generates access
      * token via GitLab api
      *
-     * @param oAuthCode given from FE application after first-step OAuth implementation passed
+     * @param authCode given from FE application after first-step OAuth implementation passed
      *                  successfully, taken from request param "code", using it to create access token
      * @return Access token given from GitLab
      */
-    private AccessTokenGitlabDto generateAccessToken(String oAuthCode) {
+    private AccessTokenGitlabDto generateAccessToken(String authCode) {
         ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
-        String path = buildPathAccessToken(oAuthCode, scmDto);
-        return sendAccessTokenRequest(path, getHeadersAccessToken());
+
+        String path = buildPathAccessToken(authCode, scmDto);
+        AccessTokenGitlabDto tokenResponse = sendAccessTokenRequest(path, getHeadersAccessToken());
+        log.info("Access token generated successfully");
+
+        return tokenResponse;
     }
 
     private AccessTokenGitlabDto sendAccessTokenRequest(String path, Map<String, String> headers) {
-        ResponseEntity<AccessTokenGitlabDto> response = restWrapper.sendRequest(path, HttpMethod.POST, null, headers, AccessTokenGitlabDto.class);
+        ResponseEntity<AccessTokenGitlabDto> response = restWrapper.sendRequest(path,
+                HttpMethod.POST,
+                null,
+                headers,
+                AccessTokenGitlabDto.class);
 
         AccessTokenGitlabDto tokenGitlabDto = Objects.requireNonNull(
                 response.getBody(), "Missing access token generation response.");
 
-        if(!verifyAccessToken(tokenGitlabDto)){
+        if (!verifyAccessToken(tokenGitlabDto)) {
             log.error(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
             throw new ScmException(RestWrapper.GENERATE_ACCESS_TOKEN_FAILURE);
         }
@@ -280,7 +285,7 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     }
 
     private String buildPathAccessToken(String oAuthCode, ScmDto scmDto) {
-        return String.format(GitLabService.URL_GENERATE_TOKEN, scmDto.getClientId(),
+        return String.format(URL_GENERATE_TOKEN, scmDto.getClientId(),
                              scmDto.getClientSecret(),
                              oAuthCode,
                              getRedirectUrl());
