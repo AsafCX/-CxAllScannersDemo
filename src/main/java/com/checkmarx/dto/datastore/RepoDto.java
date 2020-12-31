@@ -1,5 +1,6 @@
 package com.checkmarx.dto.datastore;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -19,4 +20,10 @@ public class RepoDto {
     private String webhookId;
     @JsonProperty("is_webhook_configured")
     private boolean isWebhookConfigured;
+
+    /**
+     * Convenience property that is helpful in data transformations but is not sent to the DataStore.
+     */
+    @JsonIgnore
+    private String name;
 }

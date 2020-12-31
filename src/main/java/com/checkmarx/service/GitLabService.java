@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -85,23 +86,85 @@ public class GitLabService extends AbstractScmService implements ScmService  {
 
     @Override
     public List<RepoWebDto> getScmOrgRepos(@NonNull String orgId) {
-        AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
+        TokenInfoDto tokenInfo = tokenService.getTokenInfo(getBaseDbKey(), orgId);
+        String accessToken = tokenInfo.getAccessToken();
 
-        String path = String.format(URL_GET_PROJECTS, orgId);
-        ResponseEntity<RepoGitlabDto[]> response = restWrapper.sendBearerAuthRequest(path, HttpMethod.GET,
-                null, null,
-                RepoGitlabDto[].class, accessTokenManager.getAccessTokenStr());
-        ArrayList<RepoGitlabDto> repoGitlabDtos = new ArrayList<>(Arrays.asList(
-                Objects.requireNonNull(response.getBody())));
-        for (RepoGitlabDto repoDto : repoGitlabDtos) {
-            WebhookGitLabDto webhookDto = getRepositoryCxFlowWebhook(repoDto.getId(),
-                    accessTokenManager.getAccessTokenStr());
-            setWebhookDetails(repoDto, webhookDto);
-            repoDto.setName(StringUtils.substringAfter(repoDto.getName(), "/"));
+        RepoGitlabDto[] reposFromGitlab = getReposFromGitLab(orgId, accessToken);
+
+        OrgReposDto reposForDataStore = getReposForDataStore(accessToken, reposFromGitlab, orgId);
+
+        dataStoreService.updateScmOrgRepo(reposForDataStore);
+
+        return getReposForWebClient(reposForDataStore);
+    }
+
+    private List<RepoWebDto> getReposForWebClient(OrgReposDto reposForDataStore) {
+        return reposForDataStore.getRepoList()
+                .stream()
+                .map(toRepoForWebClient())
+                .collect(Collectors.toList());
+    }
+
+    private OrgReposDto getReposForDataStore(String accessToken, RepoGitlabDto[] reposFromGitlab, String orgId) {
+        List<RepoDto> repos = Arrays.stream(reposFromGitlab)
+                .map(toRepoForDataStore(accessToken))
+                .collect(Collectors.toList());
+
+        return OrgReposDto.builder()
+                .orgIdentity(orgId)
+                .scmUrl(getBaseDbKey())
+                .repoList(repos)
+                .build();
+    }
+
+    private Function<RepoDto, RepoWebDto> toRepoForWebClient() {
+        return repo -> RepoWebDto.builder()
+                .id(repo.getRepoIdentity())
+                .name(repo.getName())
+                .webhookEnabled(repo.isWebhookConfigured())
+                .webhookId(repo.getWebhookId())
+                .build();
+    }
+
+    private Function<RepoGitlabDto, RepoDto> toRepoForDataStore(String accessToken) {
+        return (RepoGitlabDto repo) -> {
+            RepoDto repoForDataStore = new RepoDto();
+            repoForDataStore.setRepoIdentity(repo.getId());
+            repoForDataStore.setName(normalizeName(repo.getName()));
+            setWebhookRelatedFields(repo.getId(), accessToken, repoForDataStore);
+            return repoForDataStore;
+        };
+    }
+
+    private static String normalizeName(String gitlabProjectName) {
+        final String SEPARATOR = "/";
+
+        String result = StringUtils.defaultString(gitlabProjectName);
+        if (result.contains(SEPARATOR)) {
+            // Expecting GitLab project name in the form: "MyGroup / MySubgroup / MyProject".
+            // By convention, we use all but the root group as CxIntegrations repo name, e.g. "MySubgroup / MyProject".
+            result = StringUtils.substringAfter(result, SEPARATOR);
         }
-        OrgReposDto orgReposDto = Converter.convertToOrgRepoDto(accessTokenManager.getDbDto(), repoGitlabDtos);
-        dataStoreService.updateScmOrgRepo(orgReposDto);
-        return Converter.convertToListRepoWebDto(repoGitlabDtos);
+        return result.trim();
+    }
+
+    private void setWebhookRelatedFields(String repoId, String accessToken, RepoDto target) {
+        WebhookGitLabDto webhook = getRepositoryCxFlowWebhook(repoId, accessToken);
+        if (webhook != null) {
+            target.setWebhookConfigured(true);
+            target.setWebhookId(webhook.getId());
+        } else {
+            target.setWebhookConfigured(false);
+        }
+    }
+
+    private RepoGitlabDto[] getReposFromGitLab(String orgId, String accessToken) {
+        String url = String.format(URL_GET_PROJECTS, orgId);
+
+        ResponseEntity<RepoGitlabDto[]> response = restWrapper.sendBearerAuthRequest(
+                url, HttpMethod.GET, null, null, RepoGitlabDto[].class, accessToken);
+
+        return Objects.requireNonNull(response.getBody());
     }
 
     @Override
