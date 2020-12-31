@@ -1,13 +1,13 @@
 package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
-import com.checkmarx.dto.*;
-
+import com.checkmarx.dto.AccessTokenDto;
+import com.checkmarx.dto.IRepoDto;
+import com.checkmarx.dto.IWebhookDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
-
 import com.checkmarx.dto.datastore.OrgPropertiesDto;
-
-import com.checkmarx.utils.AccessTokenManager;
+import com.checkmarx.dto.datastore.RepoDto;
+import com.checkmarx.dto.datastore.TokenInfoDto;
 import com.checkmarx.utils.RestWrapper;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -26,17 +26,19 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public abstract class AbstractScmService {
-    
+
     protected final RestWrapper restWrapper;
-    
+
     protected final DataService dataStoreService;
-    
+
+    private final AccessTokenService tokenService;
+
     @Value("${redirect.url}")
     private String redirectUrl;
 
     @Value("${cxflow.webhook.url}")
     private String cxFlowUrl;
-    
+
     
     /**
      * verifyAccessToken method used to verify access token creation, Currently checks if access
@@ -104,23 +106,26 @@ public abstract class AbstractScmService {
 
 
     protected void deleteWebhook(@NonNull String orgId, @NonNull String repoId, String deleteUrl, Class<?> type) {
-        
-        AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
-        
+        TokenInfoDto tokenInfo = tokenService.getTokenInfo(getBaseDbKey(), orgId);
+
         try {
             restWrapper.sendBearerAuthRequest(deleteUrl, HttpMethod.DELETE, null, null,
                     type,
-                    accessTokenWrapper.getAccessTokenStr());
-            
-        } catch (HttpClientErrorException ex){
-            if(ex.getStatusCode().equals(HttpStatus.NOT_FOUND)){
+                    tokenInfo.getAccessToken());
+
+        } catch (HttpClientErrorException ex) {
+            if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 log.error("Webhook not found: {}", ex.getMessage());
                 throw new ScmException(RestWrapper.WEBHOOK_DELETE_FAILURE);
             }
             throw new ScmException(RestWrapper.GENERAL_RUNTIME_EXCEPTION);
         }
 
-        dataStoreService.updateWebhook(repoId, accessTokenWrapper.getDbDto(), null, false);
+        RepoDto repo = RepoDto.builder()
+                .repoIdentity(repoId)
+                .isWebhookConfigured(false)
+                .webhookId(null)
+                .build();
+        dataStoreService.updateRepo2(getBaseDbKey(), orgId, repo);
     }
-    
 }
