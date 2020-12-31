@@ -118,15 +118,6 @@ public class Converter {
         }
         return orgDtos;
     }
-
-    public static String convertObjectToJson(Object obj) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (JsonProcessingException ex){
-            throw new ScmException("Unable to parse -> Json");
-        }
-    }
     
 
 }

@@ -1,6 +1,5 @@
 package com.checkmarx.dto.github;
 
-import com.checkmarx.dto.IDto;
 import com.checkmarx.dto.IWebhookDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.yaml.snakeyaml.events.Event;
 
 import java.util.List;
 
@@ -28,6 +26,21 @@ public @Data class WebhookGithubDto implements IWebhookDto {
     @Override
     public String getUrl() {
         return config.getUrl();
+    }
+    
+    public void setUrl(String url) {
+        if(config == null){
+            config = new Config();
+        }
+        config.setUrl(url);
+    }
+
+    @Override
+    public boolean isPushOrPull() {
+        return events != null
+                && (events.contains(GithubEvent.PULL_REQEUST.getType())
+                || events.contains(GithubEvent.PUSH.getType()));
+
     }
 
 

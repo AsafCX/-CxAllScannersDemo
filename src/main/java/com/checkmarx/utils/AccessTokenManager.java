@@ -3,6 +3,7 @@ package com.checkmarx.utils;
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.AccessTokenDto;
 import com.checkmarx.dto.datastore.ScmAccessTokenDto;
+import com.checkmarx.dto.github.AccessTokenGithubDto;
 import com.checkmarx.service.DataService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -18,6 +19,11 @@ public class AccessTokenManager {
     
     public AccessTokenManager(String dbKey, String orgId, DataService dataStoreService){
         dbDto = dataStoreService.getSCMOrgToken(dbKey, orgId);
+    }
+
+    public AccessTokenManager(AccessTokenDto accessTokenDto, Class accessTokenGithubDtoClass) {
+        tokenDto = accessTokenDto;
+        fullAccessToken = getFullAccessToken(accessTokenGithubDtoClass);
     }
 
     private AccessTokenDto parse(String tokenJson) {
@@ -61,5 +67,13 @@ public class AccessTokenManager {
         }
     }
 
+    public static String convertObjectToJson(Object obj) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (JsonProcessingException ex){
+            throw new ScmException("Unable to parse -> Json");
+        }
+    }
 
 }

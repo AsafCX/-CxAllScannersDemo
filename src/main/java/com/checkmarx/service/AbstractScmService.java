@@ -37,6 +37,7 @@ public abstract class AbstractScmService {
     @Value("${cxflow.webhook.url}")
     protected String cxFlowUrl;
     
+    
     /**
      * verifyAccessToken method used to verify access token creation, Currently checks if access
      * token created(not null or empty) without GitHub validation
@@ -123,5 +124,9 @@ public abstract class AbstractScmService {
     }
 
     
-    
+    public void init(RestWrapper restWrapper,DataService dataStoreService, String cxFlowUrl){
+        this.restWrapper = restWrapper;
+        this.dataStoreService = dataStoreService;
+        this.cxFlowUrl = cxFlowUrl;
+    }
 }

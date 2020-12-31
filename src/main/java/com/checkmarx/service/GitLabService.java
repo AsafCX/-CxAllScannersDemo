@@ -130,7 +130,7 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     private List<OrganizationWebDto> getAndStoreOrganizations(AccessTokenGitlabDto tokenResponse) {
         List<GroupGitlabDto> groups = getUserGroups(tokenResponse.getAccessToken());
 
-        String tokenResponseJson = Converter.convertObjectToJson(tokenResponse);
+        String tokenResponseJson = AccessTokenManager.convertObjectToJson(tokenResponse);
 
         List<OrgDto> dataStoreOrgs = toDataStoreOrganizations(groups, tokenResponseJson);
         dataStoreService.storeOrgs(dataStoreOrgs);

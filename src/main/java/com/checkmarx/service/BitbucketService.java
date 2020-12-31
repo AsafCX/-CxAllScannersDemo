@@ -145,7 +145,7 @@ public class BitbucketService extends AbstractScmService implements ScmService  
                 restWrapper.sendBearerAuthRequest(URL_GET_WORKSPACES, HttpMethod.GET, null, null,
                         BitbucketBaseListDto.class, token.getAccessToken());
         List<BitbucketBase> organizationWebDtos = response.getBody().getElements();
-        String tokenJson = Converter.convertObjectToJson(token);
+        String tokenJson = AccessTokenManager.convertObjectToJson(token);
         List<OrgDto> orgDtos =
                 Converter.convertToListOrg(tokenJson, organizationWebDtos, getBaseDbKey());
         dataStoreService.storeOrgs(orgDtos);

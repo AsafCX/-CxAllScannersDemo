@@ -1,20 +1,18 @@
 package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
-import com.checkmarx.dto.github.AccessTokenGithubDto;
+import com.checkmarx.dto.github.*;
 import com.checkmarx.dto.BaseDto;
 
 import com.checkmarx.dto.IRepoDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
-import com.checkmarx.dto.github.OrganizationGithubDto;
-import com.checkmarx.dto.github.RepoGithubDto;
-import com.checkmarx.dto.github.WebhookGithubDto;
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.utils.AccessTokenManager;
 import com.checkmarx.utils.Converter;
 import com.checkmarx.utils.RestWrapper;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,7 +37,7 @@ public class GitHubService extends AbstractScmService implements ScmService {
 
     private static final String URL_GET_ORGANIZATIONS = "https://api.github.com/user/orgs";
 
-    private static final String URL_GET_REPOS = "https://api.github" +
+    public static final String URL_GET_REPOS = "https://api.github" +
             ".com/orgs/%s/repos?type=all&per_page=100";
     
     private static final String URL_WEBHOOK_OPERATION = "https://api.github.com/repos/%s/%s/hooks";
@@ -57,17 +55,16 @@ public class GitHubService extends AbstractScmService implements ScmService {
 
     @Override
     public List<OrganizationWebDto> getOrganizations(@NonNull String authCode) {
-        AccessTokenGithubDto accessToken = generateAccessToken(authCode);
+        AccessTokenManager accessTokenManager = generateAccessToken(authCode);
         log.info("Access token generated successfully");
 
         ResponseEntity<OrganizationGithubDto[]> response =
                 restWrapper.sendBearerAuthRequest(URL_GET_ORGANIZATIONS, HttpMethod.GET, null, null,
-                                                  OrganizationGithubDto[].class, accessToken.getAccessToken());
+                                                  OrganizationGithubDto[].class, accessTokenManager.getAccessTokenStr());
         List<OrganizationGithubDto> userOrgGithubDtos =
                 new ArrayList<>(Arrays.asList(Objects.requireNonNull(response.getBody())));
-        String tokenJson = Converter.convertObjectToJson(accessToken);
         List<OrgDto> orgDtos =
-                Converter.convertToListOrg(tokenJson, userOrgGithubDtos,
+                Converter.convertToListOrg(accessTokenManager.getAccessTokenJson(), userOrgGithubDtos,
                                                       getBaseDbKey());
         dataStoreService.storeOrgs(orgDtos);
         return Converter.convertToListOrgWebDtos(userOrgGithubDtos);
@@ -160,7 +157,7 @@ public class GitHubService extends AbstractScmService implements ScmService {
         return  WebhookGithubDto.builder()
                 .name("web")
                 .config(WebhookGithubDto.Config.builder().contentType("json").url(getCxFlowUrl()).insecureSsl("0").secret("1234").build())
-                .events(Arrays.asList("push", "pull_request"))
+                .events(GithubEvent.getAllEventsList())
                 .active(true)
                 .build();
     }
@@ -186,10 +183,12 @@ public class GitHubService extends AbstractScmService implements ScmService {
      *                  successfully, taken from request param "code", using it to create access token
      * @return Access token given from GitHub
      */
-    private AccessTokenGithubDto generateAccessToken(String oAuthCode) {
+    private AccessTokenManager generateAccessToken(String oAuthCode) {
         ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
         String path = buildPathAccessToken(oAuthCode, scmDto);
-        return sendAccessTokenRequest(path);
+        AccessTokenGithubDto accessTokenDto =  sendAccessTokenRequest(path);
+        AccessTokenManager mgr = new AccessTokenManager(accessTokenDto, AccessTokenGithubDto.class);
+        return mgr;
     }
 
     private AccessTokenGithubDto sendAccessTokenRequest(String path) {

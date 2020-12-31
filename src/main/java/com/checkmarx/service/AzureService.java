@@ -136,7 +136,7 @@ public class AzureService extends AbstractScmService implements ScmService  {
                                                   AzureUserOrganizationsDto.class, accessToken.getAccessToken());
 
         AzureUserOrganizationsDto azureUserOrganizationsDto = Objects.requireNonNull(response.getBody());
-        String tokenJson = Converter.convertObjectToJson(accessToken);
+        String tokenJson = AccessTokenManager.convertObjectToJson(accessToken);
         List<OrgDto> orgDtos = Converter.convertToListOrg(tokenJson,
                                                      azureUserOrganizationsDto.getOrganizations(), getBaseDbKey());
         dataStoreService.storeOrgs(orgDtos);
