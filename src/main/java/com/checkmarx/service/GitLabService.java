@@ -168,20 +168,33 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     }
 
     @Override
-    public BaseDto createWebhook(@NonNull String orgId, @NonNull String projectId ) {
-        AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
+    public BaseDto createWebhook(@NonNull String orgId, @NonNull String repoId) {
+        TokenInfoDto tokenInfo = tokenService.getTokenInfo(getBaseDbKey(), orgId);
 
-        String path = String.format(URL_WEBHOOK, projectId, getCxFlowUrl(), "1234") ;
-         ResponseEntity<WebhookGitLabDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.POST,
-                                                                                        new WebhookGitLabDto(), null,
-                                                                                        WebhookGitLabDto.class,
-                                                                                        accessTokenManager.getAccessTokenStr());
-        WebhookGitLabDto webhookGitLabDto = Objects.requireNonNull(
-                response.getBody(), "Missing webhook creation response.") ;
+        WebhookGitLabDto newWebhook = createWebhookInGitLab(repoId, tokenInfo.getAccessToken());
+        validateWebhookDto(newWebhook);
 
-        validateWebhookDto(webhookGitLabDto);
-        dataStoreService.updateWebhook(projectId, accessTokenManager.getDbDto(), webhookGitLabDto.getId(), true);
-        return new BaseDto(webhookGitLabDto.getId());
+        updateRepoInDataStore(orgId, repoId, newWebhook);
+
+        return new BaseDto(newWebhook.getId());
+    }
+
+    private void updateRepoInDataStore(String orgId, String repoId, WebhookGitLabDto newWebhook) {
+        RepoDto updateRepoRequest = RepoDto.builder()
+                .isWebhookConfigured(true)
+                .repoIdentity(repoId)
+                .webhookId(newWebhook.getId())
+                .build();
+
+        dataStoreService.updateRepo2(getBaseDbKey(), orgId, updateRepoRequest);
+    }
+
+    private WebhookGitLabDto createWebhookInGitLab(String repoId, String accessToken) {
+        String path = String.format(URL_WEBHOOK, repoId, getCxFlowUrl(), "1234");
+        ResponseEntity<WebhookGitLabDto> response = restWrapper.sendBearerAuthRequest(path,
+                HttpMethod.POST, new WebhookGitLabDto(), null, WebhookGitLabDto.class, accessToken);
+
+        return Objects.requireNonNull(response.getBody(), "Missing webhook creation response.");
     }
 
     @Override

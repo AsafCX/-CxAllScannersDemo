@@ -327,6 +327,17 @@ public class DataStoreService implements DataService {
     }
 
     @Override
+    public void updateRepo2(String scmUrl, String orgId, RepoDto updateRequest) {
+        String url = String.format("%s/scms/%s/orgs/%s/repos/%s",
+                dataStoreBase,
+                scmUrl,
+                orgId,
+                updateRequest.getRepoIdentity());
+
+        restWrapper.sendRequest(url, HttpMethod.PUT, updateRequest, null, ResponseEntity.class);
+    }
+
+    @Override
     public ScmAccessTokenDto2 getTokenInfo(String scmUrl, String orgId) {
         String url = String.format("%s/tokens?scmUrl=%s&orgIdentity=%s",
                 dataStoreBase,

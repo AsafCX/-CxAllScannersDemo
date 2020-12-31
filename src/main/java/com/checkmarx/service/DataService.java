@@ -19,6 +19,7 @@ public interface DataService {
     void storeScmOrgSettings(@NonNull OrgPropertiesDto orgPropertiesDto);
     void updateWebhook(@NonNull String repoId, ScmAccessTokenDto scmAccessTokenDto,
                        String webhookId, Boolean isWebhook);
+    void updateRepo2(String scmUrl, String orgId, RepoDto updateRequest);
     void storeOrgs(List<OrgDto> orgDtos);
     void storeOrgs2(String scmUrl, List<OrgDto2> orgs);
 

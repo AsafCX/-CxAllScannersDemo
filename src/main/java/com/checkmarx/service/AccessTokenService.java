@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+/**
+ * Compatibility layer between token representation in DataStore and ReposManager business logic.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
