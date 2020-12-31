@@ -59,16 +59,18 @@ public class GitHubService extends AbstractScmService implements ScmService {
 
     @Override
     public List<OrganizationWebDto> getOrganizations(@NonNull String authCode) {
-        AccessTokenManager accessTokenManager = generateAccessToken(authCode);
+        AccessTokenGithubDto accessToken = generateAccessToken(authCode);
+
         log.info("Access token generated successfully");
 
         ResponseEntity<OrganizationGithubDto[]> response =
                 restWrapper.sendBearerAuthRequest(URL_GET_ORGANIZATIONS, HttpMethod.GET, null, null,
-                                                  OrganizationGithubDto[].class, accessTokenManager.getAccessTokenStr());
+                                                  OrganizationGithubDto[].class, accessToken.getAccessToken());
         List<OrganizationGithubDto> userOrgGithubDtos =
                 new ArrayList<>(Arrays.asList(Objects.requireNonNull(response.getBody())));
+        String tokenJson = AccessTokenManager.convertObjectToJson(accessToken);
         List<OrgDto> orgDtos =
-                Converter.convertToListOrg(accessTokenManager.getAccessTokenJson(), userOrgGithubDtos,
+                Converter.convertToListOrg(tokenJson, userOrgGithubDtos,
                                                       getBaseDbKey());
         dataStoreService.storeOrgs(orgDtos);
         return Converter.convertToListOrgWebDtos(userOrgGithubDtos);
@@ -187,12 +189,10 @@ public class GitHubService extends AbstractScmService implements ScmService {
      *                  successfully, taken from request param "code", using it to create access token
      * @return Access token given from GitHub
      */
-    private AccessTokenManager generateAccessToken(String oAuthCode) {
+    private AccessTokenGithubDto generateAccessToken(String oAuthCode) {
         ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
         String path = buildPathAccessToken(oAuthCode, scmDto);
-        AccessTokenGithubDto accessTokenDto =  sendAccessTokenRequest(path);
-        AccessTokenManager mgr = new AccessTokenManager(accessTokenDto, AccessTokenGithubDto.class);
-        return mgr;
+        return sendAccessTokenRequest(path);
     }
 
     private AccessTokenGithubDto sendAccessTokenRequest(String path) {
