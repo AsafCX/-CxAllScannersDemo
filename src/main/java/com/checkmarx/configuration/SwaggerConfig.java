@@ -12,8 +12,8 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI springShopOpenAPI() {
         return new OpenAPI()
-                .info(new Info().title("CX Integrations Repos Manager API")
+                .info(new Info().title("CxIntegrations ReposManager API")
                               .version("v0.0.1")
-                              .description("CX Integrations Repos Manager End-Points"));
+                              .description("CxIntegrations ReposManager End-Points"));
     }
 }
