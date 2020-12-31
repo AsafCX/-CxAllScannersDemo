@@ -57,8 +57,11 @@ public class BitbucketService extends AbstractScmService implements ScmService  
 
     private static final String URL_VALIDATE_TOKEN = BASE_API_URL + API_VERSION + "/user";
 
-    
-    
+    public BitbucketService(RestWrapper restWrapper, DataService dataStoreService) {
+        super(restWrapper, dataStoreService);
+    }
+
+
     @Override
     public String getScopes() {
         return SCOPES;
@@ -196,8 +199,8 @@ public class BitbucketService extends AbstractScmService implements ScmService  
     }
 
     @Override
-    protected String getCxFlowUrl() {
-        return trimNonEmptyString("Cxflow URL", cxFlowUrl + "?token=1234");
+    public String getCxFlowUrl() {
+        return trimNonEmptyString("Cxflow URL", getCxFlowUrl() + "?token=1234");
 
     }
 

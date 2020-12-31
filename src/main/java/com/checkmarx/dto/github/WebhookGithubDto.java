@@ -38,7 +38,7 @@ public @Data class WebhookGithubDto implements IWebhookDto {
     @Override
     public boolean isPushOrPull() {
         return events != null
-                && (events.contains(GithubEvent.PULL_REQEUST.getType())
+                && (events.contains(GithubEvent.PULL_REQUEST.getType())
                 || events.contains(GithubEvent.PUSH.getType()));
 
     }

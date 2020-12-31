@@ -59,7 +59,11 @@ public class AzureService extends AbstractScmService implements ScmService  {
     private static final String URL_CREATE_WEBHOOK =  BASE_API_URL + "/%s/_apis/hooks/subscriptions?api-version=" + API_VERSION;
     private static final String AZURE_CONSUMER_USERNAME = "cxflow";
     private static final String AZURE_CONSUMER_PASSWORD = "1234";
-    
+
+    public AzureService(RestWrapper restWrapper, DataService dataStoreService) {
+        super(restWrapper, dataStoreService);
+    }
+
 
     /**
      * generateAccessToken method using OAuth code, client id and client secret generates access

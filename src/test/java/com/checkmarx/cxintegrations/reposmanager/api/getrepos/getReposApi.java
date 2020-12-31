@@ -43,42 +43,45 @@ public class getReposApi {
     private static final String GITHUB = "github";
     private static final String GITLAB = "gitlab";
     private static final String HOOKS = "hooks";
-    @Value("${cxflow.webhook.url}")
-    protected String cxFlowUrl;
+    private static final String cxFlowUrl = "dummyUrl";
     private FakeAccessTokenGenerator fakeAccessTokenGenerator = new FakeAccessTokenGenerator();
     private static final String ORG_ID = "myOrganization";
-    private final RestWrapper restWrapper  = mock(RestWrapper.class);;
+    private final RestWrapper restWrapper = mock(RestWrapper.class);
+    
     private DataService dataService = mock(DataService.class);
-    private GitHubService gitHubService = spy(GitHubService.class);
-    private GitLabService gitLabService = spy(GitLabService.class);
+    private GitHubService gitHubService ;
+    private GitLabService gitLabService ;
     private String scmType;
     private int numberRepos = 0;
-    private int numberHooks =0;
-    private int numberActiveHooks =0;
+    private int numberHooks = 0;
+    private int numberActiveHooks = 0;
     private int nHooksWithEvents;
     private List<RepoWebDto> apiResult;
     private int hooksWithUrl;
     private ResponseEntity<RepoGithubDto[]> githubReposMockResult;
-    private List<WebhookGithubDto> githubWebhooksMockResult  ;
+    private List<WebhookGithubDto> githubWebhooksMockResult;
     private ResponseEntity<RepoGitlabDto[]> gitlabReposMockResult;
     private List<WebhookGitLabDto> gitlabWebhooksMockResult;
 
 
-    private void initMocks(){
-        gitHubService.init(restWrapper,dataService,cxFlowUrl);
-        gitLabService.init(restWrapper,dataService,cxFlowUrl);
+    private void initMocks() {
+        gitHubService = spy(new GitHubService(restWrapper, dataService));
+        gitLabService = spy(new GitLabService(restWrapper, dataService));
+        doReturn(cxFlowUrl).when(gitHubService).getCxFlowUrl();
+        doReturn(cxFlowUrl).when(gitLabService).getCxFlowUrl();
+
         HttpRequestInterceptor httpRequestInterceptor = new HttpRequestInterceptor();
         when(restWrapper.sendBearerAuthRequest(any(), any(), any(), any(), any(), any())).thenAnswer(httpRequestInterceptor);
         doNothing().when(dataService).updateScmOrgRepo(any());
         try {
             ScmAccessTokenDto accessTokenDto = fakeAccessTokenGenerator.generate(scmType, "fake-token");
-            when(dataService.getSCMOrgToken(any(),any())).thenReturn(accessTokenDto);
+            when(dataService.getSCMOrgToken(any(), any())).thenReturn(accessTokenDto);
         } catch (JsonProcessingException e) {
             Assert.fail(e.getMessage());
         }
 
     }
-    
+
 
     @And("There are {int} webhooks defined on the repositories")
     public void thereAreN_hooksWebhooksDefinedOnTheRepositories(int n_hooks) {
@@ -86,12 +89,11 @@ public class getReposApi {
     }
 
     @And("number of active hooks is {string}")
-    public void numberOfActiveHooksIsN_active_hooks(String n_active_hooks)
-    {
-        if(n_active_hooks.equals("irrelevant")) {
+    public void numberOfActiveHooksIsN_active_hooks(String n_active_hooks) {
+        if (n_active_hooks.equals("irrelevant")) {
             this.numberActiveHooks = numberRepos;
-            
-        }else{
+
+        } else {
             this.numberActiveHooks = Integer.parseInt(n_active_hooks);
         }
     }
@@ -107,13 +109,12 @@ public class getReposApi {
     }
 
 
-
     @When("API get repositories is called with scm {string}")
     public void apiGetRepositoriesIsCalledWithScm(String scm) {
         scmType = scm;
         numberRepos = 0;
-        numberHooks =0;
-        numberActiveHooks =0;
+        numberHooks = 0;
+        numberActiveHooks = 0;
         nHooksWithEvents = 0;
         initMocks();
     }
@@ -124,7 +125,7 @@ public class getReposApi {
     }
 
     private class HttpRequestInterceptor implements Answer<ResponseEntity> {
-        
+
         @Override
         public ResponseEntity answer(InvocationOnMock invocation) {
             String url = invocation.getArgument(0);
@@ -147,12 +148,12 @@ public class getReposApi {
 
     private ResponseEntity getWebhookGitlabResponse() {
         WebhookGitLabDto[] gitlabWebhooksMockResultArr;
-        if(gitlabWebhooksMockResult.size() > 0) {
+        if (gitlabWebhooksMockResult.size() > 0) {
             WebhookGitLabDto webhook = gitlabWebhooksMockResult.get(0);
             gitlabWebhooksMockResult.remove(0);
             gitlabWebhooksMockResultArr = new WebhookGitLabDto[1];
             gitlabWebhooksMockResultArr[0] = webhook;
-        }else{
+        } else {
             gitlabWebhooksMockResultArr = new WebhookGitLabDto[0];
         }
         return new ResponseEntity<>(gitlabWebhooksMockResultArr, HttpStatus.OK);
@@ -160,12 +161,12 @@ public class getReposApi {
 
     private ResponseEntity getWebhookGithubResponse() {
         WebhookGithubDto[] githubWebhooksMockResultArr;
-        if(githubWebhooksMockResult.size() > 0) {
+        if (githubWebhooksMockResult.size() > 0) {
             WebhookGithubDto webhook = githubWebhooksMockResult.get(0);
             githubWebhooksMockResult.remove(0);
             githubWebhooksMockResultArr = new WebhookGithubDto[1];
             githubWebhooksMockResultArr[0] = webhook;
-        }else{
+        } else {
             githubWebhooksMockResultArr = new WebhookGithubDto[0];
         }
         return new ResponseEntity<>(githubWebhooksMockResultArr, HttpStatus.OK);
@@ -173,27 +174,27 @@ public class getReposApi {
 
     private List<WebhookGithubDto> prepareGithubWebhooksResult() {
         List<WebhookGithubDto> webhookGithubDtos = new LinkedList<>();
-        for (int i=0; i<numberHooks; i++){
+        for (int i = 0; i < numberHooks; i++) {
             WebhookGithubDto repoGithubDto = new WebhookGithubDto();
             repoGithubDto.setId("" + i);
             repoGithubDto.setName("repo " + i);
-            
-            if(numberActiveHooks > 0){
+
+            if (numberActiveHooks > 0) {
                 repoGithubDto.setActive(true);
-                numberActiveHooks --;
-            }else{
+                numberActiveHooks--;
+            } else {
                 repoGithubDto.setActive(false);
             }
 
-            if(nHooksWithEvents > 0){
+            if (nHooksWithEvents > 0) {
                 repoGithubDto.setEvents(GithubEvent.getAllEventsList());
-                nHooksWithEvents --;
+                nHooksWithEvents--;
             }
-            
-            if(hooksWithUrl > 0){
+
+            if (hooksWithUrl > 0) {
                 repoGithubDto.setUrl(cxFlowUrl);
-                hooksWithUrl --;
-            }else{
+                hooksWithUrl--;
+            } else {
                 repoGithubDto.setUrl("invalid");
             }
 
@@ -205,23 +206,23 @@ public class getReposApi {
     private List<WebhookGitLabDto> prepareGitlabWebhooksResult() {
         List<WebhookGitLabDto> webhookGitlabDtos = new LinkedList<>();
 
-        for (int i=0; i<numberHooks; i++){
+        for (int i = 0; i < numberHooks; i++) {
             WebhookGitLabDto webhookGitLabDto = new WebhookGitLabDto();
             webhookGitLabDto.setId("" + i);
 
-            if(nHooksWithEvents == 0){
+            if (nHooksWithEvents == 0) {
                 webhookGitLabDto.setPush_events(false);
                 webhookGitLabDto.setMerge_requests_events(false);
             }
-            if(nHooksWithEvents > 0){
+            if (nHooksWithEvents > 0) {
                 webhookGitLabDto.setPush_events(true);
                 webhookGitLabDto.setMerge_requests_events(true);
                 nHooksWithEvents--;
             }
-            if(hooksWithUrl > 0){
+            if (hooksWithUrl > 0) {
                 webhookGitLabDto.setUrl(cxFlowUrl);
-                hooksWithUrl --;
-            }else{
+                hooksWithUrl--;
+            } else {
                 webhookGitLabDto.setUrl("invalid");
             }
 
@@ -229,10 +230,10 @@ public class getReposApi {
         }
         return webhookGitlabDtos;
     }
-    
+
     private ResponseEntity<RepoGithubDto[]> prepareGithubReposResult() {
         RepoGithubDto[] listGithub = new RepoGithubDto[numberRepos];
-        for (int i=0; i<numberRepos; i++){
+        for (int i = 0; i < numberRepos; i++) {
             RepoGithubDto repoGithubDto = new RepoGithubDto();
             repoGithubDto.setId("" + i);
             repoGithubDto.setName("repo " + i);
@@ -243,7 +244,7 @@ public class getReposApi {
 
     private ResponseEntity<RepoGitlabDto[]> prepareGitlabReposResult() {
         RepoGitlabDto[] repoGitlabDtos = new RepoGitlabDto[numberRepos];
-        for (int i=0; i<numberRepos; i++){
+        for (int i = 0; i < numberRepos; i++) {
             RepoGitlabDto repoGithubDto = new RepoGitlabDto();
             repoGithubDto.setId("" + i);
             repoGithubDto.setName("repo " + i);
@@ -255,12 +256,12 @@ public class getReposApi {
     @Then("repositories list returned by CxIntegration will be {int}")
     public void repositoriesListReturnedByCxIntegrationWillBeN_repos(int numExpectedRepos) {
 
-        if(scmType.equals(GITHUB)) {
+        if (scmType.equals(GITHUB)) {
             githubReposMockResult = prepareGithubReposResult();
             githubWebhooksMockResult = prepareGithubWebhooksResult();
             apiResult = gitHubService.getScmOrgRepos(ORG_ID);
         }
-        if(scmType.equals(GITLAB)) {
+        if (scmType.equals(GITLAB)) {
             gitlabReposMockResult = prepareGitlabReposResult();
             gitlabWebhooksMockResult = prepareGitlabWebhooksResult();
             apiResult = gitLabService.getScmOrgRepos(ORG_ID);
@@ -272,15 +273,13 @@ public class getReposApi {
     @And("number of effective hooks will be {int}")
     public void numberOfEffectiveHooksWillBeN_effective_hooks(Integer n_effective_hooks) {
         int countWebhooks = 0;
-        for (RepoWebDto currResult: apiResult) {
-            if(currResult.isWebhookEnabled()){
-                countWebhooks ++;
+        for (RepoWebDto currResult : apiResult) {
+            if (currResult.isWebhookEnabled()) {
+                countWebhooks++;
             }
         }
         Assert.assertEquals(n_effective_hooks.intValue(), countWebhooks);
     }
-
-
 
 
 }

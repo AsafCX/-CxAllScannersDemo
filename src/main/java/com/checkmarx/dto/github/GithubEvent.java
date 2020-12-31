@@ -10,12 +10,12 @@ import java.util.List;
 @Getter
 public enum GithubEvent {
     
-    PULL_REQEUST("pull_request"),
+    PULL_REQUEST("pull_request"),
     PUSH( "push");
 
     private String type;
     
     public static List<String> getAllEventsList(){
-        return Arrays.asList(PULL_REQEUST.type,PUSH.type);
+        return Arrays.asList(PULL_REQUEST.type,PUSH.type);
     }
 }

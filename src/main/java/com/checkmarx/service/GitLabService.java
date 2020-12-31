@@ -55,6 +55,10 @@ public class GitLabService extends AbstractScmService implements ScmService  {
 
     private static final String TOKEN_REQUEST_USER_AGENT = "CxIntegrations";
 
+    public GitLabService(RestWrapper restWrapper, DataService dataStoreService) {
+        super(restWrapper, dataStoreService);
+    }
+
 
     @Override
     public String getScopes() {

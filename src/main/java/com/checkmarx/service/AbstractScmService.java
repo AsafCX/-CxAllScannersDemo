@@ -10,6 +10,7 @@ import com.checkmarx.dto.datastore.OrgPropertiesDto;
 import com.checkmarx.utils.AccessTokenManager;
 import com.checkmarx.utils.RestWrapper;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,19 +24,18 @@ import java.util.List;
 
 @Slf4j
 @Service("AbstractScmService")
+@RequiredArgsConstructor
 public abstract class AbstractScmService {
-
-    @Autowired
-    RestWrapper restWrapper;
-
-    @Autowired
-    DataService dataStoreService;
+    
+    protected final RestWrapper restWrapper;
+    
+    protected final DataService dataStoreService;
     
     @Value("${redirect.url}")
     private String redirectUrl;
 
     @Value("${cxflow.webhook.url}")
-    protected String cxFlowUrl;
+    private String cxFlowUrl;
     
     
     /**
@@ -50,7 +50,7 @@ public abstract class AbstractScmService {
         return accessToken != null && accessToken.getAccessToken() != null && !accessToken.getAccessToken().isEmpty();
     }
 
-    protected String getCxFlowUrl() {
+    public String getCxFlowUrl() {
         return trimNonEmptyString("Cxflow URL", cxFlowUrl);
 
     }
@@ -124,9 +124,9 @@ public abstract class AbstractScmService {
     }
 
     
-    public void init(RestWrapper restWrapper,DataService dataStoreService, String cxFlowUrl){
-        this.restWrapper = restWrapper;
-        this.dataStoreService = dataStoreService;
-        this.cxFlowUrl = cxFlowUrl;
-    }
+//    public AbstractScmService(RestWrapper restWrapper,DataService dataStoreService){
+//        this.restWrapper = restWrapper;
+//        this.dataStoreService = dataStoreService;
+//        //this.cxFlowUrl = cxFlowUrl;
+//    }
 }

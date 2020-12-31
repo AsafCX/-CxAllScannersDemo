@@ -12,8 +12,8 @@ import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.utils.AccessTokenManager;
 import com.checkmarx.utils.Converter;
 import com.checkmarx.utils.RestWrapper;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.HttpMethod;
@@ -51,6 +51,10 @@ public class GitHubService extends AbstractScmService implements ScmService {
     private static final String SCOPES = "repo,admin:repo_hook,read:org,read:user";
 
     private static final String INVALID_TOKEN = "Github token validation failure";
+
+    public GitHubService(RestWrapper restWrapper, DataService dataStoreService) {
+        super(restWrapper, dataStoreService);
+    }
 
 
     @Override
