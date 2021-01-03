@@ -13,7 +13,6 @@ import com.checkmarx.utils.AccessTokenManager;
 import com.checkmarx.utils.Converter;
 import com.checkmarx.utils.RestWrapper;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.HttpMethod;
@@ -35,18 +34,19 @@ public class GitHubService extends AbstractScmService implements ScmService {
     private static final String URL_GENERATE_TOKEN = "https://github.com/login/oauth/access_token" +
             "?client_id=%s&client_secret=%s&code=%s";
 
-    private static final String URL_GET_ORGANIZATIONS = "https://api.github.com/user/orgs";
+    private static final String GITHUB_BASE_URL = "https://api.github.com";
+    private static final String URL_GET_ORGANIZATIONS = GITHUB_BASE_URL + "/user/orgs";
 
     public static final String URL_GET_REPOS = "https://api.github" +
             ".com/orgs/%s/repos?type=all&per_page=100";
     
-    private static final String URL_WEBHOOK_OPERATION = "https://api.github.com/repos/%s/%s/hooks";
+    private static final String URL_WEBHOOK_OPERATION = GITHUB_BASE_URL + "/repos/%s/%s/hooks";
     
-    private static final String URL_DELETE_WEBHOOK = "https://api.github.com/repos/%s/%s/hooks/%s";
+    private static final String URL_DELETE_WEBHOOK = GITHUB_BASE_URL + "/repos/%s/%s/hooks/%s";
 
-    private static final String URL_VALIDATE_TOKEN = "https://api.github.com/user";
+    private static final String URL_VALIDATE_TOKEN = GITHUB_BASE_URL + "/user";
 
-    private static final String GIT_HUB_URL = "github.com";
+    private static final String GIT_HUB_DB_KEY = "github.com";
     
     private static final String SCOPES = "repo,admin:repo_hook,read:org,read:user";
 
@@ -220,7 +220,7 @@ public class GitHubService extends AbstractScmService implements ScmService {
 
     @Override
     public String getBaseDbKey() {
-        return GIT_HUB_URL;
+        return GIT_HUB_DB_KEY;
     }
 
 

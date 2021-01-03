@@ -23,7 +23,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import java.util.List;
 
 @Slf4j
-@Service("AbstractScmService")
+@Service
 @RequiredArgsConstructor
 public abstract class AbstractScmService {
     
@@ -122,11 +122,5 @@ public abstract class AbstractScmService {
 
         dataStoreService.updateWebhook(repoId, accessTokenWrapper.getDbDto(), null, false);
     }
-
     
-//    public AbstractScmService(RestWrapper restWrapper,DataService dataStoreService){
-//        this.restWrapper = restWrapper;
-//        this.dataStoreService = dataStoreService;
-//        //this.cxFlowUrl = cxFlowUrl;
-//    }
 }

@@ -197,16 +197,8 @@ public class BitbucketService extends AbstractScmService implements ScmService  
 
         return (WebhookBitbucketDto)getActiveHook(webhookDtos.getElements());
     }
-
-    @Override
-    public String getCxFlowUrl() {
-        return trimNonEmptyString("Cxflow URL", getCxFlowUrl() + "?token=1234");
-
-    }
-
-
-
-
+    
+    
     /**
      * generateAccessToken method using OAuth code, client id and client secret generates access
      * token via GitHub api

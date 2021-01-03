@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,9 +51,9 @@ public class getReposApi {
     private GitHubService gitHubService ;
     private GitLabService gitLabService ;
     private String scmType;
-    private int numberRepos = 0;
-    private int numberHooks = 0;
-    private int numberActiveHooks = 0;
+    private int numberRepos;
+    private int numberHooks;
+    private int numberActiveHooks;
     private int nHooksWithEvents;
     private List<RepoWebDto> apiResult;
     private int hooksWithUrl;
@@ -211,12 +210,12 @@ public class getReposApi {
             webhookGitLabDto.setId("" + i);
 
             if (nHooksWithEvents == 0) {
-                webhookGitLabDto.setPush_events(false);
-                webhookGitLabDto.setMerge_requests_events(false);
+                webhookGitLabDto.setPushEvents(false);
+                webhookGitLabDto.setMergeRequestsEvents(false);
             }
             if (nHooksWithEvents > 0) {
-                webhookGitLabDto.setPush_events(true);
-                webhookGitLabDto.setMerge_requests_events(true);
+                webhookGitLabDto.setPushEvents(true);
+                webhookGitLabDto.setMergeRequestsEvents(true);
                 nHooksWithEvents--;
             }
             if (hooksWithUrl > 0) {

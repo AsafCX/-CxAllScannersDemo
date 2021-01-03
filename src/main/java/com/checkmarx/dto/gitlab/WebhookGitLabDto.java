@@ -1,7 +1,5 @@
 package com.checkmarx.dto.gitlab;
 
-import com.checkmarx.dto.BaseDto;
-import com.checkmarx.dto.IDto;
 import com.checkmarx.dto.IWebhookDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -20,11 +18,13 @@ public @Data class WebhookGitLabDto  implements IWebhookDto {
     private String url;
     @JsonProperty("project_id")
     private Boolean projectId;
-    private boolean push_events = true;
-    private boolean merge_requests_events = true;
+    @JsonProperty("push_events")
+    private boolean pushEvents = true;
+    @JsonProperty("merge_requests_events")
+    private boolean mergeRequestsEvents = true;
 
     @Override
-    public boolean isPushOrPull(){ return push_events || merge_requests_events;}
+    public boolean isPushOrPull(){ return pushEvents || mergeRequestsEvents;}
     
     @Override
     public boolean isActive() {
