@@ -86,19 +86,10 @@ public class GitLabService extends AbstractScmService implements ScmService  {
         String accessToken = tokenInfo.getAccessToken();
 
         RepoGitlabDto[] reposFromGitlab = getReposFromGitLab(orgId, accessToken);
-
         OrgReposDto reposForDataStore = getReposForDataStore(accessToken, reposFromGitlab, orgId);
-
         dataStoreService.updateScmOrgRepo(reposForDataStore);
 
         return getReposForWebClient(reposForDataStore);
-    }
-
-    private List<RepoWebDto> getReposForWebClient(OrgReposDto reposForDataStore) {
-        return reposForDataStore.getRepoList()
-                .stream()
-                .map(toRepoForWebClient())
-                .collect(Collectors.toList());
     }
 
     private OrgReposDto getReposForDataStore(String accessToken, RepoGitlabDto[] reposFromGitlab, String orgId) {
@@ -113,21 +104,15 @@ public class GitLabService extends AbstractScmService implements ScmService  {
                 .build();
     }
 
-    private Function<RepoDto, RepoWebDto> toRepoForWebClient() {
-        return repo -> RepoWebDto.builder()
-                .id(repo.getRepoIdentity())
-                .name(repo.getName())
-                .webhookEnabled(repo.isWebhookConfigured())
-                .webhookId(repo.getWebhookId())
-                .build();
-    }
-
     private Function<RepoGitlabDto, RepoDto> toRepoForDataStore(String accessToken) {
         return (RepoGitlabDto repo) -> {
             RepoDto repoForDataStore = new RepoDto();
             repoForDataStore.setRepoIdentity(repo.getId());
             repoForDataStore.setName(normalizeName(repo.getName()));
-            setWebhookRelatedFields(repo.getId(), accessToken, repoForDataStore);
+
+            WebhookGitLabDto webhook = getRepositoryCxFlowWebhook(repo.getId(), accessToken);
+            setWebhookRelatedFields(webhook, repoForDataStore);
+
             return repoForDataStore;
         };
     }
@@ -142,16 +127,6 @@ public class GitLabService extends AbstractScmService implements ScmService  {
             result = StringUtils.substringAfter(result, SEPARATOR);
         }
         return result.trim();
-    }
-
-    private void setWebhookRelatedFields(String repoId, String accessToken, RepoDto target) {
-        WebhookGitLabDto webhook = getRepositoryCxFlowWebhook(repoId, accessToken);
-        if (webhook != null) {
-            target.setWebhookConfigured(true);
-            target.setWebhookId(webhook.getId());
-        } else {
-            target.setWebhookConfigured(false);
-        }
     }
 
     private RepoGitlabDto[] getReposFromGitLab(String orgId, String accessToken) {
@@ -361,6 +336,4 @@ public class GitLabService extends AbstractScmService implements ScmService  {
                              oAuthCode,
                              getRedirectUrl());
     }
-
-
 }

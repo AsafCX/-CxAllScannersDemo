@@ -1,31 +1,27 @@
 package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
-import com.checkmarx.dto.github.*;
 import com.checkmarx.dto.BaseDto;
-
-import com.checkmarx.dto.IRepoDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
+import com.checkmarx.dto.github.*;
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.utils.AccessTokenManager;
-import com.checkmarx.utils.Converter;
 import com.checkmarx.utils.RestWrapper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -67,34 +63,14 @@ public class GitHubService extends AbstractScmService implements ScmService {
 
     @Override
     public List<RepoWebDto> getScmOrgRepos(@NonNull String orgId) {
+        TokenInfoDto tokenInfo = tokenService.getTokenInfo(getBaseDbKey(), orgId);
+        String accessToken = tokenInfo.getAccessToken();
 
-        AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
+        RepoGithubDto[] reposFromGitHub = getReposFromGitHub(orgId, accessToken);
+        OrgReposDto reposForDataStore = getReposForDataStore(accessToken, reposFromGitHub, orgId);
+        dataStoreService.updateScmOrgRepo(reposForDataStore);
 
-        String path = String.format(URL_GET_REPOS, orgId);
-        ResponseEntity<RepoGithubDto[]> response =  restWrapper
-                .sendBearerAuthRequest(path, HttpMethod.GET,
-                                       null, null,
-                                       RepoGithubDto[].class, accessTokenWrapper.getAccessTokenStr());
-        ArrayList<RepoGithubDto> orgRepoGithubDtos = new ArrayList<>(Arrays.asList(
-                Objects.requireNonNull(response.getBody())));
-
-        List<IRepoDto> outputDTOs =  new ArrayList<>();
-        for (IRepoDto repoDto : orgRepoGithubDtos) {
-            try {
-                WebhookGithubDto webhookDto = getRepositoryCxFlowWebhook(orgId, repoDto.getName(),
-                        accessTokenWrapper.getAccessTokenStr());
-                setWebhookDetails(repoDto, webhookDto);
-                outputDTOs.add(repoDto);
-            } catch (HttpClientErrorException ex){
-                if(ex.getStatusCode().equals(HttpStatus.NOT_FOUND)){
-                    log.info("User can't access repository '{}' webhook settings",
-                            repoDto.getName());
-                }
-            }
-        }
-        OrgReposDto orgReposDto = Converter.convertToOrgRepoDto(accessTokenWrapper.getDbDto(), outputDTOs);
-        dataStoreService.updateScmOrgRepo(orgReposDto);
-        return Converter.convertToListRepoWebDto(outputDTOs);
+        return getReposForWebClient(reposForDataStore);
     }
 
     @Override
@@ -120,6 +96,56 @@ public class GitHubService extends AbstractScmService implements ScmService {
                               @NonNull String deleteUrl) {
         String path = String.format(URL_DELETE_WEBHOOK, orgId, repoId, deleteUrl);
         super.deleteWebhook(orgId, repoId, path, WebhookGithubDto.class);
+    }
+
+    @Override
+    public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId) {
+        AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
+
+        CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgId, accessTokenWrapper.getAccessTokenStr());
+        validateCxFlowConfig(cxFlowConfigDto);
+        return cxFlowConfigDto;
+    }
+
+    private OrgReposDto getReposForDataStore(String accessToken, RepoGithubDto[] reposFromGitHub, String orgId) {
+        List<RepoDto> repos = Arrays.stream(reposFromGitHub)
+                .map(toRepoForDataStore(orgId, accessToken))
+                .collect(Collectors.toList());
+
+        return OrgReposDto.builder()
+                .orgIdentity(orgId)
+                .scmUrl(getBaseDbKey())
+                .repoList(repos)
+                .build();
+    }
+
+    private Function<RepoGithubDto, RepoDto> toRepoForDataStore(String orgId, String accessToken) {
+        return (RepoGithubDto repo) -> {
+            RepoDto repoForDataStore = new RepoDto();
+            repoForDataStore.setRepoIdentity(repo.getId());
+            repoForDataStore.setName(repo.getName());
+
+            try {
+                WebhookGithubDto webhook = getRepositoryCxFlowWebhook(orgId, repo.getName(), accessToken);
+                setWebhookRelatedFields(webhook, repoForDataStore);
+            } catch (HttpClientErrorException ex) {
+                if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                    log.info("User can't access repository '{}' webhook settings",
+                            repo.getName());
+                }
+            }
+
+            return repoForDataStore;
+        };
+    }
+
+    private RepoGithubDto[] getReposFromGitHub(String orgId, String accessToken) {
+        String url = String.format(URL_GET_REPOS, orgId);
+
+        ResponseEntity<RepoGithubDto[]> response = restWrapper.sendBearerAuthRequest(
+                url, HttpMethod.GET, null, null, RepoGithubDto[].class, accessToken);
+
+        return Objects.requireNonNull(response.getBody());
     }
 
     private List<OrganizationWebDto> getAndStoreOrganizations(String accessToken, long tokenId) {
@@ -160,15 +186,6 @@ public class GitHubService extends AbstractScmService implements ScmService {
                 .build();
     }
 
-    @Override
-    public CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId) {
-        AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
-
-        CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgId, accessTokenWrapper.getAccessTokenStr());
-        validateCxFlowConfig(cxFlowConfigDto);
-        return cxFlowConfigDto;
-    }
-
     private void validateCxFlowConfig(CxFlowConfigDto cxFlowConfigDto) {
         if(StringUtils.isAnyEmpty(cxFlowConfigDto.getScmAccessToken(), cxFlowConfigDto.getTeam(),
                                   cxFlowConfigDto.getCxgoToken())) {
@@ -196,16 +213,24 @@ public class GitHubService extends AbstractScmService implements ScmService {
     }
 
     private WebhookGithubDto getRepositoryCxFlowWebhook(@NonNull String orgName, @NonNull String repoName,
-                                                        @NonNull String accessToken){
+                                                        @NonNull String accessToken) {
+        WebhookGithubDto result = null;
         String path = String.format(URL_WEBHOOK_OPERATION, orgName, repoName);
-        ResponseEntity<WebhookGithubDto[]> response =  restWrapper
-                .sendBearerAuthRequest(path, HttpMethod.GET,
-                                       null, null,
-                                       WebhookGithubDto[].class, accessToken);
-        ArrayList<WebhookGithubDto> webhookDtos = new ArrayList<>(Arrays.asList(
-                Objects.requireNonNull(response.getBody())));
+        try {
+            ResponseEntity<WebhookGithubDto[]> response = restWrapper
+                    .sendBearerAuthRequest(path, HttpMethod.GET,
+                            null, null,
+                            WebhookGithubDto[].class, accessToken);
 
-        return (WebhookGithubDto)getActiveHook(webhookDtos);
+            List<WebhookGithubDto> webhooks = Arrays.asList(Objects.requireNonNull(response.getBody()));
+
+            result = (WebhookGithubDto) getActiveHook(webhooks);
+        } catch (HttpClientErrorException ex) {
+            if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                log.info("User can't access repository '{}' webhook settings", repoName);
+            }
+        }
+        return result;
     }
 
     /**

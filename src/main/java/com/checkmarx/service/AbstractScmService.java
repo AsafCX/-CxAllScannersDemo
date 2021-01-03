@@ -5,9 +5,8 @@ import com.checkmarx.dto.AccessTokenDto;
 import com.checkmarx.dto.IRepoDto;
 import com.checkmarx.dto.IWebhookDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
-import com.checkmarx.dto.datastore.OrgPropertiesDto;
-import com.checkmarx.dto.datastore.RepoDto;
-import com.checkmarx.dto.datastore.TokenInfoDto;
+import com.checkmarx.dto.datastore.*;
+import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.utils.RestWrapper;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -67,6 +68,7 @@ public abstract class AbstractScmService {
         return strValue.trim();
     }
 
+    // TODO: remove after the migrations.
     protected void setWebhookDetails(IRepoDto repoDto, IWebhookDto webhookDto) {
         if(webhookDto != null) {
             repoDto.setWebHookEnabled(true);
@@ -126,5 +128,30 @@ public abstract class AbstractScmService {
                 .webhookId(null)
                 .build();
         dataStoreService.updateRepo2(getBaseDbKey(), orgId, repo);
+    }
+
+    protected static void setWebhookRelatedFields(IWebhookDto webhook, RepoDto target) {
+        if (webhook != null) {
+            target.setWebhookConfigured(true);
+            target.setWebhookId(webhook.getId());
+        } else {
+            target.setWebhookConfigured(false);
+        }
+    }
+
+    protected static List<RepoWebDto> getReposForWebClient(OrgReposDto reposForDataStore) {
+        return reposForDataStore.getRepoList()
+                .stream()
+                .map(toRepoForWebClient())
+                .collect(Collectors.toList());
+    }
+
+    private static Function<RepoDto, RepoWebDto> toRepoForWebClient() {
+        return repo -> RepoWebDto.builder()
+                .id(repo.getRepoIdentity())
+                .name(repo.getName())
+                .webhookEnabled(repo.isWebhookConfigured())
+                .webhookId(repo.getWebhookId())
+                .build();
     }
 }
