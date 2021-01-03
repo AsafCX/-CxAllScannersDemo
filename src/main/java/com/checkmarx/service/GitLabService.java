@@ -55,6 +55,10 @@ public class GitLabService extends AbstractScmService implements ScmService  {
 
     private static final String TOKEN_REQUEST_USER_AGENT = "CxIntegrations";
 
+    public GitLabService(RestWrapper restWrapper, DataService dataStoreService) {
+        super(restWrapper, dataStoreService);
+    }
+
 
     @Override
     public String getScopes() {
@@ -130,7 +134,7 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     private List<OrganizationWebDto> getAndStoreOrganizations(AccessTokenGitlabDto tokenResponse) {
         List<GroupGitlabDto> groups = getUserGroups(tokenResponse.getAccessToken());
 
-        String tokenResponseJson = Converter.convertObjectToJson(tokenResponse);
+        String tokenResponseJson = AccessTokenManager.convertObjectToJson(tokenResponse);
 
         List<OrgDto> dataStoreOrgs = toDataStoreOrganizations(groups, tokenResponseJson);
         dataStoreService.storeOrgs(dataStoreOrgs);

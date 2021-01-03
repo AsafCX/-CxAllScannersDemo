@@ -57,8 +57,11 @@ public class BitbucketService extends AbstractScmService implements ScmService  
 
     private static final String URL_VALIDATE_TOKEN = BASE_API_URL + API_VERSION + "/user";
 
-    
-    
+    public BitbucketService(RestWrapper restWrapper, DataService dataStoreService) {
+        super(restWrapper, dataStoreService);
+    }
+
+
     @Override
     public String getScopes() {
         return SCOPES;
@@ -145,7 +148,7 @@ public class BitbucketService extends AbstractScmService implements ScmService  
                 restWrapper.sendBearerAuthRequest(URL_GET_WORKSPACES, HttpMethod.GET, null, null,
                         BitbucketBaseListDto.class, token.getAccessToken());
         List<BitbucketBase> organizationWebDtos = response.getBody().getElements();
-        String tokenJson = Converter.convertObjectToJson(token);
+        String tokenJson = AccessTokenManager.convertObjectToJson(token);
         List<OrgDto> orgDtos =
                 Converter.convertToListOrg(tokenJson, organizationWebDtos, getBaseDbKey());
         dataStoreService.storeOrgs(orgDtos);
@@ -194,16 +197,8 @@ public class BitbucketService extends AbstractScmService implements ScmService  
 
         return (WebhookBitbucketDto)getActiveHook(webhookDtos.getElements());
     }
-
-    @Override
-    protected String getCxFlowUrl() {
-        return trimNonEmptyString("Cxflow URL", cxFlowUrl + "?token=1234");
-
-    }
-
-
-
-
+    
+    
     /**
      * generateAccessToken method using OAuth code, client id and client secret generates access
      * token via GitHub api

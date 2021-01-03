@@ -12,7 +12,7 @@ import java.util.Optional;
 public class MiniOrgStore {
     private final List<OrgPropertiesDto> orgs = new ArrayList<>();
 
-    private final String existingScmForTestPurposes = (new GitHubService()).getBaseDbKey();
+    private final String existingScmForTestPurposes = (new GitHubService(null,null)).getBaseDbKey();
 
     public MiniOrgStore() {
         log.info("Created a {} instance.", this.getClass().getSimpleName());

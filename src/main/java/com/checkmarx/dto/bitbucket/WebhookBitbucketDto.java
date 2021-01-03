@@ -53,8 +53,8 @@ public @Data class WebhookBitbucketDto implements IWebhookDto {
 
         return events != null
                 && (events.contains(BitBucketEvent.CREATE_PULL_REQEUST.getType())
-                || events.equals(AzureEvent.UPDATE_PULL_REQEUST.getType())
-                || events.equals(AzureEvent.PUSH.getType()));
+                || events.contains(BitBucketEvent.UPDATE_PULL_REQEUST.getType())
+                || events.contains(BitBucketEvent.PUSH.getType()));
     }
 }
 
