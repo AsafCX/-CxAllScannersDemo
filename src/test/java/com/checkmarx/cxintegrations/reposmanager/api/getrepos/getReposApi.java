@@ -265,8 +265,8 @@ public class getReposApi {
             gitlabWebhooksMockResult = prepareGitlabWebhooksResult();
             apiResult = gitLabService.getScmOrgRepos(ORG_ID);
         }
-
-        Assert.assertEquals(numExpectedRepos, apiResult.size());
+        log.info(scmType + ": Validating get repos count");
+        Assert.assertEquals(scmType + ": Validating get repos count: "+ numExpectedRepos + " vs " + apiResult.size(), numExpectedRepos, apiResult.size());
     }
 
     @And("number of effective hooks will be {int}")
@@ -277,7 +277,8 @@ public class getReposApi {
                 countWebhooks++;
             }
         }
-        Assert.assertEquals(n_effective_hooks.intValue(), countWebhooks);
+        log.info(scmType + ": Validating effective hooks count");
+        Assert.assertEquals(scmType + ": Validating effective hooks count: "+ n_effective_hooks.intValue() + " vs " + countWebhooks, n_effective_hooks.intValue(), countWebhooks);
     }
 
 
