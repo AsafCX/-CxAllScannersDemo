@@ -16,11 +16,16 @@ public @Data class WebhookGitLabDto  implements IWebhookDto {
 
     private String id;
     private String url;
+
     @JsonProperty("project_id")
     private Boolean projectId;
+
     @JsonProperty("push_events")
+    @Builder.Default
     private boolean pushEvents = true;
+
     @JsonProperty("merge_requests_events")
+    @Builder.Default
     private boolean mergeRequestsEvents = true;
 
     @Override
