@@ -60,8 +60,8 @@ public class AzureService extends AbstractScmService implements ScmService  {
     private static final String AZURE_CONSUMER_USERNAME = "cxflow";
     private static final String AZURE_CONSUMER_PASSWORD = "1234";
 
-    public AzureService(RestWrapper restWrapper, DataService dataStoreService) {
-        super(restWrapper, dataStoreService);
+    public AzureService(RestWrapper restWrapper, DataService dataStoreService, AccessTokenService tokenService) {
+        super(restWrapper, dataStoreService, tokenService);
     }
 
 
@@ -218,7 +218,7 @@ public class AzureService extends AbstractScmService implements ScmService  {
             if (cxFlowHooks.containsKey(repository.getId())) {
                 List<String> listHooks = cxFlowHooks.get(repository.getId());
                 BaseDto multipleHookId = new BaseDto();
-                listHooks.stream().forEach(id -> multipleHookId.join(id));
+                listHooks.stream().forEach(multipleHookId::join);
                 repository.setWebHookEnabled(true);
                 repository.setWebhookId(multipleHookId.getId());
             }

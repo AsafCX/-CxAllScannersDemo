@@ -57,8 +57,8 @@ public class BitbucketService extends AbstractScmService implements ScmService  
 
     private static final String URL_VALIDATE_TOKEN = BASE_API_URL + API_VERSION + "/user";
 
-    public BitbucketService(RestWrapper restWrapper, DataService dataStoreService) {
-        super(restWrapper, dataStoreService);
+    public BitbucketService(RestWrapper restWrapper, DataService dataStoreService, AccessTokenService tokenService) {
+        super(restWrapper, dataStoreService, tokenService);
     }
 
 
@@ -105,14 +105,14 @@ public class BitbucketService extends AbstractScmService implements ScmService  
         AccessTokenManager accessTokenManager = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
         String path = String.format(URL_CREATE_WEBHOOK, orgId, repoId) ;
          ResponseEntity<WebhookBitbucketDto> response =  restWrapper.sendBearerAuthRequest(path, HttpMethod.POST,
-                 getHookDto(repoId), null, WebhookBitbucketDto.class, accessTokenManager.getAccessTokenStr());
+                 getHookDto(), null, WebhookBitbucketDto.class, accessTokenManager.getAccessTokenStr());
         WebhookBitbucketDto webhookDto = response.getBody();
         validateWebhookDto(webhookDto);
         dataStoreService.updateWebhook(repoId, accessTokenManager.getDbDto(), webhookDto.getId(), true);
         return new BaseDto(webhookDto.getId());
     }
 
-    private WebhookBitbucketDto getHookDto(String repoId) {
+    private WebhookBitbucketDto getHookDto() {
 
         WebhookBitbucketDto hookdto = new WebhookBitbucketDto();
 

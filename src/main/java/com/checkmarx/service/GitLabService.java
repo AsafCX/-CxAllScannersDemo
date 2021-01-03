@@ -5,12 +5,10 @@ import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.gitlab.*;
-import com.checkmarx.dto.datastore.TokenInfoDto;
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
-import com.checkmarx.utils.*;
+import com.checkmarx.utils.RestWrapper;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
@@ -60,10 +58,8 @@ public class GitLabService extends AbstractScmService implements ScmService  {
 
     private static final String MISSING_DATA = "CxFlow configuration settings validation failure: missing data.";
 
-    private final AccessTokenService tokenService;
-
-    public GitLabService(RestWrapper restWrapper, DataService dataStoreService) {
-        super(restWrapper, dataStoreService);
+    public GitLabService(RestWrapper restWrapper, DataService dataStoreService, AccessTokenService tokenService) {
+        super(restWrapper, dataStoreService, tokenService);
     }
 
 

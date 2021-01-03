@@ -52,8 +52,8 @@ public class GitHubService extends AbstractScmService implements ScmService {
 
     private static final String INVALID_TOKEN = "Github token validation failure";
 
-    public GitHubService(RestWrapper restWrapper, DataService dataStoreService) {
-        super(restWrapper, dataStoreService);
+    public GitHubService(RestWrapper restWrapper, DataService dataStoreService, AccessTokenService tokenService) {
+        super(restWrapper, dataStoreService, tokenService);
     }
 
 

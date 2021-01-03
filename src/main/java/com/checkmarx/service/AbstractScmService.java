@@ -13,7 +13,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -31,7 +30,7 @@ public abstract class AbstractScmService {
 
     protected final DataService dataStoreService;
 
-    private final AccessTokenService tokenService;
+    protected final AccessTokenService tokenService;
 
     @Value("${redirect.url}")
     private String redirectUrl;

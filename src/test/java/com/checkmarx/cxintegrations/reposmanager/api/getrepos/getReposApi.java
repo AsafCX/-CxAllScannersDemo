@@ -8,9 +8,7 @@ import com.checkmarx.dto.github.WebhookGithubDto;
 import com.checkmarx.dto.gitlab.RepoGitlabDto;
 import com.checkmarx.dto.gitlab.WebhookGitLabDto;
 import com.checkmarx.dto.web.RepoWebDto;
-import com.checkmarx.service.DataService;
-import com.checkmarx.service.GitHubService;
-import com.checkmarx.service.GitLabService;
+import com.checkmarx.service.*;
 import com.checkmarx.utils.RestWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.cucumber.java.en.And;
@@ -50,6 +48,7 @@ public class getReposApi {
     private DataService dataService = mock(DataService.class);
     private GitHubService gitHubService ;
     private GitLabService gitLabService ;
+    private final AccessTokenService tokenService;
     private String scmType;
     private int numberRepos;
     private int numberHooks;
@@ -64,8 +63,8 @@ public class getReposApi {
 
 
     private void initMocks() {
-        gitHubService = spy(new GitHubService(restWrapper, dataService));
-        gitLabService = spy(new GitLabService(restWrapper, dataService));
+        gitHubService = spy(new GitHubService(restWrapper, dataService, tokenService));
+        gitLabService = spy(new GitLabService(restWrapper, dataService, tokenService));
         doReturn(cxFlowUrl).when(gitHubService).getCxFlowUrl();
         doReturn(cxFlowUrl).when(gitLabService).getCxFlowUrl();
 
@@ -278,7 +277,7 @@ public class getReposApi {
             }
         }
         log.info(scmType + ": Validating effective hooks count");
-        Assert.assertEquals(scmType + ": Validating effective hooks count: "+ n_effective_hooks.intValue() + " vs " + countWebhooks, n_effective_hooks.intValue(), countWebhooks);
+        Assert.assertEquals(scmType + ": Validating effective hooks count: "+ n_effective_hooks + " vs " + countWebhooks, n_effective_hooks.intValue(), countWebhooks);
     }
 
 
