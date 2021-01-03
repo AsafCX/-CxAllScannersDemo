@@ -54,7 +54,6 @@ public abstract class AbstractScmService {
 
     public String getCxFlowUrl() {
         return trimNonEmptyString("Cxflow URL", cxFlowUrl);
-
     }
 
     public String getRedirectUrl() {
@@ -105,7 +104,6 @@ public abstract class AbstractScmService {
         return null;
     }
 
-
     protected void deleteWebhook(@NonNull String orgId, @NonNull String repoId, String deleteUrl, Class<?> type) {
         TokenInfoDto tokenInfo = tokenService.getTokenInfo(getBaseDbKey(), orgId);
 
@@ -144,6 +142,16 @@ public abstract class AbstractScmService {
                 .stream()
                 .map(toRepoForWebClient())
                 .collect(Collectors.toList());
+    }
+
+    protected void storeNewWebhook(String orgId, String repoId, IWebhookDto webhook) {
+        RepoDto updateRepoRequest = RepoDto.builder()
+                .isWebhookConfigured(true)
+                .repoIdentity(repoId)
+                .webhookId(webhook.getId())
+                .build();
+
+        dataStoreService.updateRepo2(getBaseDbKey(), orgId, updateRepoRequest);
     }
 
     private static Function<RepoDto, RepoWebDto> toRepoForWebClient() {

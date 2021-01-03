@@ -2,6 +2,7 @@ package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.BaseDto;
+import com.checkmarx.dto.IWebhookDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.gitlab.*;
@@ -142,37 +143,19 @@ public class GitLabService extends AbstractScmService implements ScmService  {
     public BaseDto createWebhook(@NonNull String orgId, @NonNull String repoId) {
         TokenInfoDto tokenInfo = tokenService.getTokenInfo(getBaseDbKey(), orgId);
 
-        WebhookGitLabDto newWebhook = createWebhookInGitLab(repoId, tokenInfo.getAccessToken());
+        IWebhookDto newWebhook = createWebhookInScm(repoId, tokenInfo.getAccessToken());
         validateWebhookDto(newWebhook);
 
-        updateRepoInDataStore(orgId, repoId, newWebhook);
+        storeNewWebhook(orgId, repoId, newWebhook);
 
         return new BaseDto(newWebhook.getId());
-    }
-
-    private void updateRepoInDataStore(String orgId, String repoId, WebhookGitLabDto newWebhook) {
-        RepoDto updateRepoRequest = RepoDto.builder()
-                .isWebhookConfigured(true)
-                .repoIdentity(repoId)
-                .webhookId(newWebhook.getId())
-                .build();
-
-        dataStoreService.updateRepo2(getBaseDbKey(), orgId, updateRepoRequest);
-    }
-
-    private WebhookGitLabDto createWebhookInGitLab(String repoId, String accessToken) {
-        String path = String.format(URL_WEBHOOK, repoId, getCxFlowUrl(), "1234");
-        ResponseEntity<WebhookGitLabDto> response = restWrapper.sendBearerAuthRequest(path,
-                HttpMethod.POST, new WebhookGitLabDto(), null, WebhookGitLabDto.class, accessToken);
-
-        return Objects.requireNonNull(response.getBody(), "Missing webhook creation response.");
     }
 
     @Override
     public void deleteWebhook(@NonNull String orgId, @NonNull String repoId,
                               @NonNull String deleteUrl) {
         String path = String.format(URL_DELETE_WEBHOOK, repoId, deleteUrl);
-        super.deleteWebhook(orgId,repoId,path,WebhookGitLabDto.class);
+        super.deleteWebhook(orgId, repoId, path, WebhookGitLabDto.class);
     }
 
     @Override
@@ -184,6 +167,14 @@ public class GitLabService extends AbstractScmService implements ScmService  {
         ensureTokenIsValid(tokenInfo, result);
 
         return result;
+    }
+
+    private IWebhookDto createWebhookInScm(String repoId, String accessToken) {
+        String path = String.format(URL_WEBHOOK, repoId, getCxFlowUrl(), "1234");
+        ResponseEntity<WebhookGitLabDto> response = restWrapper.sendBearerAuthRequest(path,
+                HttpMethod.POST, new WebhookGitLabDto(), null, WebhookGitLabDto.class, accessToken);
+
+        return Objects.requireNonNull(response.getBody(), "Missing webhook creation response.");
     }
 
     private void ensureTokenIsValid(TokenInfoDto tokenInfo, CxFlowConfigDto targetConfig) {

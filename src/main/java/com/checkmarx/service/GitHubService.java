@@ -2,6 +2,7 @@ package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.BaseDto;
+import com.checkmarx.dto.IWebhookDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.github.*;
@@ -75,20 +76,14 @@ public class GitHubService extends AbstractScmService implements ScmService {
 
     @Override
     public BaseDto createWebhook(@NonNull String orgId, @NonNull String repoId) {
-        AccessTokenManager accessTokenWrapper = new AccessTokenManager(getBaseDbKey(), orgId, dataStoreService);
+        TokenInfoDto tokenInfo = tokenService.getTokenInfo(getBaseDbKey(), orgId);
 
-        String path = String.format(URL_WEBHOOK_OPERATION, orgId, repoId);
-        WebhookGithubDto webhookGithubDto = initWebhook();
-        ResponseEntity<WebhookGithubDto> response =  restWrapper
-                .sendBearerAuthRequest(path, HttpMethod.POST,
-                                       webhookGithubDto, null,
-                                       WebhookGithubDto.class,
-                                       accessTokenWrapper.getAccessTokenStr());
-        webhookGithubDto = Objects.requireNonNull(response.getBody());
-        validateWebhookDto(webhookGithubDto);
-        dataStoreService.updateWebhook(repoId, accessTokenWrapper.getDbDto(),webhookGithubDto.getId(), true);
+        IWebhookDto newWebhook = createWebhookInScm(orgId, repoId, tokenInfo.getAccessToken());
+        validateWebhookDto(newWebhook);
 
-        return new BaseDto(webhookGithubDto.getId());
+        storeNewWebhook(orgId, repoId, newWebhook);
+
+        return new BaseDto(newWebhook.getId());
     }
 
     @Override
@@ -105,6 +100,17 @@ public class GitHubService extends AbstractScmService implements ScmService {
         CxFlowConfigDto cxFlowConfigDto = getOrganizationSettings(orgId, accessTokenWrapper.getAccessTokenStr());
         validateCxFlowConfig(cxFlowConfigDto);
         return cxFlowConfigDto;
+    }
+
+    private IWebhookDto createWebhookInScm(String orgId, String repoId, String accessToken) {
+        String path = String.format(URL_WEBHOOK_OPERATION, orgId, repoId);
+        WebhookGithubDto webhookGithubDto = initWebhook();
+        ResponseEntity<WebhookGithubDto> response = restWrapper
+                .sendBearerAuthRequest(path, HttpMethod.POST,
+                        webhookGithubDto, null,
+                        WebhookGithubDto.class,
+                        accessToken);
+        return Objects.requireNonNull(response.getBody());
     }
 
     private OrgReposDto getReposForDataStore(String accessToken, RepoGithubDto[] reposFromGitHub, String orgId) {
