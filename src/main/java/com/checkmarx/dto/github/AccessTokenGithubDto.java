@@ -17,9 +17,8 @@ import lombok.EqualsAndHashCode;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AccessTokenGithubDto extends AccessTokenDto {
-
-    @JsonProperty("scope")
     private String scope;
+
     @JsonProperty("token_type")
     private String type;
 }

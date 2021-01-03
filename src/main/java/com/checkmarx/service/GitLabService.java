@@ -254,7 +254,7 @@ public class GitLabService extends AbstractScmService implements ScmService  {
         return Arrays.asList(Objects.requireNonNull(response.getBody()));
     }
 
-    private List<OrganizationWebDto> toOrganizationsForWebClient(List<GroupGitlabDto> gitlabOrgs) {
+    private static List<OrganizationWebDto> toOrganizationsForWebClient(List<GroupGitlabDto> gitlabOrgs) {
         return gitlabOrgs.stream()
                 .map(gitlabOrg -> OrganizationWebDto.builder()
                         .id(gitlabOrg.getPath())
