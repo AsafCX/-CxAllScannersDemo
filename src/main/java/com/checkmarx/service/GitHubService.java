@@ -240,12 +240,10 @@ public class GitHubService extends AbstractScmService implements ScmService {
     }
 
     /**
-     * generateAccessToken method using OAuth code, client id and client secret generates access
-     * token via GitHub api
+     * Exchanges a one-time OAuth code for an SCM access token using the SCM API.
      *
-     * @param authCode given from FE application after first-step OAuth implementation passed
-     *                  successfully, taken from request param "code", using it to create access token
-     * @return Access token given from GitHub
+     * @param authCode given from FE application after OAuth authorization is passed successfully.
+     * @return generated SCM access token.
      */
     private AccessTokenGithubDto generateAccessToken(String authCode) {
         ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());

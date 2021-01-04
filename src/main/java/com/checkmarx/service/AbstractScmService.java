@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public abstract class AbstractScmService {
+    private static final String MISSING_DATA = "CxFlow configuration settings validation failure: missing data.";
 
     protected final RestWrapper restWrapper;
 
@@ -161,5 +162,14 @@ public abstract class AbstractScmService {
                 .webhookEnabled(repo.isWebhookConfigured())
                 .webhookId(repo.getWebhookId())
                 .build();
+    }
+
+    protected static void validateFieldsArePresent(CxFlowConfigDto cxFlowConfigDto) {
+        if (StringUtils.isAnyEmpty(cxFlowConfigDto.getScmAccessToken(),
+                cxFlowConfigDto.getTeam(),
+                cxFlowConfigDto.getCxgoSecret())) {
+            log.error(MISSING_DATA);
+            throw new ScmException(MISSING_DATA);
+        }
     }
 }

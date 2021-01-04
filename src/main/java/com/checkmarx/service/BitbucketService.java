@@ -199,15 +199,6 @@ public class BitbucketService extends AbstractScmService implements ScmService  
         return (WebhookBitbucketDto)getActiveHook(webhookDtos.getElements());
     }
     
-    
-    /**
-     * generateAccessToken method using OAuth code, client id and client secret generates access
-     * token via GitHub api
-     *
-     * @param oAuthCode given from FE application after first-step OAuth implementation passed
-     *                  successfully, taken from request param "code", using it to create access token
-     * @return Access token given from GitHub
-     */
     private AccessTokenBitbucketDto generateAccessToken(String oAuthCode) {
         HttpHeaders headers = getAccessTokenHeaders();
         return sendGenerateAccessTokenRequest(URL_AUTH_TOKEN, headers, getBodyAccessToken(oAuthCode));

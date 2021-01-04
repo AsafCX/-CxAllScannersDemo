@@ -9,8 +9,6 @@ import lombok.NonNull;
 import java.util.List;
 
 public interface ScmService {
-
-
     List<OrganizationWebDto> getOrganizations(@NonNull String authCode);
     List<RepoWebDto> getScmOrgRepos(@NonNull String orgId);
     BaseDto createWebhook(@NonNull String orgId, @NonNull String repoId);
@@ -19,6 +17,4 @@ public interface ScmService {
     CxFlowConfigDto getCxFlowConfiguration(@NonNull String orgId);
     String getBaseDbKey();
     String getScopes();
-
-
 }

@@ -2,6 +2,7 @@ package com.checkmarx.service;
 
 import com.checkmarx.controller.exception.ScmException;
 import com.checkmarx.dto.BaseDto;
+import com.checkmarx.dto.IRepoDto;
 import com.checkmarx.dto.IWebhookDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
@@ -57,12 +58,9 @@ public class GitLabService extends AbstractScmService implements ScmService  {
 
     private static final String TOKEN_REQUEST_USER_AGENT = "CxIntegrations";
 
-    private static final String MISSING_DATA = "CxFlow configuration settings validation failure: missing data.";
-
     public GitLabService(RestWrapper restWrapper, DataService dataStoreService, AccessTokenService tokenService) {
         super(restWrapper, dataStoreService, tokenService);
     }
-
 
     @Override
     public String getScopes() {
@@ -105,8 +103,8 @@ public class GitLabService extends AbstractScmService implements ScmService  {
                 .build();
     }
 
-    private Function<RepoGitlabDto, RepoDto> toRepoForDataStore(String accessToken) {
-        return (RepoGitlabDto repo) -> {
+    private Function<IRepoDto, RepoDto> toRepoForDataStore(String accessToken) {
+        return (IRepoDto repo) -> {
             RepoDto repoForDataStore = new RepoDto();
             repoForDataStore.setRepoIdentity(repo.getId());
             repoForDataStore.setName(normalizeName(repo.getName()));
@@ -200,7 +198,9 @@ public class GitLabService extends AbstractScmService implements ScmService  {
                 .build();
 
         // Currently not used in code, but may be useful for diagnostics.
-        result.getAdditionalData().put("created_at", gitLabSpecificDto.getCreatedAt().toString());
+        if (gitLabSpecificDto.getCreatedAt() != null) {
+            result.getAdditionalData().put("created_at", gitLabSpecificDto.getCreatedAt().toString());
+        }
         return result;
     }
 
@@ -252,15 +252,6 @@ public class GitLabService extends AbstractScmService implements ScmService  {
         return result;
     }
 
-    private void validateFieldsArePresent(CxFlowConfigDto cxFlowConfigDto) {
-        if (StringUtils.isAnyEmpty(cxFlowConfigDto.getScmAccessToken(),
-                cxFlowConfigDto.getTeam(),
-                cxFlowConfigDto.getCxgoSecret())) {
-            log.error(MISSING_DATA);
-            throw new ScmException(MISSING_DATA);
-        }
-    }
-
     private String buildRefreshTokenApiPath(String refreshToken) {
         ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
         return String.format(URL_REFRESH_TOKEN, GRANT_TYPE, refreshToken,
@@ -279,15 +270,6 @@ public class GitLabService extends AbstractScmService implements ScmService  {
         return (WebhookGitLabDto) getActiveHook(webhookDtos);
     }
 
-
-    /**
-     * generateAccessToken method using OAuth code, client id and client secret generates access
-     * token via GitLab api
-     *
-     * @param authCode given from FE application after first-step OAuth implementation passed
-     *                  successfully, taken from request param "code", using it to create access token
-     * @return Access token given from GitLab
-     */
     private AccessTokenGitlabDto generateAccessToken(String authCode) {
         ScmDto scmDto = dataStoreService.getScm(getBaseDbKey());
 

@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * Compatibility layer between token representation in DataStore and ReposManager business logic.
+ * Compatibility layer between token representation in DataStore and the rest of the code that uses SCM access tokens.
  */
 @Service
 @Slf4j
