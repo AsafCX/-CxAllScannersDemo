@@ -7,6 +7,7 @@ import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.datastore.*;
 import com.checkmarx.dto.gitlab.WebhookGitLabDto;
 import com.checkmarx.dto.web.OrganizationWebDto;
+import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.utils.AccessTokenManager;
 import com.checkmarx.utils.RestWrapper;
 import lombok.NonNull;
@@ -21,6 +22,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.UnknownContentTypeException;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 

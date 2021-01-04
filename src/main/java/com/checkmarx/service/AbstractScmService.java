@@ -167,7 +167,7 @@ public abstract class AbstractScmService {
     protected static void validateFieldsArePresent(CxFlowConfigDto cxFlowConfigDto) {
         if (StringUtils.isAnyEmpty(cxFlowConfigDto.getScmAccessToken(),
                 cxFlowConfigDto.getTeam(),
-                cxFlowConfigDto.getCxgoSecret())) {
+                cxFlowConfigDto.getCxgoToken())) {
             log.error(MISSING_DATA);
             throw new ScmException(MISSING_DATA);
         }
