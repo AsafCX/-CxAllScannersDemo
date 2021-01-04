@@ -306,7 +306,8 @@ public class AzureService extends AbstractScmService implements ScmService  {
     }
 
     private CxFlowConfigDto validateCxFlowConfig(CxFlowConfigDto cxFlowConfigDto, AccessTokenAzureDto accessToken) {
-        if(StringUtils.isEmpty(cxFlowConfigDto.getScmAccessToken()) || StringUtils.isEmpty(cxFlowConfigDto.getTeam()) || StringUtils.isEmpty(cxFlowConfigDto.getCxgoSecret())) {
+        if(StringUtils.isAnyEmpty(cxFlowConfigDto.getScmAccessToken(), cxFlowConfigDto.getTeam(),
+                                  cxFlowConfigDto.getCxgoToken())){
             log.error("CxFlow configuration settings validation failure, missing data");
             throw new ScmException("CxFlow configuration settings validation failure, missing data");
         }

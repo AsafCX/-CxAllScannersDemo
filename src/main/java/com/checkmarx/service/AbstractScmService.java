@@ -87,7 +87,7 @@ public abstract class AbstractScmService {
                 organizationId);
         return CxFlowConfigDto.builder()
                 .team(orgPropertiesDto.getCxTeam())
-                .cxgoSecret(orgPropertiesDto.getCxGoToken())
+                .cxgoToken(orgPropertiesDto.getCxGoToken())
                 .scmAccessToken(token)
                 .build();
     }

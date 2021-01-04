@@ -13,14 +13,14 @@ import lombok.NoArgsConstructor;
 public @Data class CxFlowConfigDto {
 
     private String team;
-    private String cxgoSecret;
+    private String cxgoToken;
     private String scmAccessToken;
 
     @Override
     public String toString() {
         return "CxFlowConfigDto{" +
                 "team='" + team + '\'' +
-                ", cxgoSecret='**********" + '\'' +
+                ", cxgoToken='**********" + '\'' +
                 ", scmAccessToken='**********" + '\'' +
                 '}';
     }

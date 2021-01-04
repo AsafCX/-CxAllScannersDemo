@@ -9,7 +9,7 @@ Feature: Organization settings API
         When API client calls the 'get organization settings' API for the myOrgId organization of github SCM
         Then response status is 200
         And response contains the team field set to my-team-1
-        And response contains the cxgoSecret field set to my-secret-1
+        And response contains the cxgoToken field set to my-secret-1
         And response does not have any other fields
 
     Scenario Outline: Trying to get settings for an invalid combination of organization and SCM

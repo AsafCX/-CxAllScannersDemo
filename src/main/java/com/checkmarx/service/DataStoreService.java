@@ -140,8 +140,8 @@ public class DataStoreService implements DataService {
             throw new DataStoreException(RestWrapper.SCM_DETAILS_MISSING + " for requested Scm: " + scmUrl, ex);
         }
         ScmDto scmDto = response.getBody();
-        if (scmDto == null || StringUtils
-                .isEmpty(scmDto.getClientId()) || StringUtils.isEmpty(scmDto.getClientSecret())){
+        if (scmDto == null || StringUtils.isAnyEmpty(scmDto.getClientId(),
+                                                    scmDto.getClientSecret())){
             log.error(RestWrapper.SCM_DETAILS_MISSING + ", Scm details received from DataStore" +
                               " are empty");
             throw new ScmException(RestWrapper.SCM_DETAILS_MISSING + ", Scm details received from DataStore" +

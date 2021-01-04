@@ -9,7 +9,7 @@ Feature: Providing SCM organization config to CxFlow
         When CxFlow calls ReposManager API to get this organization config in <SCM> SCM
         Then response status is 200
         And response contains the team field set to <team>
-        And response contains the cxgoSecret field set to <cxgo_secret>
+        And response contains the cxgoToken field set to <cxgo_secret>
         And response contains the scmAccessToken field set to <scm_access_token>
         Examples:
             | team  | cxgo_secret    | scm_access_token  | SCM    |

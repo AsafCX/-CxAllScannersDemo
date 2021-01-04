@@ -143,8 +143,8 @@ public class GitHubService extends AbstractScmService implements ScmService {
     }
 
     private void validateCxFlowConfig(CxFlowConfigDto cxFlowConfigDto) {
-        if(StringUtils.isEmpty(cxFlowConfigDto.getScmAccessToken()) || StringUtils.isEmpty(
-                cxFlowConfigDto.getTeam()) || StringUtils.isEmpty(cxFlowConfigDto.getCxgoSecret())) {
+        if(StringUtils.isAnyEmpty(cxFlowConfigDto.getScmAccessToken(), cxFlowConfigDto.getTeam(),
+                                  cxFlowConfigDto.getCxgoToken())) {
             log.error("CxFlow configuration settings validation failure, missing data");
             throw new ScmException("CxFlow configuration settings validation failure, missing data");
         }

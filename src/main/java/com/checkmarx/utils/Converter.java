@@ -10,7 +10,6 @@ import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -81,7 +80,7 @@ public class Converter {
                                                              OrgSettingsWebDto orgSettingsWebDto) {
         return OrgPropertiesDto.builder()
                 .cxTeam(orgSettingsWebDto.getTeam())
-                .cxGoToken(orgSettingsWebDto.getCxgoSecret())
+                .cxGoToken(orgSettingsWebDto.getCxgoToken())
                 .orgIdentity(orgName)
                 .scmUrl(scmUrl)
                 .build();
@@ -99,7 +98,7 @@ public class Converter {
         }
         return OrgSettingsWebDto.builder()
                 .team(cxTeam)
-                .cxgoSecret(cxGoToken)
+                .cxgoToken(cxGoToken)
                 .build();
     }
     

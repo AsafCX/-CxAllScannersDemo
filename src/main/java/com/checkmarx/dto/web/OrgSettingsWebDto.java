@@ -13,5 +13,5 @@ import lombok.NoArgsConstructor;
 public @Data class OrgSettingsWebDto {
 
     private String team;
-    private String cxgoSecret;
+    private String cxgoToken;
 }

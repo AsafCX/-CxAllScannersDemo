@@ -3,24 +3,25 @@ package com.checkmarx.controller;
 import com.checkmarx.dto.BaseDto;
 import com.checkmarx.dto.cxflow.CxFlowConfigDto;
 import com.checkmarx.dto.web.OrgSettingsWebDto;
-
 import com.checkmarx.dto.web.OrganizationWebDto;
 import com.checkmarx.dto.web.RepoWebDto;
 import com.checkmarx.dto.web.ScmConfigWebDto;
 import com.checkmarx.service.ConfigurationService;
 import com.checkmarx.service.ScmService;
-
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.http.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import javax.validation.constraints.Pattern;
 import java.util.List;
 
 @Slf4j
 @RestController
 @RequestMapping
+@Validated
 public class WebController {
 
     @Autowired
@@ -28,6 +29,9 @@ public class WebController {
     
     @Autowired
     ConfigurationService genericScmService;
+
+    //no special character regex validation
+    private static final String VALIDATION_REGEX = "^[^`~!@#$%^&*+={}:;<>?๐฿]*$";
 
     /**
      * @param scmType Given Scm to handle
@@ -74,7 +78,7 @@ public class WebController {
     @Operation(summary = "Rest api used to get for specific organization all repositories (private and public)")
     @GetMapping(value = "/{scmType}/orgs/{orgId}/repos")
     public ResponseEntity<List<RepoWebDto>> getOrganizationRepositories(@PathVariable String scmType,
-                                                      @PathVariable String orgId) {
+                                                                        @PathVariable @Pattern(regexp = VALIDATION_REGEX) String orgId) {
         log.trace("getOrganizationRepositories: scmType={}, orgId={}", scmType, orgId);
         List<RepoWebDto> repoWebDtos = getScmService(scmType).getScmOrgRepos(orgId);
         log.info("Return Scm: {} Organization: {} repositories: {}", scmType, orgId,
@@ -91,8 +95,8 @@ public class WebController {
     @Operation(summary = "Rest api used to create webhook for given scm organization repository")
     @PostMapping(value = "/{scmType}/orgs/{orgId}/repos/{repoId}/webhooks")
     public ResponseEntity<BaseDto> createWebhook(@PathVariable String scmType,
-                                        @PathVariable String orgId,
-                                        @PathVariable String repoId) {
+                                        @PathVariable @Pattern(regexp = VALIDATION_REGEX) String orgId,
+                                        @PathVariable @Pattern(regexp = VALIDATION_REGEX) String repoId) {
         log.trace("createWebhook: scmType={}, orgId={}, repoName={}", scmType, orgId, repoId);
         BaseDto webhookId = getScmService(scmType).createWebhook(orgId, repoId);
         log.info("{} CXFlow Webhook created successfully!",repoId);
@@ -103,15 +107,15 @@ public class WebController {
      * @param scmType Given Scm to handle
      * @param orgId organization name
      * @param repoId repository name
-     * @param webhookId webhook id to delete
+     * @param webhookId webhook id
      * @return ResponseEntity with http status:200
      */
     @Operation(summary = "Rest api used to delete webhook from given scm organization repository")
     @DeleteMapping(value = "/{scmType}/orgs/{orgId}/repos/{repoId}/webhooks/{webhookId}")
     public ResponseEntity deleteWebhook(@PathVariable String scmType,
-                                        @PathVariable String orgId,
-                                        @PathVariable String repoId,
-                                        @PathVariable String webhookId) {
+                                        @PathVariable @Pattern(regexp = VALIDATION_REGEX) String orgId,
+                                        @PathVariable @Pattern(regexp = VALIDATION_REGEX) String repoId,
+                                        @PathVariable @Pattern(regexp = VALIDATION_REGEX) String webhookId) {
         log.trace("deleteWebhook: scmType={}, repoId={}, repoId={}, webhookId={}",scmType, orgId,
                 repoId, webhookId);
         getScmService(scmType).deleteWebhook(orgId, repoId, webhookId);
@@ -127,7 +131,7 @@ public class WebController {
     @Operation(summary = "Rest api used to retrieve scm organization settings")
     @GetMapping(value = "/{scmType}/orgs/{orgId}/settings")
     public ResponseEntity<OrgSettingsWebDto> getOrgSettings(@PathVariable String scmType,
-    @PathVariable String orgId) {
+                                                            @PathVariable @Pattern(regexp = VALIDATION_REGEX) String orgId) {
         log.trace("getOrgSettings: scmType={}, orgId={}", scmType, orgId);
         String baseUrl = getScmService(scmType).getBaseDbKey();
         OrgSettingsWebDto orgSettingsWebDto = genericScmService.getOrgSettings(orgId,baseUrl);
@@ -143,7 +147,7 @@ public class WebController {
      */
     @Operation(summary = "Rest api used to create/update scm organization settings")
     @PutMapping(value = "/{scmType}/orgs/{orgId}/settings")
-    public ResponseEntity setOrgSettings(@PathVariable String scmType, @PathVariable String orgId,
+    public ResponseEntity setOrgSettings(@PathVariable String scmType, @PathVariable @Pattern(regexp = VALIDATION_REGEX) String orgId,
                                   @RequestBody OrgSettingsWebDto orgSettingsWebDto) {
         log.trace("setOrgSettings: scmType={}, orgId={}, OrgSettingsWebDto={}", scmType, orgId,
                   orgSettingsWebDto);
@@ -157,12 +161,12 @@ public class WebController {
      * @param scmType Given Scm to handle
      * @param orgId organization name
      * @return ResponseEntity with http status:200 body: CxFlow Configuration including CxGo
-     * secret, team and Scm access token
+     * token, team and Scm access token
      */
     @Operation(summary = "Rest api used by CxFlow app - Get CxFlow org settings and token")
     @GetMapping(value = "/{scmType}/orgs/{orgId}/tenantConfig")
     public ResponseEntity<CxFlowConfigDto> getCxFlowConfiguration(@PathVariable String scmType,
-                                                  @PathVariable String orgId) {
+                                                                  @PathVariable @Pattern(regexp = VALIDATION_REGEX) String orgId) {
         log.trace("getCxFlowConfiguration: scmType={}, orgId={}", scmType, orgId);
         CxFlowConfigDto cxFlowConfigDto = getScmService(scmType).getCxFlowConfiguration(orgId);
         log.info("Return CxFlow organization: {} settings: {}", orgId, cxFlowConfigDto);

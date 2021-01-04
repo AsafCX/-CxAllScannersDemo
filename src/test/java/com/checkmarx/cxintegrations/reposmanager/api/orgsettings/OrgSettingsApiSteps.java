@@ -84,7 +84,7 @@ public class OrgSettingsApiSteps {
     @When("API client creates a request with cxgoSecret field set to {word} and team field set to {word}")
     public void apiClientCreatesARequest(String cxgoSecret, String team) {
         testState.setRequestForSending(OrgSettingsWebDto.builder()
-                .cxgoSecret(cxgoSecret)
+                .cxgoToken(cxgoSecret)
                 .team(team)
                 .build());
     }

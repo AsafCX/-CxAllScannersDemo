@@ -11,7 +11,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Builder
@@ -49,6 +48,7 @@ public @Data class WebhookBitbucketDto implements IWebhookDto {
         return uuid;
     }
 
+    @Override
     public boolean isPushOrPull() {
 
         return events != null
