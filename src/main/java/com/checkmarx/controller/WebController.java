@@ -28,7 +28,7 @@ public class WebController {
     private final ConfigurationService genericScmService;
 
     //no special character regex validation
-    private static final String VALIDATION_REGEX = "^[^`~!@#$%^&*+={}:;<>?๐฿]*$";
+    private static final String VALIDATION_REGEX = "^[^`~!@#$%^&*+={}:;<>?]*$";
 
     /**
      * @param scmType Given Scm to handle
@@ -109,7 +109,7 @@ public class WebController {
      */
     @Operation(summary = "Rest api used to delete webhook from given scm organization repository")
     @DeleteMapping(value = "/{scmType}/orgs/{orgId}/repos/{repoId}/webhooks/{webhookId}")
-    public ResponseEntity deleteWebhook(@PathVariable String scmType,
+    public ResponseEntity<Object> deleteWebhook(@PathVariable String scmType,
                                         @PathVariable @Pattern(regexp = VALIDATION_REGEX) String orgId,
                                         @PathVariable @Pattern(regexp = VALIDATION_REGEX) String repoId,
                                         @PathVariable @Pattern(regexp = VALIDATION_REGEX) String webhookId) {
